@@ -187,7 +187,7 @@
       }
     },
     "com.unity.visualscripting": {
-      "version": "1.9.8",
+      "version": "1.9.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -277,20 +277,20 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "nl.cwi.dis.vr2gather.nativelibraries": "0.9.11",
+        "nl.cwi.dis.vr2gather.nativelibraries": "0.99.6",
         "nl.cwi.dis.vr2gather.nativelibraries.webrtc": "0.9.6",
         "nl.cwi.dis.cwipc": "7.6.12",
         "com.itisnajim.socketiounity": "1.1.4",
         "com.unity.animation.rigging": "1.2.1",
-        "com.unity.recorder": "4.0.2",
-        "com.unity.textmeshpro": "3.0.8",
-        "com.unity.xr.interaction.toolkit": "2.5.2",
-        "com.unity.xr.management": "4.4.1",
-        "com.unity.xr.oculus": "4.2.0",
-        "com.unity.xr.openxr": "1.10.0",
+        "com.unity.recorder": "4.0.3",
+        "com.unity.textmeshpro": "3.0.9",
+        "com.unity.xr.interaction.toolkit": "2.6.5",
+        "com.unity.xr.management": "4.5.2",
+        "com.unity.xr.oculus": "4.5.2",
+        "com.unity.xr.openxr": "1.14.3",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "332416a81314cda2d9dff6dddee149593a02f4a9"
+      "hash": "3aa8afe58007fc3daeeef64703fdcecfb89e3a7c"
     },
     "nl.cwi.dis.vr2gather.nativelibraries": {
       "version": "git+https://github.com/cwi-dis/VR2G-nativeLibraries?path=/nl.cwi.dis.vr2gather.nativelibraries",
