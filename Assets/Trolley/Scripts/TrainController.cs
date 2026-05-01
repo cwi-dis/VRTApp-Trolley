@@ -4,8 +4,12 @@ using UnityEngine;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Moves the train along one of two waypoint paths depending on the decision.
-    /// For the optional scenario, actionPath leads to a wall (hasWallCollision = true).
+    /// Moves the train in three phases:
+    ///   1. Approach  — shared path leading to the fork (starts when narration ends)
+    ///   2. Wait      — holds at fork until a decision is made
+    ///   3. Branch    — follows action or inaction path based on the decision
+    ///
+    /// If approachPath is empty the train starts at the fork immediately.
     /// </summary>
     public class TrainController : MonoBehaviour
     {
@@ -13,10 +17,13 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Transform train;
         [SerializeField] float trainSpeed = 6f;
 
-        [Header("Action path (divert track)")]
+        [Header("Approach path (shared — leads to fork)")]
+        [SerializeField] Transform[] approachPath;
+
+        [Header("Action path (divert track — after fork)")]
         [SerializeField] Transform[] actionPath;
 
-        [Header("Inaction path (default track)")]
+        [Header("Inaction path (default track — after fork)")]
         [SerializeField] Transform[] inactionPath;
 
         [Header("Optional: wall collision at end of action path")]
@@ -31,25 +38,56 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Animator[] inactionTrackWorkers;
 
         static readonly int DangerHash = Animator.StringToHash("Danger");
-        static readonly int SafeHash = Animator.StringToHash("Safe");
+        static readonly int SafeHash   = Animator.StringToHash("Safe");
 
+        Transform[] _decidedPath;
+        bool        _hitWall;
+        bool        _decisionMade;
+
+        // Called by TrolleyController when narration ends (same moment timer starts).
+        public void StartApproach()
+        {
+            StartCoroutine(RunTrain());
+        }
+
+        // Called immediately when a decision is made — train switches path at fork.
         public void ExecuteAction()
         {
             TriggerWorkers(inactionTrackWorkers, safe: true);
             TriggerWorkers(actionTrackWorkers, safe: !hasWallCollision);
-            StartCoroutine(MoveTrain(actionPath, hitWall: hasWallCollision));
+            _decidedPath  = actionPath;
+            _hitWall      = hasWallCollision;
+            _decisionMade = true;
         }
 
         public void ExecuteInaction()
         {
             TriggerWorkers(inactionTrackWorkers, safe: false);
             TriggerWorkers(actionTrackWorkers, safe: true);
-            StartCoroutine(MoveTrain(inactionPath, hitWall: false));
+            _decidedPath  = inactionPath;
+            _hitWall      = false;
+            _decisionMade = true;
         }
 
-        IEnumerator MoveTrain(Transform[] path, bool hitWall)
+        // ── Internal ──────────────────────────────────────────────────────────
+
+        IEnumerator RunTrain()
         {
-            if (path == null || path.Length == 0 || train == null) yield break;
+            // Phase 1: approach
+            if (approachPath != null && approachPath.Length > 0)
+                yield return StartCoroutine(FollowPath(approachPath, hitWall: false));
+
+            // Phase 2: wait at fork for decision
+            yield return new WaitUntil(() => _decisionMade);
+
+            // Phase 3: branch
+            if (_decidedPath != null && _decidedPath.Length > 0)
+                yield return StartCoroutine(FollowPath(_decidedPath, hitWall: _hitWall));
+        }
+
+        IEnumerator FollowPath(Transform[] path, bool hitWall)
+        {
+            if (train == null) yield break;
 
             foreach (var waypoint in path)
             {
@@ -58,7 +96,8 @@ namespace VRT.Pilots.Trolley
                 {
                     Vector3 dir = (target - train.position).normalized;
                     if (dir != Vector3.zero) train.rotation = Quaternion.LookRotation(dir);
-                    train.position = Vector3.MoveTowards(train.position, target, trainSpeed * Time.deltaTime);
+                    train.position = Vector3.MoveTowards(
+                        train.position, target, trainSpeed * Time.deltaTime);
                     yield return null;
                 }
             }

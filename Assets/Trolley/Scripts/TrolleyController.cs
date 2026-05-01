@@ -1,5 +1,5 @@
 using UnityEngine;
-using VRT.Pilots.Common;
+using UnityEngine.SceneManagement;
 using VRT.Orchestrator.Wrapping;
 using VRT.Orchestrator.Responses;
 
@@ -17,7 +17,7 @@ namespace VRT.Pilots.Trolley
     /// Inaction: each client handles timer expiry locally — both timers run in
     /// lockstep because they start from the same master broadcast.
     /// </summary>
-    public class TrolleyController : PilotController
+    public class TrolleyController : MonoBehaviour
     {
         enum State { Idle, Narration, Decision, Outcome, Transition }
 
@@ -33,9 +33,8 @@ namespace VRT.Pilots.Trolley
 
         State _state = State.Idle;
 
-        public override void Start()
+        void Start()
         {
-            base.Start();
             OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnInaction;
@@ -57,6 +56,7 @@ namespace VRT.Pilots.Trolley
         {
             _state = State.Decision;
             interactable.SetActive(true);
+            trainController.StartApproach();
             if (OrchestratorController.Instance.UserIsMaster)
                 OrchestratorController.Instance.SendMessageToAll("timer:start");
             decisionTimer.StartCountdown();
@@ -117,7 +117,7 @@ namespace VRT.Pilots.Trolley
                 TrolleyGameState.Instance.AdvanceScenario();
             }
             string next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
-            LoadNewScene(next);
+            SceneManager.LoadScene(next);
         }
 
         // ── Network messages ──────────────────────────────────────────────
@@ -135,9 +135,5 @@ namespace VRT.Pilots.Trolley
             }
         }
 
-        public override void OnUserMessageReceived(string message)
-        {
-            // Handled via OnNetworkMessage subscription above.
-        }
     }
 }
