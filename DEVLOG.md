@@ -17,43 +17,25 @@ Full protocol: `protocol.md`
 - `TrolleyGameState` + `DataLogger` GameObjects added to `TrolleyTutorial` scene
 - Everything committed and pushed to master
 
-**Next session starts here:**
-- Open `TrolleyBystander` scene
-- Follow Steps 1–7 (see below) to wire it up fully
-- Test in editor before moving to other scenes
-
 ---
 
-## Scene Wiring Checklist
+### Day 2 (2026-05-01) — ~2.5 hours
+**Done:**
+- All 5 scenes fully wired via per-scene editor setup scripts (run from Trolley menu)
+- `TrolleyBystander`: train, 2 workers per track, waypoints, lever, timer canvas
+- `TrolleyDriver`: same but with button instead of lever
+- `TrolleyOptional`: button + wall collision + particle burst effect; action track has no workers
+- `TrolleyQuestionnaire`: two-booth black room, dim point lights, opaque divider, full Likert UI (7 buttons) per booth
+- `QuestionnaireController` updated: dual Booth A/B refs — master uses A, non-master uses B (privacy without separate scenes)
+- `TrolleyTutorial`: researcher setup panel (condition + 6 counterbalanced orders), avatar selector wired to Man/Woman prefabs, practice lever + button
+- `ScenarioRegistry` updated in VRTLoginManager — TrolleyTutorial (+ other scenes for debugging) added
+- Man/Woman avatar FBX added to `Assets/Trolley/Models/`, prefabs created and linked to AvatarSelector
+- Everything committed to master
 
-### TrolleyBystander — IN PROGRESS
-Steps to complete:
-- [ ] Create `TrolleyController` empty → add `TrolleyController` component, scenarioID = "bystander"
-- [ ] Create `NarrationPlayer` empty → add `NarrationPlayer` + `Audio Source`
-- [ ] Create `TimerCanvas` (World Space Canvas) → child `TimerText` (TMP) → add `DecisionTimer`, wire TimerText
-- [ ] Create train waypoints: `TrainPaths/ActionPath/Waypoint1...` and `TrainPaths/InactionPath/Waypoint1...`
-- [ ] Add `TrainController` to `train_typeB`, wire train + waypoints + worker animators
-- [ ] Create `Lever` empty with child cube + `LeverPivot` → add `XRGrabInteractable` + `TrolleyLever`, wire pivot
-- [ ] Wire all references into `TrolleyController` inspector
-- [ ] Test in editor (solo mode)
-
-### TrolleyDriver — NOT STARTED
-- Same as Bystander but swap `TrolleyLever` → `TrolleyButton`, scenarioID = "driver"
-
-### TrolleyOptional — NOT STARTED
-- Same as Driver but enable `Has Wall Collision` on `TrainController`, add wall + collision effect
-
-### TrolleyQuestionnaire — NOT STARTED
-- Two booths ~25m apart with opaque wall between them
-- `QuestionnaireController` with `TrolleyQuestions` asset wired in
-- Reflection timer UI + Likert button panels in each booth
-- Spatial audio: participants far enough apart that voice doesn't bleed
-
-### TrolleyTutorial — NOT STARTED
-- `TrolleyGameState` + `DataLogger` already placed (DontDestroyOnLoad)
-- Add `TutorialController` → researcher setup panel UI (condition + scenario order buttons)
-- Add `AvatarSelector` → male/female buttons → wire male/female Mixamo prefabs (pending avatar files)
-- Practice lever + practice button (same components, no consequences)
+**Next session starts here:**
+- Full flow test via VRTLogin → Create Room → TrolleyTutorial → Solo → run one complete scenario
+- Fix bugs found during test
+- Quest build (Android target)
 
 ---
 
@@ -92,20 +74,20 @@ Steps to complete:
 
 ## Pending / Blockers
 
-- **Mixamo avatar files** — not yet added. Avatar selector UI is built but prefabs not wired. Add male/female FBX to `Assets/Trolley/Models/` when ready.
 - **Narration audio** — placeholder mode active (4s delay). Add real AudioClips to `Assets/Trolley/Audio/` per scenario when ready.
-- **Quest build** — not attempted yet. Scheduled for Day 5.
+- **Quest build** — not attempted yet. Next priority after editor test passes.
+- **Full flow test** — needs VRTLogin → TrolleyTutorial run to catch runtime bugs.
 
 ---
 
 ## Timeline
 
-| Day | Goal | Hours |
+| Day | Goal | Status |
 |---|---|---|
-| 2 | Wire TrolleyBystander, test in editor | 4–5h |
-| 3 | TrolleyDriver + TrolleyOptional | 4–5h |
-| 4 | TrolleyQuestionnaire scene | 4–5h |
-| 5 | TrolleyTutorial + full session flow | 4–5h |
-| 6 | Quest build + on-device testing + fixes | 4–5h |
+| 1 | Scripts + scene scaffolding | ✓ Done |
+| 2 | Wire all 5 scenes + avatar setup | ✓ Done |
+| 3 | Full flow editor test + bug fixes | Next |
+| 4 | Quest build + on-device test | — |
+| 5 | Fixes from on-device test | — |
 
-Target completion: ~5 working days from 2026-05-01.
+Target completion: ~3–4 weeks from 2026-04-30.
