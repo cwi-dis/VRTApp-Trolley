@@ -94,6 +94,13 @@ namespace VRT.Pilots.Trolley.Editor
             // Action path ends at z=30 where the wall sits.
             var pathsGO = new GameObject("TrainPaths");
 
+            var approachPathGO = new GameObject("ApproachPath");
+            approachPathGO.transform.SetParent(pathsGO.transform);
+            var approachWPs = CreateWaypoints(approachPathGO,
+                new Vector3(0f, 0f, -8f),
+                new Vector3(0f, 0f, -4f),
+                new Vector3(0f, 0f,  0f));
+
             var inactionPathGO = new GameObject("InactionPath");
             inactionPathGO.transform.SetParent(pathsGO.transform);
             var inactionWPs = CreateWaypoints(inactionPathGO,
@@ -147,6 +154,7 @@ namespace VRT.Pilots.Trolley.Editor
             // Wire TrainController (with wall collision enabled)
             var tcSO = new SerializedObject(trainController);
             tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
+            SetTransformArray(tcSO, "approachPath", approachWPs);
             SetTransformArray(tcSO, "inactionPath", inactionWPs);
             SetTransformArray(tcSO, "actionPath", actionWPs);
             SetAnimatorArray(tcSO, "inactionTrackWorkers", inactionWorkers);

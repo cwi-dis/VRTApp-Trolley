@@ -91,9 +91,16 @@ namespace VRT.Pilots.Trolley.Editor
             var trainController = trainGO.AddComponent<TrainController>();
 
             // ── Train waypoints ────────────────────────────────────────────────
-            // Layout: train starts at z=-15, fork at z=0, inaction track goes
-            // straight (workers at z=20-25), action track diverts right (x=4).
+            // Train starts at z=-15. Approach path leads it to the fork at z=0.
+            // After the decision, it branches to action (right) or inaction (straight).
             var pathsGO = new GameObject("TrainPaths");
+
+            var approachPathGO = new GameObject("ApproachPath");
+            approachPathGO.transform.SetParent(pathsGO.transform);
+            var approachWPs = CreateWaypoints(approachPathGO,
+                new Vector3(0f, 0f, -8f),
+                new Vector3(0f, 0f, -4f),
+                new Vector3(0f, 0f,  0f));
 
             var inactionPathGO = new GameObject("InactionPath");
             inactionPathGO.transform.SetParent(pathsGO.transform);
@@ -121,6 +128,7 @@ namespace VRT.Pilots.Trolley.Editor
             // Wire TrainController via SerializedObject
             var tcSO = new SerializedObject(trainController);
             tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
+            SetTransformArray(tcSO, "approachPath", approachWPs);
             SetTransformArray(tcSO, "inactionPath", inactionWPs);
             SetTransformArray(tcSO, "actionPath", actionWPs);
             SetAnimatorArray(tcSO, "inactionTrackWorkers", inactionWorkers);
@@ -140,6 +148,7 @@ namespace VRT.Pilots.Trolley.Editor
             meshGO.transform.localScale = new Vector3(0.07f, 0.45f, 0.07f);
             meshGO.transform.localPosition = new Vector3(0f, 0.225f, 0f);
             Object.DestroyImmediate(meshGO.GetComponent<BoxCollider>());
+            ColorMesh(meshGO, new Color(0.85f, 0.15f, 0.1f));
 
             var grab = leverGO.AddComponent<XRGrabInteractable>();
             var lever = leverGO.AddComponent<TrolleyLever>();
@@ -198,6 +207,16 @@ namespace VRT.Pilots.Trolley.Editor
                 animators[i] = anim;
             }
             return animators;
+        }
+
+        static void ColorMesh(GameObject go, Color color)
+        {
+            var r = go.GetComponent<Renderer>();
+            if (r == null) return;
+            var mat = Object.Instantiate(r.sharedMaterial);
+            mat.SetColor("_BaseColor", color);
+            mat.SetColor("_Color", color);
+            r.sharedMaterial = mat;
         }
 
         static void SetField(Object target, string fieldName, Object value)
