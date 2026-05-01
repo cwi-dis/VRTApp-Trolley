@@ -12,6 +12,9 @@ namespace VRT.Pilots.Trolley
     /// Runs the post-scenario questionnaire. Both paired participants are in this
     /// scene simultaneously but in separate booths (no eye/ear contact).
     ///
+    /// The master client uses Booth A refs; the non-master uses Booth B refs.
+    /// In solo condition only Booth A refs are needed.
+    ///
     /// Flow: Reflection (15 s think-aloud) -> Common questions -> Paired-only questions
     ///       -> signal done -> wait for partner done (paired) -> load next scene.
     /// </summary>
@@ -20,25 +23,43 @@ namespace VRT.Pilots.Trolley
         [Header("Question Set")]
         [SerializeField] QuestionSet questionSet;
 
-        [Header("Reflection UI")]
-        [SerializeField] GameObject reflectionPanel;
-        [SerializeField] TextMeshProUGUI reflectionPromptText;
-        [SerializeField] TextMeshProUGUI reflectionTimerText;
+        [Header("Booth A — Master / Solo player")]
+        [SerializeField] GameObject reflectionPanelA;
+        [SerializeField] TextMeshProUGUI reflectionPromptTextA;
+        [SerializeField] TextMeshProUGUI reflectionTimerTextA;
+        [SerializeField] GameObject questionPanelA;
+        [SerializeField] TextMeshProUGUI questionBodyTextA;
+        [SerializeField] Button[] likertButtonsA;
+        [SerializeField] TextMeshProUGUI[] likertLabelsA;
+        [SerializeField] GameObject waitingPanelA;
+        [SerializeField] TextMeshProUGUI waitingTextA;
+
+        [Header("Booth B — Non-master player (paired only)")]
+        [SerializeField] GameObject reflectionPanelB;
+        [SerializeField] TextMeshProUGUI reflectionPromptTextB;
+        [SerializeField] TextMeshProUGUI reflectionTimerTextB;
+        [SerializeField] GameObject questionPanelB;
+        [SerializeField] TextMeshProUGUI questionBodyTextB;
+        [SerializeField] Button[] likertButtonsB;
+        [SerializeField] TextMeshProUGUI[] likertLabelsB;
+        [SerializeField] GameObject waitingPanelB;
+        [SerializeField] TextMeshProUGUI waitingTextB;
+
+        [Header("Timing")]
         [SerializeField] float reflectionDuration = 15f;
 
-        [Header("Question UI")]
-        [SerializeField] GameObject questionPanel;
-        [SerializeField] TextMeshProUGUI questionBodyText;
-
-        [Header("Likert Buttons (provide 7; last 2 hidden for 5-point scales)")]
-        [SerializeField] Button[] likertButtons;
-        [SerializeField] TextMeshProUGUI[] likertLabels;
-
-        [Header("End Panel")]
-        [SerializeField] GameObject waitingPanel;
-        [SerializeField] TextMeshProUGUI waitingText;
-
         const string DonePrefix = "questionnaire:done:";
+
+        // Working refs resolved at Start() based on master/non-master role.
+        GameObject reflectionPanel;
+        TextMeshProUGUI reflectionPromptText;
+        TextMeshProUGUI reflectionTimerText;
+        GameObject questionPanel;
+        TextMeshProUGUI questionBodyText;
+        Button[] likertButtons;
+        TextMeshProUGUI[] likertLabels;
+        GameObject waitingPanel;
+        TextMeshProUGUI waitingText;
 
         string _completedScenario;
         bool _isPaired;
@@ -49,12 +70,28 @@ namespace VRT.Pilots.Trolley
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
 
+            bool useBoothA = !_isPaired || OrchestratorController.Instance.UserIsMaster;
+            SelectBooth(useBoothA);
+
             OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
             questionPanel.SetActive(false);
             reflectionPanel.SetActive(false);
             if (waitingPanel != null) waitingPanel.SetActive(false);
 
             StartCoroutine(RunQuestionnaire());
+        }
+
+        void SelectBooth(bool useA)
+        {
+            reflectionPanel      = useA ? reflectionPanelA      : reflectionPanelB;
+            reflectionPromptText = useA ? reflectionPromptTextA  : reflectionPromptTextB;
+            reflectionTimerText  = useA ? reflectionTimerTextA   : reflectionTimerTextB;
+            questionPanel        = useA ? questionPanelA         : questionPanelB;
+            questionBodyText     = useA ? questionBodyTextA      : questionBodyTextB;
+            likertButtons        = useA ? likertButtonsA         : likertButtonsB;
+            likertLabels         = useA ? likertLabelsA          : likertLabelsB;
+            waitingPanel         = useA ? waitingPanelA          : waitingPanelB;
+            waitingText          = useA ? waitingTextA           : waitingTextB;
         }
 
         void OnDestroy()
@@ -72,7 +109,6 @@ namespace VRT.Pilots.Trolley
             if (_isPaired)
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
 
-            // Signal done and wait for partner if paired.
             string myId = OrchestratorController.Instance.SelfUser.userId;
             OrchestratorController.Instance.SendMessageToAll($"{DonePrefix}{myId}");
 
