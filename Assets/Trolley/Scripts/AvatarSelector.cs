@@ -37,7 +37,16 @@ namespace VRT.Pilots.Trolley
                 playersManager.SelfPlayerPrefab =
                     gender == TrolleyGameState.Gender.Male ? maleSelfPrefab : femaleSelfPrefab;
 
-            selectionPanel.SetActive(false);
+            // Keep panel visible — just highlight the selected button.
+            SetHighlight(maleButton,   gender == TrolleyGameState.Gender.Male);
+            SetHighlight(femaleButton, gender == TrolleyGameState.Gender.Female);
+        }
+
+        static void SetHighlight(Button btn, bool selected)
+        {
+            var img = btn.GetComponent<UnityEngine.UI.Image>();
+            if (img != null)
+                img.color = selected ? new Color(0.1f, 0.6f, 0.1f) : new Color(0.2f, 0.2f, 0.5f);
         }
     }
 }
