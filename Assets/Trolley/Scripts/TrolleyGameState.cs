@@ -12,9 +12,12 @@ namespace VRT.Pilots.Trolley
 
         public enum Condition { Solo, Paired }
         public enum Gender { Male, Female }
+        public enum RelationshipType { NotApplicable, Friend, Stranger, Acquaintance, Partner }
 
         [Header("Session Config (set by researcher before starting)")]
         public Condition condition = Condition.Solo;
+        public int participantNumber = 0;
+        public RelationshipType relationshipType = RelationshipType.NotApplicable;
 
         [Header("Scenario Sequence (set by researcher; order is counterbalanced)")]
         public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleyOptional" };
@@ -27,6 +30,7 @@ namespace VRT.Pilots.Trolley
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
         public Gender localGender = Gender.Male;
+        public string scenarioOrderLabel = "";
 
         void Awake()
         {
