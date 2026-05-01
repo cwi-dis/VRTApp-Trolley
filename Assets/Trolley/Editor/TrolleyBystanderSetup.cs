@@ -56,6 +56,18 @@ namespace VRT.Pilots.Trolley.Editor
             canvasGO.transform.position = new Vector3(0f, 2.8f, 1.5f);
             canvasGO.transform.localScale = Vector3.one * 0.005f;
 
+            var statusTextGO = new GameObject("StatusText");
+            statusTextGO.transform.SetParent(canvasGO.transform, false);
+            var statusTMP = statusTextGO.AddComponent<TextMeshProUGUI>();
+            statusTMP.text = "Narration playing…";
+            statusTMP.fontSize = 40;
+            statusTMP.alignment = TextAlignmentOptions.Center;
+            statusTMP.color = Color.white;
+            var statusRect = statusTextGO.GetComponent<RectTransform>();
+            statusRect.anchorMin = new Vector2(0f, 0.5f);
+            statusRect.anchorMax = Vector2.one;
+            statusRect.offsetMin = statusRect.offsetMax = Vector2.zero;
+
             var timerTextGO = new GameObject("TimerText");
             timerTextGO.transform.SetParent(canvasGO.transform, false);
             var timerTMP = timerTextGO.AddComponent<TextMeshProUGUI>();
@@ -65,12 +77,14 @@ namespace VRT.Pilots.Trolley.Editor
             timerTMP.color = Color.white;
             var timerRect = timerTextGO.GetComponent<RectTransform>();
             timerRect.anchorMin = Vector2.zero;
-            timerRect.anchorMax = Vector2.one;
-            timerRect.offsetMin = Vector2.zero;
-            timerRect.offsetMax = Vector2.zero;
+            timerRect.anchorMax = new Vector2(1f, 0.5f);
+            timerRect.offsetMin = timerRect.offsetMax = Vector2.zero;
 
             var decisionTimer = canvasGO.AddComponent<DecisionTimer>();
-            SetField(decisionTimer, "timerText", timerTMP);
+            var dtSO = new SerializedObject(decisionTimer);
+            dtSO.FindProperty("timerText").objectReferenceValue  = timerTMP;
+            dtSO.FindProperty("statusText").objectReferenceValue = statusTMP;
+            dtSO.ApplyModifiedProperties();
 
             // ── Train ─────────────────────────────────────────────────────────
             var trainPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TrainPrefabPath);

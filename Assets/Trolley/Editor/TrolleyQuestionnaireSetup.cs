@@ -6,20 +6,34 @@ using TMPro;
 
 namespace VRT.Pilots.Trolley.Editor
 {
-    /// <summary>
-    /// Run once via menu: Trolley > Wire Questionnaire Scene
-    /// Creates a black two-booth room. Booth A = master, Booth B = non-master.
-    /// An opaque wall divides them so participants cannot see each other.
-    /// </summary>
     public static class TrolleyQuestionnaireSetup
     {
-        const string ScenePath = "Assets/Trolley/Scenes/TrolleyQuestionnaire.unity";
+        const string ScenePath      = "Assets/Trolley/Scenes/TrolleyQuestionnaire.unity";
         const string QuestionSetPath = "Assets/Trolley/TrolleyQuestions.asset";
 
-        // Booth positions along the Z axis, far enough apart for voice separation.
-        static readonly Vector3 BoothACenter = new Vector3(0f, 0f, 0f);
-        static readonly Vector3 BoothBCenter = new Vector3(0f, 0f, -30f);
-        static readonly Vector3 DividerCenter = new Vector3(0f, 2f, -15f);
+        static readonly Vector3 BoothACenter  = new Vector3(0f,  0f,   0f);
+        static readonly Vector3 BoothBCenter  = new Vector3(0f,  0f, -30f);
+        static readonly Vector3 DividerCenter = new Vector3(0f,  2f, -15f);
+
+        static readonly Color BtnDefault = new Color(0.2f, 0.2f, 0.8f);
+        static readonly Color BtnGreen   = new Color(0.1f, 0.55f, 0.1f);
+
+        struct BoothRefs
+        {
+            public GameObject refPanel;
+            public TextMeshProUGUI refPrompt, refTimer;
+            public GameObject qPanel;
+            public TextMeshProUGUI qBody;
+            public Button[] buttons;
+            public TextMeshProUGUI[] labels;
+            public Button nextButton;
+            public TextMeshProUGUI scaleMinLabel, scaleMaxLabel;
+            public GameObject waitPanel;
+            public TextMeshProUGUI waitText;
+            public GameObject transitionPanel;
+            public TextMeshProUGUI transitionText;
+            public Button startButton;
+        }
 
         [MenuItem("Trolley/Wire Questionnaire Scene")]
         public static void WireQuestionnaireScene()
@@ -35,45 +49,26 @@ namespace VRT.Pilots.Trolley.Editor
             }
 
             // ── Environment ───────────────────────────────────────────────────
-            // Black floor spanning both booths + an opaque dividing wall.
             var envGO = new GameObject("Environment");
 
-            var floor = CreateBlackCube("Floor", envGO,
-                position: new Vector3(0f, -0.05f, -15f),
-                scale: new Vector3(12f, 0.1f, 40f));
+            CreateBlackCube("Floor",    envGO, new Vector3(0f, -0.05f, -15f), new Vector3(12f, 0.1f,  40f));
+            CreateBlackCube("Ceiling",  envGO, new Vector3(0f,  3.1f,  -15f), new Vector3(12f, 0.1f,  40f));
+            CreateBlackCube("WallLeft", envGO, new Vector3(-6f, 1.5f,  -15f), new Vector3(0.1f, 3f,   40f));
+            CreateBlackCube("WallRight",envGO, new Vector3( 6f, 1.5f,  -15f), new Vector3(0.1f, 3f,   40f));
+            CreateBlackCube("WallEndA", envGO, new Vector3(0f,  1.5f,    5f), new Vector3(12f,  3f,  0.1f));
+            CreateBlackCube("WallEndB", envGO, new Vector3(0f,  1.5f,  -35f), new Vector3(12f,  3f,  0.1f));
+            CreateBlackCube("Divider",  envGO, DividerCenter,                  new Vector3(12f,  4f,  0.3f));
 
-            // Ceiling to block looking over the wall.
-            var ceiling = CreateBlackCube("Ceiling", envGO,
-                position: new Vector3(0f, 3.1f, -15f),
-                scale: new Vector3(12f, 0.1f, 40f));
-
-            // Side walls.
-            CreateBlackCube("WallLeft",  envGO, new Vector3(-6f, 1.5f, -15f), new Vector3(0.1f, 3f, 40f));
-            CreateBlackCube("WallRight", envGO, new Vector3( 6f, 1.5f, -15f), new Vector3(0.1f, 3f, 40f));
-
-            // End walls behind each booth.
-            CreateBlackCube("WallEndA", envGO, new Vector3(0f, 1.5f,  5f), new Vector3(12f, 3f, 0.1f));
-            CreateBlackCube("WallEndB", envGO, new Vector3(0f, 1.5f, -35f), new Vector3(12f, 3f, 0.1f));
-
-            // Opaque divider between booths (full height + width to block sightlines).
-            CreateBlackCube("Divider", envGO, DividerCenter, new Vector3(12f, 4f, 0.3f));
-
-            // Dim overhead lights — one per booth.
             CreateDimLight("LightBoothA", envGO, BoothACenter + new Vector3(0f, 2.8f, 0f));
             CreateDimLight("LightBoothB", envGO, BoothBCenter + new Vector3(0f, 2.8f, 0f));
 
             // ── Booth canvases ─────────────────────────────────────────────────
-            var (refPanelA, refPromptA, refTimerA,
-                 qPanelA, qBodyA, buttonsA, labelsA,
-                 waitPanelA, waitTextA) = BuildBoothCanvas("BoothA_Canvas", BoothACenter);
-
-            var (refPanelB, refPromptB, refTimerB,
-                 qPanelB, qBodyB, buttonsB, labelsB,
-                 waitPanelB, waitTextB) = BuildBoothCanvas("BoothB_Canvas", BoothBCenter);
+            var a = BuildBoothCanvas("BoothA_Canvas", BoothACenter);
+            var b = BuildBoothCanvas("BoothB_Canvas", BoothBCenter);
 
             // ── QuestionnaireController ───────────────────────────────────────
             var controllerGO = new GameObject("QuestionnaireController");
-            var controller = controllerGO.AddComponent<QuestionnaireController>();
+            var controller   = controllerGO.AddComponent<QuestionnaireController>();
 
             var questionSet = AssetDatabase.LoadAssetAtPath<QuestionSet>(QuestionSetPath);
             if (questionSet == null)
@@ -82,28 +77,8 @@ namespace VRT.Pilots.Trolley.Editor
             var so = new SerializedObject(controller);
             so.FindProperty("questionSet").objectReferenceValue = questionSet;
 
-            // Booth A
-            so.FindProperty("reflectionPanelA").objectReferenceValue      = refPanelA;
-            so.FindProperty("reflectionPromptTextA").objectReferenceValue  = refPromptA;
-            so.FindProperty("reflectionTimerTextA").objectReferenceValue   = refTimerA;
-            so.FindProperty("questionPanelA").objectReferenceValue         = qPanelA;
-            so.FindProperty("questionBodyTextA").objectReferenceValue      = qBodyA;
-            so.FindProperty("waitingPanelA").objectReferenceValue          = waitPanelA;
-            so.FindProperty("waitingTextA").objectReferenceValue           = waitTextA;
-            SetButtonArray(so, "likertButtonsA", buttonsA);
-            SetTMPArray(so, "likertLabelsA", labelsA);
-
-            // Booth B
-            so.FindProperty("reflectionPanelB").objectReferenceValue      = refPanelB;
-            so.FindProperty("reflectionPromptTextB").objectReferenceValue  = refPromptB;
-            so.FindProperty("reflectionTimerTextB").objectReferenceValue   = refTimerB;
-            so.FindProperty("questionPanelB").objectReferenceValue         = qPanelB;
-            so.FindProperty("questionBodyTextB").objectReferenceValue      = qBodyB;
-            so.FindProperty("waitingPanelB").objectReferenceValue          = waitPanelB;
-            so.FindProperty("waitingTextB").objectReferenceValue           = waitTextB;
-            SetButtonArray(so, "likertButtonsB", buttonsB);
-            SetTMPArray(so, "likertLabelsB", labelsB);
-
+            WireBooth(so, "A", a);
+            WireBooth(so, "B", b);
             so.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -111,37 +86,53 @@ namespace VRT.Pilots.Trolley.Editor
             Debug.Log("TrolleyQuestionnaireSetup: scene wired and saved.");
         }
 
-        // ── Booth canvas builder ──────────────────────────────────────────────
-        // Returns all UI component refs for wiring into QuestionnaireController.
-
-        static (GameObject refPanel, TextMeshProUGUI refPrompt, TextMeshProUGUI refTimer,
-                GameObject qPanel, TextMeshProUGUI qBody,
-                Button[] buttons, TextMeshProUGUI[] labels,
-                GameObject waitPanel, TextMeshProUGUI waitText)
-            BuildBoothCanvas(string canvasName, Vector3 boothCenter)
+        static void WireBooth(SerializedObject so, string suffix, BoothRefs r)
         {
-            // Canvas faces the player (facing +Z from the booth center).
+            so.FindProperty($"reflectionPanel{suffix}").objectReferenceValue      = r.refPanel;
+            so.FindProperty($"reflectionPromptText{suffix}").objectReferenceValue = r.refPrompt;
+            so.FindProperty($"reflectionTimerText{suffix}").objectReferenceValue  = r.refTimer;
+            so.FindProperty($"questionPanel{suffix}").objectReferenceValue        = r.qPanel;
+            so.FindProperty($"questionBodyText{suffix}").objectReferenceValue     = r.qBody;
+            so.FindProperty($"nextButton{suffix}").objectReferenceValue           = r.nextButton;
+            so.FindProperty($"scaleMinLabel{suffix}").objectReferenceValue        = r.scaleMinLabel;
+            so.FindProperty($"scaleMaxLabel{suffix}").objectReferenceValue        = r.scaleMaxLabel;
+            so.FindProperty($"waitingPanel{suffix}").objectReferenceValue         = r.waitPanel;
+            so.FindProperty($"waitingText{suffix}").objectReferenceValue          = r.waitText;
+            so.FindProperty($"transitionPanel{suffix}").objectReferenceValue      = r.transitionPanel;
+            so.FindProperty($"transitionText{suffix}").objectReferenceValue       = r.transitionText;
+            so.FindProperty($"startButton{suffix}").objectReferenceValue          = r.startButton;
+
+            var btnProp = so.FindProperty($"likertButtons{suffix}");
+            btnProp.arraySize = r.buttons.Length;
+            for (int i = 0; i < r.buttons.Length; i++)
+                btnProp.GetArrayElementAtIndex(i).objectReferenceValue = r.buttons[i];
+
+            var lblProp = so.FindProperty($"likertLabels{suffix}");
+            lblProp.arraySize = r.labels.Length;
+            for (int i = 0; i < r.labels.Length; i++)
+                lblProp.GetArrayElementAtIndex(i).objectReferenceValue = r.labels[i];
+        }
+
+        // ── Booth canvas builder ──────────────────────────────────────────────
+
+        static BoothRefs BuildBoothCanvas(string canvasName, Vector3 boothCenter)
+        {
             var canvasGO = new GameObject(canvasName);
-            var canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
+            canvasGO.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
             canvasGO.AddComponent<GraphicRaycaster>();
-            var rootRect = canvasGO.GetComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(800f, 600f);
-            canvasGO.transform.position = boothCenter + new Vector3(0f, 1.6f, 2f);
-            canvasGO.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // face the player
-            canvasGO.transform.localScale = Vector3.one * 0.003f;
+            canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 600f);
+            canvasGO.transform.position    = boothCenter + new Vector3(0f, 1.6f, 0f);
+            canvasGO.transform.rotation    = Quaternion.Euler(0f, 180f, 0f);
+            canvasGO.transform.localScale  = Vector3.one * 0.003f;
 
             // ── Reflection panel ──────────────────────────────────────────────
-            var refPanel = CreatePanel("ReflectionPanel", canvasGO, Color.black);
-
+            var refPanel  = CreatePanel("ReflectionPanel", canvasGO, Color.black);
             var refPrompt = CreateTMP("PromptText", refPanel,
-                anchorMin: new Vector2(0.05f, 0.3f), anchorMax: new Vector2(0.95f, 0.9f),
-                fontSize: 36, text: "Reflect aloud: why did you make this decision?");
-
-            var refTimer = CreateTMP("TimerText", refPanel,
-                anchorMin: new Vector2(0.35f, 0.05f), anchorMax: new Vector2(0.65f, 0.28f),
-                fontSize: 72, text: "15");
+                new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.90f), 36,
+                "Reflect aloud: why did you make this decision?");
+            var refTimer  = CreateTMP("TimerText", refPanel,
+                new Vector2(0.35f, 0.05f), new Vector2(0.65f, 0.28f), 72, "15");
             refTimer.alignment = TextAlignmentOptions.Center;
             refPanel.SetActive(false);
 
@@ -149,21 +140,20 @@ namespace VRT.Pilots.Trolley.Editor
             var qPanel = CreatePanel("QuestionPanel", canvasGO, Color.black);
 
             var qBody = CreateTMP("QuestionBodyText", qPanel,
-                anchorMin: new Vector2(0.05f, 0.55f), anchorMax: new Vector2(0.95f, 0.95f),
-                fontSize: 34, text: "Question text here.");
+                new Vector2(0.05f, 0.60f), new Vector2(0.95f, 0.95f), 34, "Question text here.");
             qBody.alignment = TextAlignmentOptions.TopLeft;
 
-            // Likert row: 7 buttons + labels
-            var likertRowGO = new GameObject("LikertRow");
-            likertRowGO.transform.SetParent(qPanel.transform, false);
-            var rowRect = likertRowGO.AddComponent<RectTransform>();
-            rowRect.anchorMin = new Vector2(0.02f, 0.05f);
-            rowRect.anchorMax = new Vector2(0.98f, 0.52f);
+            // Likert buttons row
+            var rowGO = new GameObject("LikertRow");
+            rowGO.transform.SetParent(qPanel.transform, false);
+            var rowRect = rowGO.AddComponent<RectTransform>();
+            rowRect.anchorMin = new Vector2(0.02f, 0.38f);
+            rowRect.anchorMax = new Vector2(0.98f, 0.60f);
             rowRect.offsetMin = rowRect.offsetMax = Vector2.zero;
-            var hlg = likertRowGO.AddComponent<HorizontalLayoutGroup>();
+            var hlg = rowGO.AddComponent<HorizontalLayoutGroup>();
             hlg.spacing = 8f;
-            hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.childForceExpandWidth = true;
+            hlg.childAlignment      = TextAnchor.MiddleCenter;
+            hlg.childForceExpandWidth  = true;
             hlg.childForceExpandHeight = true;
 
             var buttons = new Button[7];
@@ -171,24 +161,16 @@ namespace VRT.Pilots.Trolley.Editor
             for (int i = 0; i < 7; i++)
             {
                 var btnGO = new GameObject($"LikertButton_{i + 1}");
-                btnGO.transform.SetParent(likertRowGO.transform, false);
+                btnGO.transform.SetParent(rowGO.transform, false);
                 btnGO.AddComponent<RectTransform>();
-
-                var img = btnGO.AddComponent<Image>();
-                img.color = new Color(0.2f, 0.2f, 0.8f);
-
+                btnGO.AddComponent<Image>().color = BtnDefault;
                 var btn = btnGO.AddComponent<Button>();
-                var colors = btn.colors;
-                colors.highlightedColor = new Color(0.4f, 0.4f, 1f);
-                colors.pressedColor     = new Color(0.1f, 0.1f, 0.5f);
-                btn.colors = colors;
 
                 var labelGO = new GameObject("Label");
                 labelGO.transform.SetParent(btnGO.transform, false);
-                var labelRect = labelGO.AddComponent<RectTransform>();
-                labelRect.anchorMin = Vector2.zero;
-                labelRect.anchorMax = Vector2.one;
-                labelRect.offsetMin = labelRect.offsetMax = Vector2.zero;
+                var lr = labelGO.AddComponent<RectTransform>();
+                lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
+                lr.offsetMin = lr.offsetMax = Vector2.zero;
                 var tmp = labelGO.AddComponent<TextMeshProUGUI>();
                 tmp.text = (i + 1).ToString();
                 tmp.fontSize = 40;
@@ -199,51 +181,112 @@ namespace VRT.Pilots.Trolley.Editor
                 labels[i]  = tmp;
             }
 
+            // Scale endpoint labels
+            var scaleMin = CreateTMP("ScaleMinLabel", qPanel,
+                new Vector2(0.02f, 0.28f), new Vector2(0.35f, 0.37f), 22, "Not at all");
+            scaleMin.alignment = TextAlignmentOptions.MidlineLeft;
+            scaleMin.color = new Color(0.8f, 0.8f, 0.8f);
+
+            var scaleMax = CreateTMP("ScaleMaxLabel", qPanel,
+                new Vector2(0.65f, 0.28f), new Vector2(0.98f, 0.37f), 22, "Very much");
+            scaleMax.alignment = TextAlignmentOptions.MidlineRight;
+            scaleMax.color = new Color(0.8f, 0.8f, 0.8f);
+
+            // Next button
+            var nextBtn = CreateButton("NextButton", qPanel, "NEXT →",
+                new Vector2(0.30f, 0.05f), new Vector2(0.70f, 0.25f), BtnGreen, 32);
+            nextBtn.interactable = false;
+
             qPanel.SetActive(false);
 
             // ── Waiting panel ─────────────────────────────────────────────────
             var waitPanel = CreatePanel("WaitingPanel", canvasGO, Color.black);
-            var waitText = CreateTMP("WaitingText", waitPanel,
-                anchorMin: new Vector2(0.1f, 0.3f), anchorMax: new Vector2(0.9f, 0.7f),
-                fontSize: 40, text: "Waiting for your partner...");
+            var waitText  = CreateTMP("WaitingText", waitPanel,
+                new Vector2(0.1f, 0.3f), new Vector2(0.9f, 0.7f), 40,
+                "Waiting for your partner...");
             waitText.alignment = TextAlignmentOptions.Center;
             waitPanel.SetActive(false);
 
-            return (refPanel, refPrompt, refTimer,
-                    qPanel, qBody, buttons, labels,
-                    waitPanel, waitText);
+            // ── Transition panel ──────────────────────────────────────────────
+            var transPanel = CreatePanel("TransitionPanel", canvasGO, Color.black);
+            var transText  = CreateTMP("TransitionText", transPanel,
+                new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.88f), 36, "");
+            transText.alignment = TextAlignmentOptions.Center;
+
+            var startBtn = CreateButton("StartButton", transPanel, "START",
+                new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.25f), BtnGreen, 40);
+
+            transPanel.SetActive(false);
+
+            return new BoothRefs
+            {
+                refPanel       = refPanel,
+                refPrompt      = refPrompt,
+                refTimer       = refTimer,
+                qPanel         = qPanel,
+                qBody          = qBody,
+                buttons        = buttons,
+                labels         = labels,
+                nextButton     = nextBtn,
+                scaleMinLabel  = scaleMin,
+                scaleMaxLabel  = scaleMax,
+                waitPanel      = waitPanel,
+                waitText       = waitText,
+                transitionPanel = transPanel,
+                transitionText  = transText,
+                startButton     = startBtn,
+            };
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
-        static GameObject CreatePanel(string name, GameObject parent, Color bgColor)
+        static GameObject CreatePanel(string name, GameObject parent, Color bg)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
             var rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
+            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
-            var img = go.AddComponent<Image>();
-            img.color = bgColor;
+            go.AddComponent<Image>().color = bg;
             return go;
         }
 
         static TextMeshProUGUI CreateTMP(string name, GameObject parent,
-            Vector2 anchorMin, Vector2 anchorMax, float fontSize, string text)
+            Vector2 min, Vector2 max, float fontSize, string text)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
             var rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = anchorMin;
-            rect.anchorMax = anchorMax;
+            rect.anchorMin = min; rect.anchorMax = max;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             var tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.color = Color.white;
-            tmp.enableWordWrapping = true;
+            tmp.text = text; tmp.fontSize = fontSize;
+            tmp.color = Color.white; tmp.enableWordWrapping = true;
             return tmp;
+        }
+
+        static Button CreateButton(string name, GameObject parent, string label,
+            Vector2 min, Vector2 max, Color bg, float fontSize)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent.transform, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = min; rect.anchorMax = max;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            go.AddComponent<Image>().color = bg;
+            var btn = go.AddComponent<Button>();
+
+            var labelGO = new GameObject("Label");
+            labelGO.transform.SetParent(go.transform, false);
+            var lr = labelGO.AddComponent<RectTransform>();
+            lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
+            lr.offsetMin = lr.offsetMax = Vector2.zero;
+            var tmp = labelGO.AddComponent<TextMeshProUGUI>();
+            tmp.text = label; tmp.fontSize = fontSize;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+
+            return btn;
         }
 
         static GameObject CreateBlackCube(string name, GameObject parent,
@@ -252,23 +295,14 @@ namespace VRT.Pilots.Trolley.Editor
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
             go.transform.SetParent(parent.transform);
-            go.transform.position = position;
+            go.transform.position   = position;
             go.transform.localScale = scale;
-
             var renderer = go.GetComponent<Renderer>();
-            var mat = Object.Instantiate(renderer.sharedMaterial); // copy the existing URP-ready default
+            var mat = Object.Instantiate(renderer.sharedMaterial);
             mat.SetColor("_BaseColor", Color.black);
             mat.SetColor("_Color",     Color.black);
             renderer.sharedMaterial = mat;
             return go;
-        }
-
-        static void SetButtonArray(SerializedObject so, string fieldName, Button[] buttons)
-        {
-            var prop = so.FindProperty(fieldName);
-            prop.arraySize = buttons.Length;
-            for (int i = 0; i < buttons.Length; i++)
-                prop.GetArrayElementAtIndex(i).objectReferenceValue = buttons[i];
         }
 
         static void CreateDimLight(string name, GameObject parent, Vector3 position)
@@ -277,18 +311,10 @@ namespace VRT.Pilots.Trolley.Editor
             go.transform.SetParent(parent.transform);
             go.transform.position = position;
             var light = go.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.intensity = 0.4f;
-            light.range = 8f;
-            light.color = new Color(1f, 0.95f, 0.85f); // warm white
-        }
-
-        static void SetTMPArray(SerializedObject so, string fieldName, TextMeshProUGUI[] tmps)
-        {
-            var prop = so.FindProperty(fieldName);
-            prop.arraySize = tmps.Length;
-            for (int i = 0; i < tmps.Length; i++)
-                prop.GetArrayElementAtIndex(i).objectReferenceValue = tmps[i];
+            light.type      = LightType.Point;
+            light.intensity = 1.2f;
+            light.range     = 8f;
+            light.color     = new Color(1f, 0.95f, 0.85f);
         }
     }
 }
