@@ -11,6 +11,7 @@ namespace VRT.Pilots.Trolley
     public class DecisionTimer : MonoBehaviour
     {
         [SerializeField] TextMeshProUGUI timerText;
+        [SerializeField] TextMeshProUGUI statusText;
         [SerializeField] float duration = 5f;
         [SerializeField] Color normalColor = Color.white;
         [SerializeField] Color urgentColor = Color.red;
@@ -31,12 +32,14 @@ namespace VRT.Pilots.Trolley
             if (_running) return;
             _elapsed = 0f;
             _running = true;
+            if (statusText != null) statusText.gameObject.SetActive(false);
             SetVisible(true);
         }
 
         public void Stop()
         {
             _running = false;
+            if (statusText != null) statusText.gameObject.SetActive(false);
             SetVisible(false);
         }
 

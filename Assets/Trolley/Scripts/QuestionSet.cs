@@ -17,6 +17,8 @@ namespace VRT.Pilots.Trolley
         {
             [TextArea(2, 4)] public string text = "Placeholder question text.";
             public QuestionType type = QuestionType.Likert5;
+            public string scaleMin = "Not at all";
+            public string scaleMax = "Very much";
         }
 
         [Header("Post-scenario — shown after every scenario (solo and paired)")]
