@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRT.Orchestrator.Wrapping;
@@ -41,7 +42,25 @@ namespace VRT.Pilots.Trolley
             interactable.OnTriggered += OnLocalActionTriggered;
             interactable.SetActive(false);
             _state = State.Narration;
-            trainController.StartApproach();   // train starts moving during narration
+
+            // Wait for fade-in to complete before starting narration + train
+            if (SceneFader.Instance != null)
+                SceneFader.Instance.OnFadeInComplete += BeginNarration;
+            else
+                StartCoroutine(FallbackBegin());
+        }
+
+        IEnumerator FallbackBegin()
+        {
+            yield return new WaitForSeconds(2f);
+            BeginNarration();
+        }
+
+        void BeginNarration()
+        {
+            if (SceneFader.Instance != null)
+                SceneFader.Instance.OnFadeInComplete -= BeginNarration;
+            trainController.StartApproach(narrationPlayer.TotalDuration);
             narrationPlayer.Play();
         }
 

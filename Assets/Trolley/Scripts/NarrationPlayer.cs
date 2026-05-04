@@ -18,6 +18,19 @@ namespace VRT.Pilots.Trolley
 
         public event Action OnNarrationComplete;
 
+        public float TotalDuration
+        {
+            get
+            {
+                if (clips == null || clips.Length == 0 || clips[0] == null)
+                    return placeholderDuration;
+                float t = 0f;
+                foreach (var c in clips)
+                    if (c != null) t += c.length + 0.2f;
+                return t;
+            }
+        }
+
         public void Play()
         {
             if (clips != null && clips.Length > 0 && clips[0] != null)

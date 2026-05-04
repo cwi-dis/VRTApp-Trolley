@@ -17,6 +17,10 @@ namespace VRT.Pilots.Trolley
 
         [SerializeField] float fadeDuration = 0.8f;
         [SerializeField] float canvasDistance = 0.3f;
+        [Tooltip("Seconds to hold black before fading in on scene load.")]
+        [SerializeField] float introHoldDuration = 2f;
+
+        public event Action OnFadeInComplete;
 
         Transform _fadeCanvas;
         Image _overlay;
@@ -72,7 +76,17 @@ namespace VRT.Pilots.Trolley
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            StartCoroutine(DoFade(1f, 0f, null));
+            StartCoroutine(IntroFadeIn());
+        }
+
+        IEnumerator IntroFadeIn()
+        {
+            Color c = _overlay.color;
+            c.a = 1f;
+            _overlay.color = c;
+            yield return new WaitForSeconds(introHoldDuration);
+            yield return DoFade(1f, 0f, null);
+            OnFadeInComplete?.Invoke();
         }
 
         IEnumerator DoFade(float from, float to, Action onComplete)

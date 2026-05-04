@@ -28,6 +28,9 @@ namespace VRT.Pilots.Trolley
         [Header("Inaction path (default track — after fork)")]
         [SerializeField] Transform[] inactionPath;
 
+        [Header("Train audio")]
+        [SerializeField] AudioSource trainAudioSource;
+
         [Header("Optional: wall collision at end of action path")]
         [SerializeField] bool hasWallCollision;
         [SerializeField] GameObject wallCollisionEffect;
@@ -46,9 +49,11 @@ namespace VRT.Pilots.Trolley
         bool        _hitWall;
         bool        _decisionMade;
 
-        // Called by TrolleyController when narration ends (same moment timer starts).
-        public void StartApproach()
+        // durationOverride: if > 0, overrides approachDuration (pass narration clip length).
+        public void StartApproach(float durationOverride = 0f)
         {
+            if (durationOverride > 0f) approachDuration = durationOverride;
+            if (trainAudioSource != null) { trainAudioSource.loop = true; trainAudioSource.Play(); }
             StartCoroutine(RunTrain());
         }
 
@@ -94,6 +99,8 @@ namespace VRT.Pilots.Trolley
             // Phase 3: branch
             if (_decidedPath != null && _decidedPath.Length > 0)
                 yield return StartCoroutine(FollowPath(_decidedPath, hitWall: _hitWall));
+
+            if (trainAudioSource != null) trainAudioSource.Stop();
         }
 
         IEnumerator FollowPath(Transform[] path, bool hitWall)
