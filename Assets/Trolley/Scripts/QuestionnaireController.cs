@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -12,6 +14,12 @@ namespace VRT.Pilots.Trolley
     {
         [Header("Question Set")]
         [SerializeField] QuestionSet questionSet;
+
+        [Header("Recording (optional — falls back to 15s timer if unassigned)")]
+        [SerializeField] Button recordButtonA;
+        [SerializeField] Button stopButtonA;
+        [SerializeField] Button recordButtonB;
+        [SerializeField] Button stopButtonB;
 
         [Header("Booth A — Master / Solo player")]
         [SerializeField] GameObject reflectionPanelA;
@@ -56,6 +64,7 @@ namespace VRT.Pilots.Trolley
         static readonly Color SelectedBtnColor = new Color(0.1f, 0.6f, 0.1f);
 
         // Working refs resolved at Start() based on master/non-master role.
+        Button recordButton, stopButton;
         GameObject reflectionPanel;
         TextMeshProUGUI reflectionPromptText, reflectionTimerText;
         GameObject questionPanel;
@@ -71,15 +80,23 @@ namespace VRT.Pilots.Trolley
         Button startButton;
 
         string _completedScenario;
+        string _lastDecision;
         bool _isPaired;
         bool _remoteDone;
+
+        // Recording state
+        string _micDevice;
+        AudioClip _recording;
 
         void Start()
         {
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
+            _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
 
             bool useBoothA = !_isPaired || OrchestratorController.Instance.UserIsMaster;
+            recordButton = useBoothA ? recordButtonA : recordButtonB;
+            stopButton   = useBoothA ? stopButtonA   : stopButtonB;
             SelectBooth(useBoothA);
 
             OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
@@ -136,17 +153,93 @@ namespace VRT.Pilots.Trolley
         IEnumerator ShowReflection()
         {
             reflectionPanel.SetActive(true);
-            reflectionPromptText.text =
-                "Please reflect aloud:\nWhy did you make this decision?\nWhat were you thinking during the scenario?";
-            float elapsed = 0f;
-            while (elapsed < reflectionDuration)
+            reflectionPromptText.text = BuildConsequenceText(_completedScenario, _lastDecision);
+
+            if (recordButton != null)
             {
-                elapsed += Time.deltaTime;
-                int remaining = Mathf.CeilToInt(reflectionDuration - elapsed);
-                if (reflectionTimerText != null) reflectionTimerText.text = remaining.ToString();
-                yield return null;
+                // Recording flow: user presses Record, then Stop
+                recordButton.gameObject.SetActive(true);
+                if (stopButton != null) stopButton.gameObject.SetActive(false);
+                if (reflectionTimerText != null) reflectionTimerText.text = "";
+
+                bool done = false;
+
+                recordButton.onClick.RemoveAllListeners();
+                recordButton.onClick.AddListener(() =>
+                {
+                    StartVoiceRecording();
+                    recordButton.gameObject.SetActive(false);
+                    if (stopButton != null) stopButton.gameObject.SetActive(true);
+                });
+
+                if (stopButton != null)
+                {
+                    stopButton.onClick.RemoveAllListeners();
+                    stopButton.onClick.AddListener(() =>
+                    {
+                        StopVoiceRecording();
+                        stopButton.gameObject.SetActive(false);
+                        done = true;
+                    });
+                }
+
+                yield return new WaitUntil(() => done);
             }
+            else
+            {
+                // Fallback: auto-timer
+                float elapsed = 0f;
+                while (elapsed < reflectionDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    if (reflectionTimerText != null)
+                        reflectionTimerText.text = Mathf.CeilToInt(reflectionDuration - elapsed).ToString();
+                    yield return null;
+                }
+            }
+
             reflectionPanel.SetActive(false);
+        }
+
+        string BuildConsequenceText(string scenarioID, string decision)
+        {
+            string interactable = scenarioID == "driver" ? "button" : "lever";
+            if (decision == "action")
+                return $"You decided to pull the {interactable}, which resulted in killing one person.\n\nFor your action, please reflect aloud shortly.";
+            else
+                return $"You decided not to pull the {interactable}, which resulted in killing five people.\n\nFor your inaction, please reflect aloud shortly.";
+        }
+
+        void StartVoiceRecording()
+        {
+            if (Microphone.devices.Length == 0)
+            {
+                Debug.LogWarning("QuestionnaireController: no microphone found.");
+                return;
+            }
+            _micDevice = Microphone.devices[0];
+            _recording = Microphone.Start(_micDevice, false, 120, 44100);
+            if (reflectionTimerText != null) reflectionTimerText.text = "● REC";
+        }
+
+        void StopVoiceRecording()
+        {
+            if (string.IsNullOrEmpty(_micDevice)) return;
+            int pos = Microphone.GetPosition(_micDevice);
+            Microphone.End(_micDevice);
+
+            if (_recording != null && pos > 0)
+            {
+                string filename = $"{_completedScenario}_reflection_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
+                string path = Path.Combine(Application.persistentDataPath, filename);
+                WavUtility.Save(path, _recording, pos);
+                DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, filename);
+                Debug.Log($"Reflection saved: {path}");
+                if (reflectionTimerText != null) reflectionTimerText.text = "Saved";
+            }
+
+            _micDevice = null;
+            _recording = null;
         }
 
         IEnumerator ShowQuestions(QuestionSet.Question[] questions, int indexOffset)
@@ -281,7 +374,9 @@ namespace VRT.Pilots.Trolley
                 next = TrolleyGameState.Instance.NextScenarioScene();
             else
                 next = TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
-            SceneManager.LoadScene(next);
+            if (SceneFader.Instance == null)
+                new GameObject("SceneFader").AddComponent<SceneFader>();
+            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
         }
 
         void OnNetworkMessage(UserMessage msg)

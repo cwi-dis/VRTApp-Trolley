@@ -29,6 +29,7 @@ namespace VRT.Pilots.Trolley
 
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
+        public string lastDecision = "";   // "action" or "inaction"
         public Gender localGender = Gender.Male;
         public string scenarioOrderLabel = "";
 

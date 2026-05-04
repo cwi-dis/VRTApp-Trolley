@@ -22,6 +22,7 @@ namespace VRT.Pilots.Trolley.Editor
         {
             public GameObject refPanel;
             public TextMeshProUGUI refPrompt, refTimer;
+            public Button recordButton, stopButton;
             public GameObject qPanel;
             public TextMeshProUGUI qBody;
             public Button[] buttons;
@@ -91,6 +92,8 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty($"reflectionPanel{suffix}").objectReferenceValue      = r.refPanel;
             so.FindProperty($"reflectionPromptText{suffix}").objectReferenceValue = r.refPrompt;
             so.FindProperty($"reflectionTimerText{suffix}").objectReferenceValue  = r.refTimer;
+            so.FindProperty($"recordButton{suffix}").objectReferenceValue         = r.recordButton;
+            so.FindProperty($"stopButton{suffix}").objectReferenceValue           = r.stopButton;
             so.FindProperty($"questionPanel{suffix}").objectReferenceValue        = r.qPanel;
             so.FindProperty($"questionBodyText{suffix}").objectReferenceValue     = r.qBody;
             so.FindProperty($"nextButton{suffix}").objectReferenceValue           = r.nextButton;
@@ -134,6 +137,13 @@ namespace VRT.Pilots.Trolley.Editor
             var refTimer  = CreateTMP("TimerText", refPanel,
                 new Vector2(0.35f, 0.05f), new Vector2(0.65f, 0.28f), 72, "15");
             refTimer.alignment = TextAlignmentOptions.Center;
+
+            var recordBtn = CreateButton("RecordButton", refPanel, "● RECORD",
+                new Vector2(0.10f, 0.05f), new Vector2(0.45f, 0.27f), new Color(0.7f, 0.1f, 0.1f), 30);
+            var stopBtn   = CreateButton("StopButton", refPanel, "■ STOP",
+                new Vector2(0.55f, 0.05f), new Vector2(0.90f, 0.27f), new Color(0.3f, 0.3f, 0.3f), 30);
+            stopBtn.gameObject.SetActive(false);
+
             refPanel.SetActive(false);
 
             // ── Question panel ────────────────────────────────────────────────
@@ -223,6 +233,8 @@ namespace VRT.Pilots.Trolley.Editor
                 refPanel       = refPanel,
                 refPrompt      = refPrompt,
                 refTimer       = refTimer,
+                recordButton   = recordBtn,
+                stopButton     = stopBtn,
                 qPanel         = qPanel,
                 qBody          = qBody,
                 buttons        = buttons,

@@ -101,20 +101,21 @@ namespace VRT.Pilots.Trolley.Editor
                 trainGO.transform.localScale = new Vector3(2f, 1.5f, 5f);
                 Debug.LogWarning("WireBystanderScene: Train_Type B prefab not found — created placeholder cube.");
             }
-            trainGO.transform.position = new Vector3(0f, 0f, -15f);
+            trainGO.transform.position = new Vector3(0f, 0f, -250f);
             var trainController = trainGO.AddComponent<TrainController>();
 
             // ── Train waypoints ────────────────────────────────────────────────
-            // Train starts at z=-15. Approach path leads it to the fork at z=0.
+            // Train starts at z=-250. Approach path leads it to the fork at z=0.
+            // approachDuration=38s matches narration length — speed auto-calculated.
             // After the decision, it branches to action (right) or inaction (straight).
             var pathsGO = new GameObject("TrainPaths");
 
             var approachPathGO = new GameObject("ApproachPath");
             approachPathGO.transform.SetParent(pathsGO.transform);
             var approachWPs = CreateWaypoints(approachPathGO,
-                new Vector3(0f, 0f, -8f),
-                new Vector3(0f, 0f, -4f),
-                new Vector3(0f, 0f,  0f));
+                new Vector3(0f, 0f, -150f),
+                new Vector3(0f, 0f, -50f),
+                new Vector3(0f, 0f,   0f));
 
             var inactionPathGO = new GameObject("InactionPath");
             inactionPathGO.transform.SetParent(pathsGO.transform);
@@ -142,6 +143,7 @@ namespace VRT.Pilots.Trolley.Editor
             // Wire TrainController via SerializedObject
             var tcSO = new SerializedObject(trainController);
             tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
+            tcSO.FindProperty("approachDuration").floatValue = 38f;
             SetTransformArray(tcSO, "approachPath", approachWPs);
             SetTransformArray(tcSO, "inactionPath", inactionWPs);
             SetTransformArray(tcSO, "actionPath", actionWPs);

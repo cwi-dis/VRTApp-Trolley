@@ -16,6 +16,8 @@ namespace VRT.Pilots.Trolley
         [Header("Train")]
         [SerializeField] Transform train;
         [SerializeField] float trainSpeed = 6f;
+        [Tooltip("Seconds the approach path takes. Auto-calculates speed from path length. Set to 0 to use trainSpeed directly.")]
+        [SerializeField] float approachDuration = 38f;
 
         [Header("Approach path (shared — leads to fork)")]
         [SerializeField] Transform[] approachPath;
@@ -73,9 +75,18 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunTrain()
         {
-            // Phase 1: approach
+            // Phase 1: approach — auto-calculate speed if approachDuration is set
             if (approachPath != null && approachPath.Length > 0)
+            {
+                if (approachDuration > 0 && train != null)
+                {
+                    float len = Vector3.Distance(train.position, approachPath[0].position);
+                    for (int i = 1; i < approachPath.Length; i++)
+                        len += Vector3.Distance(approachPath[i - 1].position, approachPath[i].position);
+                    if (len > 0) trainSpeed = len / approachDuration;
+                }
                 yield return StartCoroutine(FollowPath(approachPath, hitWall: false));
+            }
 
             // Phase 2: wait at fork for decision
             yield return new WaitUntil(() => _decisionMade);

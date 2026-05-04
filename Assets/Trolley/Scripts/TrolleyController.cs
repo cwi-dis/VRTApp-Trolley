@@ -41,6 +41,7 @@ namespace VRT.Pilots.Trolley
             interactable.OnTriggered += OnLocalActionTriggered;
             interactable.SetActive(false);
             _state = State.Narration;
+            trainController.StartApproach();   // train starts moving during narration
             narrationPlayer.Play();
         }
 
@@ -56,7 +57,6 @@ namespace VRT.Pilots.Trolley
         {
             _state = State.Decision;
             interactable.SetActive(true);
-            trainController.StartApproach();
             if (OrchestratorController.Instance.UserIsMaster)
                 OrchestratorController.Instance.SendMessageToAll("timer:start");
             decisionTimer.StartCountdown();
@@ -90,6 +90,7 @@ namespace VRT.Pilots.Trolley
             decisionTimer.Stop();
             interactable.SetActive(false);
             trainController.ExecuteAction();
+            if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
             DataLogger.Instance.LogDecision(scenarioID, "action", triggeredByPlayerId, rt);
             Invoke(nameof(TransitionOut), 5f);
         }
@@ -101,6 +102,7 @@ namespace VRT.Pilots.Trolley
             decisionTimer.Stop();
             interactable.SetActive(false);
             trainController.ExecuteInaction();
+            if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
             DataLogger.Instance.LogDecision(scenarioID, "inaction", "", 5f);
             Invoke(nameof(TransitionOut), 5f);
         }
@@ -117,7 +119,9 @@ namespace VRT.Pilots.Trolley
                 TrolleyGameState.Instance.AdvanceScenario();
             }
             string next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
-            SceneManager.LoadScene(next);
+            if (SceneFader.Instance == null)
+                new GameObject("SceneFader").AddComponent<SceneFader>();
+            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
         }
 
         // ── Network messages ──────────────────────────────────────────────

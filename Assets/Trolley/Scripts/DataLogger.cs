@@ -80,6 +80,20 @@ namespace VRT.Pilots.Trolley
                 AppendLine(_questionnairePath, line);
         }
 
+        public void LogReflection(string scenario, string decision, string audioFilename)
+        {
+            string line =
+                $"{Now()},{_sessionID},{Meta()},{scenario},{decision},{CSV(audioFilename)}";
+            Debug.Log($"[Reflection] {line}");
+            if (_exportEnabled && _sessionStarted)
+            {
+                string path = Path.Combine(Application.persistentDataPath, $"reflections_{_sessionID}.csv");
+                if (!File.Exists(path))
+                    WriteHeader(path, "timestamp,sessionID,participantNumber,gender,condition,relationshipType,scenarioOrder,scenario,decision,audioFile");
+                AppendLine(path, line);
+            }
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
 
         string Meta()

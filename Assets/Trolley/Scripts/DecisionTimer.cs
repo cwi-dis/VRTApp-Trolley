@@ -16,6 +16,7 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Color normalColor = Color.white;
         [SerializeField] Color urgentColor = Color.red;
         [SerializeField] float urgentThreshold = 2f;
+        [SerializeField] float hudDistance = 2f;
 
         public event Action OnTimerExpired;
 
@@ -67,6 +68,15 @@ namespace VRT.Pilots.Trolley
         void SetVisible(bool visible)
         {
             if (timerText != null) timerText.gameObject.SetActive(visible);
+            if (visible) PositionInFrontOfCamera();
+        }
+
+        void PositionInFrontOfCamera()
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            transform.position = cam.transform.position + cam.transform.forward * hudDistance;
+            transform.rotation = cam.transform.rotation;
         }
     }
 }
