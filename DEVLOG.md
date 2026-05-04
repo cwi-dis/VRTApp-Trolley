@@ -33,11 +33,34 @@ Full protocol: `protocol.md`
 - Man/Woman avatar FBX added to `Assets/Trolley/Models/`, prefabs linked to AvatarSelector
 - Everything committed and pushed to master
 
+---
+
+### Day 3 (2026-05-04) — ~4 hours
+**Done:**
+- Bystander narration drafted and finalised (see `protocol.md`)
+- Narration MP3 added to `Assets/Trolley/Audio/` and linked to NarrationPlayer
+- `Assets/Trolley/Audio/` folder created; placeholder WAVs committed
+- Train approach now starts during narration (not after); speed auto-calculated from actual clip length via `NarrationPlayer.TotalDuration`
+- `SceneFader.cs` added — blackout fade between scenes; 2s hold on black before fade-in on scene load
+- `WavUtility.cs` added — saves AudioClip as WAV for voice recordings
+- `DecisionTimer` repositioned in front of camera (HUD-style) when shown
+- `QuestionnaireController` updated: shows consequence text ("You decided to pull the lever…"), Record/Stop buttons for voice reflection, saves WAV to persistentDataPath
+- `DataLogger.LogReflection()` added
+- `TrolleyGameState.lastDecision` added
+- All setup scripts updated to use `TrackedDeviceGraphicRaycaster` instead of `GraphicRaycaster`
+- Do NOT re-run setup scripts — manual Inspector assignments (audio clips, AudioSource) are lost on re-wire
+
+**Bugs found during on-device test:**
+- Train timing was off — approach was hardcoded to 38s but narration clip is longer (~55s). Fixed by passing actual clip length to TrainController at runtime.
+- No ray visible from VR2Gather controller → UI raycast clicking does not work
+
 **Next session starts here:**
-- Full flow test via VRTLogin → Create Room → TrolleyTutorial → Solo → run one complete scenario
-- Fix bugs found during test
-- Add narration audio clips (`Assets/Trolley/Audio/`)
-- Quest build (Android target)
+- **BLOCKER: UI interaction** — VR2Gather player has no XRRayInteractor; controller ray does not appear. Two options:
+  1. Ask senior dev (before May 14 holiday) how to add ray interactor to VR2Gather player
+  2. Reimplement questionnaire navigation using controller buttons (thumbstick + trigger) — bypasses ray entirely
+- Wire Driver and Optional scenes (run setup scripts, assign audio manually after)
+- Draft Driver and Optional narration scripts
+- Quest build + on-device test
 
 ---
 
@@ -76,9 +99,10 @@ Full protocol: `protocol.md`
 
 ## Pending / Blockers
 
-- **Full flow test** — needs VRTLogin → TrolleyTutorial → Solo → complete one scenario end-to-end. Highest priority.
-- **Narration audio** — placeholder mode active (4s delay). Use ElevenLabs or macOS `say` to generate WAV clips; drop into `Assets/Trolley/Audio/`.
-- **Quest build** — not attempted yet. After editor test passes.
+- **UI interaction in VR** — XRRayInteractor missing from VR2Gather player; buttons unclickable. Ask dev or switch to controller-button navigation. Highest priority.
+- **Driver + Optional narration** — not yet drafted. Bystander narration is done.
+- **Driver + Optional scenes** — not yet wired. Run setup scripts, then manually assign audio clips and AudioSource references (do NOT re-wire Bystander).
+- **Quest build** — not attempted yet.
 - **Driver scene perspective** — Train_Type B model not ideal for inside-the-cab view; may need rethinking.
 
 ---
@@ -89,8 +113,9 @@ Full protocol: `protocol.md`
 |---|---|---|
 | 1 | Scripts + scene scaffolding | ✓ Done |
 | 2 | Wire all 5 scenes + questionnaire UX + bug fixes | ✓ Done |
-| 3 | Full flow editor test + narration audio + bug fixes | Next |
-| 4 | Quest build + on-device test | — |
-| 5 | Fixes from on-device test | — |
+| 3 | Narration audio + train timing + fade transitions + raycaster fix | ✓ Done |
+| 4 | UI interaction fix + Driver/Optional scenes + narration | Next |
+| 5 | Quest build + on-device test | — |
+| 6 | Fixes from on-device test | — |
 
 Target completion: ~3–4 weeks from 2026-04-30.
