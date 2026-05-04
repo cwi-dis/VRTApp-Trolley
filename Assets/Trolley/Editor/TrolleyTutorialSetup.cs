@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
 using UnityEngine.XR.Interaction.Toolkit;
 using VRT.Pilots.Common;
@@ -201,7 +202,7 @@ namespace VRT.Pilots.Trolley.Editor
             var go = new GameObject(name);
             go.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             go.AddComponent<CanvasScaler>();
-            go.AddComponent<GraphicRaycaster>();
+            go.AddComponent<TrackedDeviceGraphicRaycaster>();
             go.GetComponent<RectTransform>().sizeDelta = size;
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
