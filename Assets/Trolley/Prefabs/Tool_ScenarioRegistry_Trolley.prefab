@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8844383278882202676
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374808, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374814, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: m_Name
+      value: Tool_ScenarioRegistry_Trolley Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[0].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[1].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[2].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[3].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[4].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[5].scenarioId
+      value: 8aef4fbe-e8a9-4e70-b009-0633e50cf356
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[6].scenarioId
+      value: fd170a0c-b52d-4541-af3d-5c18317e8f07
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[7].scenarioId
+      value: eeda8491-d64b-40d8-b1af-bd119e126799
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[0].scenarioName
+      value: TrolleyTutorial
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[1].scenarioName
+      value: TrolleyBystander
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[2].scenarioName
+      value: TrolleyDriver
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[3].scenarioName
+      value: TrolleyOptional
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[4].scenarioName
+      value: TrolleyQuestionnaire
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[5].scenarioName
+      value: Pilot 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[6].scenarioName
+      value: Technical Playground
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[7].scenarioName
+      value: Empty
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[0].scenarioSceneName
+      value: TrolleyTutorial
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[1].scenarioSceneName
+      value: TrolleyBystander
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[2].scenarioSceneName
+      value: TrolleyDriver
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[3].scenarioSceneName
+      value: TrolleyOptional
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[4].scenarioSceneName
+      value: TrolleyQuestionnaire
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[5].scenarioSceneName
+      value: Pilot0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[6].scenarioSceneName
+      value: TechnicalPlayground
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[7].scenarioSceneName
+      value: VRTEmpty
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[0].scenarioDescription
+      value: Where the researcher setup the configuration for the experiment
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[1].scenarioDescription
+      value: Where participants are bystanders
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[2].scenarioDescription
+      value: Where participants are drivers
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[3].scenarioDescription
+      value: Where participants are drivers and their action would harm themselves
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[4].scenarioDescription
+      value: Questionnaire scene
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[5].scenarioDescription
+      value: Fairly empty test scenario
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[6].scenarioDescription
+      value: Scenario for developers to test new things
+      objectReference: {fileID: 0}
+    - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
+      propertyPath: scenarios.Array.data[7].scenarioDescription
+      value: Empty scenario, good for visual quality assesment
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
