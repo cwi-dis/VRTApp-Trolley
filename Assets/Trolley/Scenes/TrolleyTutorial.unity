@@ -1455,16 +1455,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 373187836}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7951c64acb0fa62458bf30a60089fe2d, type: 3}
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_IgnoreReversedGraphics: 0
-  m_CheckFor2DOcclusion: 0
-  m_CheckFor3DOcclusion: 0
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_RaycastTriggerInteraction: 1
 --- !u!1 &419264581
 GameObject:
   m_ObjectHideFlags: 0
@@ -4086,9 +4084,13 @@ MonoBehaviour:
   currentScenarioIndex: 0
   questionnaireScene: TrolleyQuestionnaire
   endScene: VRTLoginManager
+  avatarBodyType: 0
+  skinToneIndex: 0
+  hairColorIndex: 0
+  avatarHeight: 1
+  selfHarmControllerSlot: 0
   lastCompletedScenarioID: 
   lastDecision: 
-  localGender: 0
   scenarioOrderLabel: 
 --- !u!4 &1165833861
 Transform:
@@ -4256,10 +4258,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionPanel: {fileID: 527663673}
-  maleButton: {fileID: 1609701555}
-  femaleButton: {fileID: 714890410}
-  maleSelfPrefab: {fileID: 0}
-  femaleSelfPrefab: {fileID: 0}
+  masculineButton: {fileID: 1609701555}
+  feminineButton: {fileID: 714890410}
+  masculineSelfPrefab: {fileID: 0}
+  feminineSelfPrefab: {fileID: 0}
+  skinToneButtons: []
+  hairColorButtons: []
+  shortButton: {fileID: 0}
+  mediumButton: {fileID: 0}
+  tallButton: {fileID: 0}
   playersManager: {fileID: 1511423909}
 --- !u!4 &1243935760
 Transform:

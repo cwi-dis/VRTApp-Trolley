@@ -11,8 +11,9 @@ namespace VRT.Pilots.Trolley
         public static TrolleyGameState Instance { get; private set; }
 
         public enum Condition { Solo, Paired }
-        public enum Gender { Male, Female }
-        public enum RelationshipType { NotApplicable, Friend, Stranger, Acquaintance, Partner }
+        public enum RelationshipType { NotApplicable, Stranger, Colleague, Friend, RomanticPartner }
+        public enum AvatarBodyType { Masculine, Feminine }
+        public enum AvatarHeight { Short, Medium, Tall }
 
         [Header("Session Config (set by researcher before starting)")]
         public Condition condition = Condition.Solo;
@@ -20,41 +21,40 @@ namespace VRT.Pilots.Trolley
         public RelationshipType relationshipType = RelationshipType.NotApplicable;
 
         [Header("Scenario Sequence (set by researcher; order is counterbalanced)")]
-        public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleyOptional" };
+        public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleySelfHarm" };
         public int currentScenarioIndex = 0;
 
         [Header("Scene Names")]
+        public string avatarSetupScene   = "TrolleyAvatarSetup";
         public string questionnaireScene = "TrolleyQuestionnaire";
         public string endScene = "VRTLoginManager";
 
+        [Header("Avatar Configuration (set during avatar selection)")]
+        public AvatarBodyType avatarBodyType = AvatarBodyType.Masculine;
+        public int skinToneIndex = 0;    // 0–5
+        public int hairColorIndex = 0;   // 0–5
+        public AvatarHeight avatarHeight = AvatarHeight.Medium;
+
+        [Header("Self-harm Paired Control (counterbalanced per pair)")]
+        [Tooltip("0 = Master player has the action control; 1 = Non-master player has it.")]
+        public int selfHarmControllerSlot = 0;
+
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
-        public string lastDecision = "";   // "action" or "inaction"
-        public Gender localGender = Gender.Male;
+        public string lastDecision = "";    // "action" or "inaction"
         public string scenarioOrderLabel = "";
 
         void Awake()
         {
-            if (Instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
+            if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
 
-        public string NextScenarioScene()
-        {
-            if (currentScenarioIndex < scenarioOrder.Length)
-                return scenarioOrder[currentScenarioIndex];
-            return null;
-        }
+        public string NextScenarioScene() =>
+            currentScenarioIndex < scenarioOrder.Length ? scenarioOrder[currentScenarioIndex] : null;
 
-        public void AdvanceScenario()
-        {
-            currentScenarioIndex++;
-        }
+        public void AdvanceScenario() => currentScenarioIndex++;
 
         public bool HasMoreScenarios() => currentScenarioIndex < scenarioOrder.Length;
 
@@ -63,5 +63,12 @@ namespace VRT.Pilots.Trolley
             currentScenarioIndex = 0;
             lastCompletedScenarioID = "";
         }
+
+        /// <summary>Returns true if the local client controls the shared action in the self-harm scenario.</summary>
+        public bool IsSelfHarmController(bool isMaster) =>
+            (selfHarmControllerSlot == 0) == isMaster;
+
+        public string AvatarConfigString() =>
+            $"body:{avatarBodyType},skin:{skinToneIndex},hair:{hairColorIndex},height:{avatarHeight}";
     }
 }
