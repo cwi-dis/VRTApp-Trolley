@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -167,7 +167,7 @@ namespace VRT.Pilots.Trolley.Editor
             Object.DestroyImmediate(meshGO.GetComponent<BoxCollider>());
             ColorMesh(meshGO, new Color(0.85f, 0.15f, 0.1f));
 
-            var grab = leverGO.AddComponent<XRGrabInteractable>();
+            var grab = leverGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             var lever = leverGO.AddComponent<TrolleyLever>();
             SetField(lever, "leverPivot", pivotGO.transform);
 

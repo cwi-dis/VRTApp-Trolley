@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
-using UnityEngine.XR.Interaction.Toolkit;
+
 using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
@@ -178,7 +178,7 @@ namespace VRT.Pilots.Trolley.Editor
             leverMesh.transform.localScale    = new Vector3(0.07f, 0.45f, 0.07f);
             leverMesh.transform.localPosition = new Vector3(0f, 0.225f, 0f);
             Object.DestroyImmediate(leverMesh.GetComponent<BoxCollider>());
-            practiceLever.AddComponent<XRGrabInteractable>();
+            practiceLever.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
             // ── Practice Button ────────────────────────────────────────────────
             var practiceButton = new GameObject("PracticeButton");
@@ -188,7 +188,7 @@ namespace VRT.Pilots.Trolley.Editor
             btnMesh.transform.SetParent(practiceButton.transform, false);
             btnMesh.transform.localScale    = new Vector3(0.15f, 0.04f, 0.15f);
             btnMesh.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-            practiceButton.AddComponent<XRSimpleInteractable>();
+            practiceButton.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

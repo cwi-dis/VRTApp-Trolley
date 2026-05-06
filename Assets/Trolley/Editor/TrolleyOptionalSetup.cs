@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -189,7 +189,7 @@ namespace VRT.Pilots.Trolley.Editor
             buttonMeshGO.transform.localScale = new Vector3(0.12f, 0.04f, 0.12f);
             buttonMeshGO.transform.localPosition = new Vector3(0f, 0.04f, 0f);
 
-            buttonGO.AddComponent<XRSimpleInteractable>();
+            buttonGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
             var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
             SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
 

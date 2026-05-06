@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace VRT.Pilots.Trolley
 {
@@ -7,7 +7,7 @@ namespace VRT.Pilots.Trolley
     /// Lever for the bystander scenario. Grab and pull past the angle threshold to trigger.
     /// Attach to the lever root; assign leverPivot to the rotating child transform.
     /// </summary>
-    [RequireComponent(typeof(XRGrabInteractable))]
+    [RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
     public class TrolleyLever : TrolleyInteractable
     {
         [Tooltip("Degrees from rest rotation required to trigger the decision.")]
@@ -17,13 +17,13 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Optional visual highlight shown when the lever is active.")]
         [SerializeField] GameObject highlightObject;
 
-        XRGrabInteractable _grab;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _grab;
         Quaternion _restRotation;
         bool _isGrabbed;
 
         void Awake()
         {
-            _grab = GetComponent<XRGrabInteractable>();
+            _grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             _grab.selectEntered.AddListener(_ => _isGrabbed = true);
             _grab.selectExited.AddListener(_ => _isGrabbed = false);
             if (leverPivot != null)
