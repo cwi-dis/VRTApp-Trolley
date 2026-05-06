@@ -1,8 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using VRT.Orchestrator.Wrapping;
-using VRT.Orchestrator.Responses;
+using VRT.Orchestrator;
+using VRT.OrchestratorComm;
 
 namespace VRT.Pilots.Trolley
 {
@@ -36,7 +36,9 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
-            OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
+#if xxxjack_needs_fixing
+            VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent += OnNetworkMessage;
+#endif
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnInaction;
             interactable.OnTriggered += OnLocalActionTriggered;
@@ -66,8 +68,10 @@ namespace VRT.Pilots.Trolley
 
         void OnDestroy()
         {
-            if (OrchestratorController.Instance != null)
-                OrchestratorController.Instance.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#if xxxjack_needs_fixing
+            if (VRTOrchestratorSingleton.Comm != null)
+                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#endif
         }
 
         // ── Narration complete ─────────────────────────────────────────────
@@ -76,8 +80,10 @@ namespace VRT.Pilots.Trolley
         {
             _state = State.Decision;
             interactable.SetActive(true);
-            if (OrchestratorController.Instance.UserIsMaster)
-                OrchestratorController.Instance.SendMessageToAll("timer:start");
+#if xxxjack_needs_fixing
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendMessageToAll("timer:start");
+#endif
             decisionTimer.StartCountdown();
         }
 
@@ -86,8 +92,10 @@ namespace VRT.Pilots.Trolley
         void OnLocalActionTriggered()
         {
             if (_state != State.Decision) return;
-            string myId = OrchestratorController.Instance.SelfUser.userId;
-            OrchestratorController.Instance.SendMessageToAll($"decision:action:{myId}");
+            string myId = VRTOrchestratorSingleton.Comm.SelfUser.userId;
+#if xxxjack_needs_fixing
+            VRTOrchestratorSingleton.Comm.SendMessageToAll($"decision:action:{myId}");
+#endif
             ApplyAction(myId);
         }
 

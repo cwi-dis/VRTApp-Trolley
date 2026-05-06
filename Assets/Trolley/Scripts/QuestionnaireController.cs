@@ -5,8 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using VRT.Orchestrator.Wrapping;
-using VRT.Orchestrator.Responses;
+using VRT.Orchestrator;
 
 namespace VRT.Pilots.Trolley
 {
@@ -94,12 +93,14 @@ namespace VRT.Pilots.Trolley
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
 
-            bool useBoothA = !_isPaired || OrchestratorController.Instance.UserIsMaster;
+            bool useBoothA = !_isPaired || VRTOrchestratorSingleton.Comm.UserIsMaster;
             recordButton = useBoothA ? recordButtonA : recordButtonB;
             stopButton   = useBoothA ? stopButtonA   : stopButtonB;
             SelectBooth(useBoothA);
 
-            OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
+#if xxxjack_needs_fixing
+            VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent += OnNetworkMessage;
+#endif
             questionPanel.SetActive(false);
             reflectionPanel.SetActive(false);
             if (waitingPanel != null) waitingPanel.SetActive(false);
@@ -129,8 +130,10 @@ namespace VRT.Pilots.Trolley
 
         void OnDestroy()
         {
-            if (OrchestratorController.Instance != null)
-                OrchestratorController.Instance.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#if xxxjack_needs_fixing
+            if (VRTOrchestratorSingleton.Comm != null)
+                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#endif
         }
 
         IEnumerator RunQuestionnaire()
@@ -142,9 +145,10 @@ namespace VRT.Pilots.Trolley
             if (_isPaired)
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
 
-            string myId = OrchestratorController.Instance.SelfUser.userId;
-            OrchestratorController.Instance.SendMessageToAll($"{DonePrefix}{myId}");
-
+            string myId = VRTOrchestratorSingleton.Comm.SelfUser.userId;
+#if xxxjack_needs_fixing
+            VRTOrchestratorSingleton.Comm.SendMessageToAll($"{DonePrefix}{myId}");
+#endif
             yield return StartCoroutine(ShowTransition());
 
             LoadNextScene();
