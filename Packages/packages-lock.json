@@ -404,16 +404,16 @@
         "nl.cwi.dis.vr2gather.nativelibraries.webrtc": "0.9.6",
         "nl.cwi.dis.cwipc": "8.0.0",
         "com.itisnajim.socketiounity": "1.1.4",
-        "com.unity.animation.rigging": "1.2.1",
-        "com.unity.recorder": "4.0.3",
-        "com.unity.textmeshpro": "3.0.9",
-        "com.unity.xr.interaction.toolkit": "2.6.5",
+        "com.unity.animation.rigging": "1.4.1",
+        "com.unity.recorder": "5.1.5",
+        "com.unity.textmeshpro": "5.0.0",
+        "com.unity.xr.interaction.toolkit": "3.3.1",
         "com.unity.xr.management": "4.5.4",
         "com.unity.xr.oculus": "4.5.4",
-        "com.unity.xr.openxr": "1.14.3",
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
+        "com.unity.xr.openxr": "1.16.1",
+        "com.unity.nuget.newtonsoft-json": "3.2.2"
       },
-      "hash": "3c8dbe15073212fc5725aea41051ddb6f5a633c4"
+      "hash": "978fdd44e67eb3a91236ed0693f31673bebae4fd"
     },
     "nl.cwi.dis.vr2gather.nativelibraries": {
       "version": "git+https://github.com/cwi-dis/VR2G-nativeLibraries?path=/nl.cwi.dis.vr2gather.nativelibraries",
