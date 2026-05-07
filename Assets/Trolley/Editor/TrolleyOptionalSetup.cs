@@ -35,13 +35,17 @@ namespace VRT.Pilots.Trolley.Editor
                 if (existing != null) Object.DestroyImmediate(existing);
             }
 
+            const string menuItem = "Trolley/Wire Optional Scene";
+
             // ── TrolleyController ─────────────────────────────────────────────
             var controllerGO = new GameObject("TrolleyController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var controller = controllerGO.AddComponent<TrolleyController>();
             controller.scenarioID = "optional";
 
             // ── NarrationPlayer ───────────────────────────────────────────────
             var narrationGO = new GameObject("NarrationPlayer");
+            narrationGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var audioSrc = narrationGO.AddComponent<AudioSource>();
             audioSrc.playOnAwake = false;
             var narrationPlayer = narrationGO.AddComponent<NarrationPlayer>();
@@ -49,9 +53,11 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Timer Canvas (World Space) ─────────────────────────────────────
             var canvasGO = new GameObject("TimerCanvas");
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(400f, 150f);
             canvasGO.transform.position = new Vector3(0f, 2.8f, 1.5f);
@@ -103,11 +109,13 @@ namespace VRT.Pilots.Trolley.Editor
                 Debug.LogWarning("WireOptionalScene: Train_Type B prefab not found — created placeholder cube.");
             }
             trainGO.transform.position = new Vector3(0f, 0f, -15f);
+            trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var trainController = trainGO.AddComponent<TrainController>();
 
             // ── Train waypoints ────────────────────────────────────────────────
             // Action path ends at z=30 where the wall sits.
             var pathsGO = new GameObject("TrainPaths");
+            pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
             var approachPathGO = new GameObject("ApproachPath");
             approachPathGO.transform.SetParent(pathsGO.transform);
@@ -135,7 +143,7 @@ namespace VRT.Pilots.Trolley.Editor
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
             var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f);
+                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f, menuItem: menuItem);
 
             // Action track has no workers (train hits wall instead).
             var actionWorkers = new Animator[0];
@@ -143,11 +151,13 @@ namespace VRT.Pilots.Trolley.Editor
             // ── Wall at end of action path ────────────────────────────────────
             var wallGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
             wallGO.name = "Wall";
+            wallGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             wallGO.transform.position = new Vector3(4f, 1f, 31f);
             wallGO.transform.localScale = new Vector3(4f, 3f, 0.3f);
 
             // ── Collision effect (starts inactive, activated on impact) ────────
             var effectGO = new GameObject("WallCollisionEffect");
+            effectGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             effectGO.transform.position = new Vector3(4f, 1f, 30.5f);
             var ps = effectGO.AddComponent<ParticleSystem>();
             // Simple burst: 50 particles, short lifetime
@@ -181,6 +191,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Button ────────────────────────────────────────────────────────
             var buttonGO = new GameObject("Button");
+            buttonGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             buttonGO.transform.position = new Vector3(0f, 1.0f, 0.6f);
 
             var buttonMeshGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -220,9 +231,11 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         static Animator[] SpawnWorkers(string groupName, GameObject prefab,
-            RuntimeAnimatorController animController, Vector3 center, int count, float spacing)
+            RuntimeAnimatorController animController, Vector3 center, int count, float spacing,
+            string menuItem = null)
         {
             var group = new GameObject(groupName);
+            if (menuItem != null) group.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var animators = new Animator[count];
             for (int i = 0; i < count; i++)
             {

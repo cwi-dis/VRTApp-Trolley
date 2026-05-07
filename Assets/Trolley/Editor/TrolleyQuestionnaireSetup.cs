@@ -50,8 +50,11 @@ namespace VRT.Pilots.Trolley.Editor
                 if (existing != null) Object.DestroyImmediate(existing);
             }
 
+            const string menuItem = "Trolley/Wire Questionnaire Scene";
+
             // ── Environment ───────────────────────────────────────────────────
             var envGO = new GameObject("Environment");
+            envGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
             CreateBlackCube("Floor",    envGO, new Vector3(0f, -0.05f, -15f), new Vector3(12f, 0.1f,  40f));
             CreateBlackCube("Ceiling",  envGO, new Vector3(0f,  3.1f,  -15f), new Vector3(12f, 0.1f,  40f));
@@ -70,6 +73,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── QuestionnaireController ───────────────────────────────────────
             var controllerGO = new GameObject("QuestionnaireController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var controller   = controllerGO.AddComponent<QuestionnaireController>();
 
             var questionSet = AssetDatabase.LoadAssetAtPath<QuestionSet>(QuestionSetPath);
@@ -124,7 +128,9 @@ namespace VRT.Pilots.Trolley.Editor
             var canvasGO = new GameObject(canvasName);
             canvasGO.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Questionnaire Scene";
             canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 600f);
             canvasGO.transform.position    = boothCenter + new Vector3(0f, 1.6f, 0f);
             canvasGO.transform.rotation    = Quaternion.Euler(0f, 180f, 0f);

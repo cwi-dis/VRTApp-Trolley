@@ -52,9 +52,11 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Canvas ────────────────────────────────────────────────────────
             var canvasGO = new GameObject("AvatarCanvas");
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Add Avatar UI";
             var canvas   = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             var canvasRect = canvasGO.GetComponent<RectTransform>();
             canvasRect.sizeDelta   = new Vector2(700f, 560f);

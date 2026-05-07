@@ -34,13 +34,17 @@ namespace VRT.Pilots.Trolley.Editor
                 if (existing != null) Object.DestroyImmediate(existing);
             }
 
+            const string menuItem = "Trolley/Wire Bystander Scene";
+
             // ── TrolleyController ─────────────────────────────────────────────
             var controllerGO = new GameObject("TrolleyController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var controller = controllerGO.AddComponent<TrolleyController>();
             controller.scenarioID = "bystander";
 
             // ── NarrationPlayer ───────────────────────────────────────────────
             var narrationGO = new GameObject("NarrationPlayer");
+            narrationGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var audioSrc = narrationGO.AddComponent<AudioSource>();
             audioSrc.playOnAwake = false;
             var narrationPlayer = narrationGO.AddComponent<NarrationPlayer>();
@@ -48,9 +52,11 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Timer Canvas (World Space) ─────────────────────────────────────
             var canvasGO = new GameObject("TimerCanvas");
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             var canvasRect = canvasGO.GetComponent<RectTransform>();
             canvasRect.sizeDelta = new Vector2(400f, 150f);
@@ -103,6 +109,7 @@ namespace VRT.Pilots.Trolley.Editor
                 Debug.LogWarning("WireBystanderScene: Train_Type B prefab not found — created placeholder cube.");
             }
             trainGO.transform.position = new Vector3(0f, 0f, -250f);
+            trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var trainController = trainGO.AddComponent<TrainController>();
 
             // ── Train waypoints ────────────────────────────────────────────────
@@ -110,6 +117,7 @@ namespace VRT.Pilots.Trolley.Editor
             // approachDuration=38s matches narration length — speed auto-calculated.
             // After the decision, it branches to action (right) or inaction (straight).
             var pathsGO = new GameObject("TrainPaths");
+            pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
             var approachPathGO = new GameObject("ApproachPath");
             approachPathGO.transform.SetParent(pathsGO.transform);
@@ -137,9 +145,9 @@ namespace VRT.Pilots.Trolley.Editor
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
             var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f);
+                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f, menuItem: menuItem);
             var actionWorkers = SpawnWorkers("ActionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(4f, 0f, 17f), count: 2, spacing: 1.2f);
+                center: new Vector3(4f, 0f, 17f), count: 2, spacing: 1.2f, menuItem: menuItem);
 
             // Wire TrainController via SerializedObject
             var tcSO = new SerializedObject(trainController);
@@ -154,6 +162,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Lever ─────────────────────────────────────────────────────────
             var leverGO = new GameObject("Lever");
+            leverGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             leverGO.transform.position = new Vector3(-1.5f, 0.9f, -0.5f);
 
             var pivotGO = new GameObject("LeverPivot");
@@ -200,9 +209,11 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         static Animator[] SpawnWorkers(string groupName, GameObject prefab,
-            RuntimeAnimatorController animController, Vector3 center, int count, float spacing)
+            RuntimeAnimatorController animController, Vector3 center, int count, float spacing,
+            string menuItem = null)
         {
             var group = new GameObject(groupName);
+            if (menuItem != null) group.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var animators = new Animator[count];
             for (int i = 0; i < count; i++)
             {

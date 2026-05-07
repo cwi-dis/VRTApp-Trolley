@@ -49,6 +49,7 @@ namespace VRT.Pilots.Trolley.Editor
             var canvas = BuildCanvas("ResearcherCanvas",
                 position: new Vector3(0f, 1.6f, 2f),
                 size: new Vector2(960f, 860f));
+            canvas.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
 
             var panel = CreatePanel("ResearcherPanel", canvas, new Color(0.08f, 0.08f, 0.08f, 0.97f));
 
@@ -125,20 +126,22 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── AvatarSelector component ──────────────────────────────────────
             var avatarSelectorGO = new GameObject("AvatarSelector");
+            avatarSelectorGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
             var avatarSelector = avatarSelectorGO.AddComponent<AvatarSelector>();
             var playersManager = Object.FindObjectOfType<SessionPlayersManager>();
             if (playersManager == null)
                 Debug.LogWarning("WireTutorialScene: SessionPlayersManager not found — wire manually.");
 
             var asSO = new SerializedObject(avatarSelector);
-            asSO.FindProperty("selectionPanel").objectReferenceValue  = panel; // whole panel stays visible
-            asSO.FindProperty("maleButton").objectReferenceValue      = maleBtn;
-            asSO.FindProperty("femaleButton").objectReferenceValue    = femaleBtn;
+            asSO.FindProperty("selectionPanel").objectReferenceValue   = panel; // whole panel stays visible
+            asSO.FindProperty("masculineButton").objectReferenceValue = maleBtn;
+            asSO.FindProperty("feminineButton").objectReferenceValue  = femaleBtn;
             asSO.FindProperty("playersManager").objectReferenceValue  = playersManager;
             asSO.ApplyModifiedProperties();
 
             // ── TutorialController ─────────────────────────────────────────────
             var controllerGO = new GameObject("TutorialController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
             var controller   = controllerGO.AddComponent<TutorialController>();
 
             controller.researcherPanel        = panel;
@@ -169,6 +172,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Practice Lever ────────────────────────────────────────────────
             var practiceLever = new GameObject("PracticeLever");
+            practiceLever.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
             practiceLever.transform.position = new Vector3(-1.5f, 0.9f, 1f);
             var leverPivot = new GameObject("LeverPivot");
             leverPivot.transform.SetParent(practiceLever.transform, false);
@@ -182,6 +186,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Practice Button ────────────────────────────────────────────────
             var practiceButton = new GameObject("PracticeButton");
+            practiceButton.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
             practiceButton.transform.position = new Vector3(1.5f, 0.9f, 1f);
             var btnMesh = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             btnMesh.name = "ButtonMesh";
@@ -202,6 +207,7 @@ namespace VRT.Pilots.Trolley.Editor
             var go = new GameObject(name);
             go.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             go.AddComponent<CanvasScaler>();
+            go.AddComponent<GraphicRaycaster>();
             go.AddComponent<TrackedDeviceGraphicRaycaster>();
             go.GetComponent<RectTransform>().sizeDelta = size;
             go.transform.position = position;

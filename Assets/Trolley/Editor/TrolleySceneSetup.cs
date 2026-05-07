@@ -13,7 +13,7 @@ namespace VRT.Pilots.Trolley.Editor
     public static class TrolleySceneSetup
     {
         const string SourceScene =
-            "Assets/Samples/VR2Gather/1.3.0/VRT Essential Assets/Scenes/Empty/VRTEmpty.unity";
+            "Assets/Samples/VR2Gather/1.3.992/VRT Essential Assets/Scenes/Empty/VRTEmpty.unity";
 
         static readonly string[] SceneNames =
         {

@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
-// using UnityEngine.XR.Interaction.Toolkit.UI; // swap back when XRRayInteractor is on player
+using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
 
 namespace VRT.Pilots.Trolley.Editor
@@ -70,11 +70,15 @@ namespace VRT.Pilots.Trolley.Editor
             }
 
             // ── Avatar canvas ─────────────────────────────────────────────────
+            const string menuItem = "Trolley/Wire Avatar Setup Scene";
+
             var canvasGO = new GameObject("AvatarCanvas");
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var canvas   = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
-            canvasGO.AddComponent<GraphicRaycaster>(); // swap to TrackedDeviceGraphicRaycaster when XRRayInteractor is on player
+            canvasGO.AddComponent<GraphicRaycaster>();
+            canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             var cRect = canvasGO.GetComponent<RectTransform>();
             cRect.sizeDelta = new Vector2(700f, 620f);
             canvasGO.transform.position   = new Vector3(0f, 1.6f, 2f);
@@ -139,6 +143,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── AvatarSelector ────────────────────────────────────────────────
             var selectorGO = new GameObject("AvatarSelector");
+            selectorGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var selector   = selectorGO.AddComponent<AvatarSelector>();
 
             var sSO = new SerializedObject(selector);
@@ -163,13 +168,8 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── AvatarSetupController ─────────────────────────────────────────
             var controllerGO = new GameObject("AvatarSetupController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var controller   = controllerGO.AddComponent<AvatarSetupController>();
-
-            var cSO = new SerializedObject(controller);
-            cSO.FindProperty("avatarSelector").objectReferenceValue = selector;
-            cSO.FindProperty("confirmButton").objectReferenceValue  = confirmBtn;
-            cSO.FindProperty("statusText").objectReferenceValue     = statusText;
-            cSO.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
