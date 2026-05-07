@@ -3,9 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using VRT.Orchestrator.Wrapping;
-using VRT.Orchestrator.Responses;
-
+using VRT.Orchestrator;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
@@ -26,10 +24,11 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
+#if xxxjack_needs_fixing
 
-            if (OrchestratorController.Instance != null)
-                OrchestratorController.Instance.OnUserMessageReceivedEvent += OnNetworkMessage;
-
+            if (VRTOrchestratorSingleton.Comm != null)
+                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent += OnNetworkMessage;
+#endif
             // Find UI by name
             _statusText = FindTMP("StatusText");
 
@@ -43,8 +42,10 @@ namespace VRT.Pilots.Trolley
 
         void OnDestroy()
         {
-            if (OrchestratorController.Instance != null)
-                OrchestratorController.Instance.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#if xxxjack_needs_fixing
+            if (VRTOrchestratorSingleton.Comm != null)
+                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent -= OnNetworkMessage;
+#endif
         }
 
         // ── Avatar selector wiring ─────────────────────────────────────────
@@ -101,9 +102,11 @@ namespace VRT.Pilots.Trolley
             var confirmBtn = FindButton("ConfirmButton");
             if (confirmBtn != null) confirmBtn.interactable = false;
 
-            if (_isPaired && OrchestratorController.Instance != null)
+            if (_isPaired && VRTOrchestratorSingleton.Comm != null)
             {
-                OrchestratorController.Instance.SendMessageToAll(ReadyMsg);
+#if xxxjack_needs_fixing
+                VRTOrchestratorSingleton.Comm.SendMessageToAll(ReadyMsg);
+#endif
                 SetStatus("Waiting for your partner…");
                 StartCoroutine(WaitForPartner());
             }
