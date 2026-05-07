@@ -181,7 +181,8 @@ Full protocol: `protocol.md`
 ## Pending / Blockers
 
 - **UI interaction in VR** — XRRayInteractor missing from VR2Gather player; buttons unclickable in headset. Affects questionnaire AND avatar setup scene. Ask senior dev before May 14 holiday. Highest priority.
-- **Player spawn path unknown** — `TrolleyPlayerPositions.cs` written but `Tool_SceneSetup/Player Initial Locations/Player 1` path doesn't exist in Tutorial scene. VR2Gather may use a different spawn mechanism. Check Bystander scene in Unity or ask developer.
+- **Shared button state sync** — Implementation approach known; not blocked.
+- **Player spawn path** — ✓ Resolved.
 - **TrolleyAvatarSetup in Build Settings** — must be added manually after running `Trolley > Wire Avatar Setup Scene`.
 - **TrolleyQuestions ScriptableObject** — delete and recreate in Unity; `QuestionSet.cs` has new question arrays.
 - **Driver + SelfHarm narration** — not yet drafted. Bystander narration done.
