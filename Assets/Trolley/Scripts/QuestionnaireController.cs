@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using VRT.Orchestrator;
+using VRT.OrchestratorComm;
 
 namespace VRT.Pilots.Trolley
 {
@@ -57,8 +58,6 @@ namespace VRT.Pilots.Trolley
         [Header("Timing")]
         [SerializeField] float reflectionDuration = 60f;
 
-        const string DonePrefix = "questionnaire:done:";
-
         static readonly Color DefaultBtnColor  = new Color(0.2f, 0.2f, 0.8f);
         static readonly Color SelectedBtnColor = new Color(0.1f, 0.6f, 0.1f);
 
@@ -87,6 +86,21 @@ namespace VRT.Pilots.Trolley
         string _micDevice;
         AudioClip _recording;
 
+        void Awake()
+        {
+            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.QuestDone, typeof(TrolleyQuestionnaireDoneMessage));
+        }
+
+        void OnEnable()
+        {
+            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyQuestionnaireDoneMessage>(OnQuestionnaireDone);
+        }
+
+        void OnDisable()
+        {
+            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyQuestionnaireDoneMessage>(OnQuestionnaireDone);
+        }
+
         void Start()
         {
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
@@ -98,9 +112,6 @@ namespace VRT.Pilots.Trolley
             stopButton   = useBoothA ? stopButtonA   : stopButtonB;
             SelectBooth(useBoothA);
 
-#if xxxjack_needs_fixing
-            VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent += OnNetworkMessage;
-#endif
             questionPanel.SetActive(false);
             reflectionPanel.SetActive(false);
             if (waitingPanel != null) waitingPanel.SetActive(false);
@@ -128,14 +139,6 @@ namespace VRT.Pilots.Trolley
             startButton          = useA ? startButtonA           : startButtonB;
         }
 
-        void OnDestroy()
-        {
-#if xxxjack_needs_fixing
-            if (VRTOrchestratorSingleton.Comm != null)
-                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent -= OnNetworkMessage;
-#endif
-        }
-
         IEnumerator RunQuestionnaire()
         {
             yield return StartCoroutine(ShowReflection());
@@ -156,10 +159,11 @@ namespace VRT.Pilots.Trolley
             if (_isPaired && TrolleyGameState.Instance?.currentScenarioIndex == 2)
                 yield return StartCoroutine(ShowITCSOPI());
 
-            string myId = VRTOrchestratorSingleton.Comm.SelfUser.userId;
-#if xxxjack_needs_fixing
-            VRTOrchestratorSingleton.Comm.SendMessageToAll($"{DonePrefix}{myId}");
-#endif
+            var doneMsg = new TrolleyQuestionnaireDoneMessage();
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(doneMsg);
+            else
+                VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(doneMsg);
             yield return StartCoroutine(ShowTransition());
 
             LoadNextScene();
@@ -414,10 +418,12 @@ namespace VRT.Pilots.Trolley
             SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
         }
 
-        void OnNetworkMessage(UserMessage msg)
+        void OnQuestionnaireDone(TrolleyQuestionnaireDoneMessage msg)
         {
-            if (msg.message.StartsWith(DonePrefix))
-                _remoteDone = true;
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
+            if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
+            _remoteDone = true;
         }
 
     }

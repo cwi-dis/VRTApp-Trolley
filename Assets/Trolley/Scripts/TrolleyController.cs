@@ -12,13 +12,13 @@ namespace VRT.Pilots.Trolley
     /// Controls a single trolley scenario scene. State machine:
     /// Idle -> Narration -> Decision -> Outcome -> Transition
     ///
-    /// Decision sync: the client who triggers the physical action broadcasts
-    /// "decision:action:<playerID>" via SendMessageToAll and also applies the
-    /// outcome locally. The other client applies it on receipt.
-    /// Attempt logging: every interaction attempt broadcasts "interaction:attempt:<playerID>:<unixMs>"
-    /// so both clients accumulate the full attempt list for competition detection.
-    /// Timer start: the master broadcasts "timer:start" after narration; master
-    /// also starts locally (SendMessageToAll does not echo to sender).
+    /// Decision sync: the client who triggers the physical action sends a
+    /// TrolleyActionMessage (via master if non-master) and also applies the outcome
+    /// locally. The other client applies it on receipt.
+    /// Attempt logging: the TrolleyActionMessage carries the timestamp so both
+    /// clients accumulate the full attempt list for competition detection.
+    /// Timer start: the master sends TrolleyTimerStartMessage to all after narration
+    /// and starts locally; non-master starts on receipt.
     /// Inaction: each client handles timer expiry locally — both timers run in
     /// lockstep because they start from the same master broadcast.
     /// </summary>
@@ -45,11 +45,26 @@ namespace VRT.Pilots.Trolley
         // Interaction attempt tracking for competition detection
         readonly List<InteractionAttempt> _interactionAttempts = new List<InteractionAttempt>();
 
+        void Awake()
+        {
+            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.TimerStart, typeof(TrolleyTimerStartMessage));
+            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.Action,     typeof(TrolleyActionMessage));
+        }
+
+        void OnEnable()
+        {
+            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyTimerStartMessage>(OnTimerStart);
+            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyActionMessage>(OnRemoteAction);
+        }
+
+        void OnDisable()
+        {
+            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyTimerStartMessage>(OnTimerStart);
+            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyActionMessage>(OnRemoteAction);
+        }
+
         void Start()
         {
-#if xxxjack_needs_fixing
-            VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent += OnNetworkMessage;
-#endif
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnInaction;
             interactable.OnTriggered += OnLocalActionTriggered;
@@ -84,14 +99,6 @@ namespace VRT.Pilots.Trolley
             narrationPlayer.Play();
         }
 
-        void OnDestroy()
-        {
-#if xxxjack_needs_fixing
-            if (VRTOrchestratorSingleton.Comm != null)
-                VRTOrchestratorSingleton.Comm.OnUserMessageReceivedEvent -= OnNetworkMessage;
-#endif
-        }
-
         // ── Narration complete ─────────────────────────────────────────────
 
         void OnNarrationComplete()
@@ -100,11 +107,12 @@ namespace VRT.Pilots.Trolley
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
             interactable.SetActive(true);
-#if xxxjack_needs_fixing
             if (VRTOrchestratorSingleton.Comm.UserIsMaster)
-                VRTOrchestratorSingleton.Comm.SendMessageToAll("timer:start");
-#endif
-            decisionTimer.StartCountdown();
+            {
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(new TrolleyTimerStartMessage());
+                decisionTimer.StartCountdown();
+            }
+            // non-master starts timer on receipt of TrolleyTimerStartMessage
         }
 
         // ── Local physical interaction ─────────────────────────────────────
@@ -118,10 +126,11 @@ namespace VRT.Pilots.Trolley
             // Record and broadcast this attempt before applying the decision,
             // so the remote client can include it in competition detection.
             _interactionAttempts.Add(new InteractionAttempt { participantId = myId, unixMs = nowMs });
-#if xxxjack_needs_fixing
-            OrchestratorController.Instance.SendMessageToAll($"interaction:attempt:{myId}:{nowMs}");
-            OrchestratorController.Instance.SendMessageToAll($"decision:action:{myId}");
-#endif
+            var actionMsg = new TrolleyActionMessage { triggeredByPlayerId = myId, unixMs = nowMs };
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(actionMsg);
+            else
+                VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(actionMsg);
             ApplyAction(myId);
         }
 
@@ -204,30 +213,19 @@ namespace VRT.Pilots.Trolley
 
         // ── Network messages ──────────────────────────────────────────────
 
-        void OnNetworkMessage(UserMessage msg)
+        void OnTimerStart(TrolleyTimerStartMessage msg)
         {
-            if (msg.message.StartsWith("decision:action:"))
-            {
-                string playerID = msg.message.Substring("decision:action:".Length);
-                ApplyAction(playerID);
-            }
-            else if (msg.message.StartsWith("interaction:attempt:"))
-            {
-                // Log remote attempt for competition detection; does not trigger the decision.
-                string[] parts = msg.message.Split(':');
-                if (parts.Length >= 4 && long.TryParse(parts[3], out long remoteMs))
-                {
-                    _interactionAttempts.Add(new InteractionAttempt
-                    {
-                        participantId = parts[2],
-                        unixMs        = remoteMs
-                    });
-                }
-            }
-            else if (msg.message == "timer:start")
-            {
-                decisionTimer.StartCountdown();
-            }
+            if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
+            decisionTimer.StartCountdown();
+        }
+
+        void OnRemoteAction(TrolleyActionMessage msg)
+        {
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
+            if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
+            _interactionAttempts.Add(new InteractionAttempt { participantId = msg.triggeredByPlayerId, unixMs = msg.unixMs });
+            ApplyAction(msg.triggeredByPlayerId);
         }
     }
 }
