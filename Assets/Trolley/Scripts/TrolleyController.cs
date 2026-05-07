@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRT.Orchestrator;
@@ -13,6 +15,8 @@ namespace VRT.Pilots.Trolley
     /// Decision sync: the client who triggers the physical action broadcasts
     /// "decision:action:<playerID>" via SendMessageToAll and also applies the
     /// outcome locally. The other client applies it on receipt.
+    /// Attempt logging: every interaction attempt broadcasts "interaction:attempt:<playerID>:<unixMs>"
+    /// so both clients accumulate the full attempt list for competition detection.
     /// Timer start: the master broadcasts "timer:start" after narration; master
     /// also starts locally (SendMessageToAll does not echo to sender).
     /// Inaction: each client handles timer expiry locally — both timers run in
@@ -29,10 +33,17 @@ namespace VRT.Pilots.Trolley
         [SerializeField] TrolleyInteractable interactable;
 
         [Header("Scenario")]
-        [Tooltip("Identifier written to the data log: bystander | driver | optional")]
+        [Tooltip("Identifier written to the data log: bystander | driver | selfharm")]
         public string scenarioID = "unknown";
 
         State _state = State.Idle;
+
+        // Timestamp tracking for logging
+        DateTime _narrationEndTime;
+        DateTime _windowStartTime;
+
+        // Interaction attempt tracking for competition detection
+        readonly List<InteractionAttempt> _interactionAttempts = new List<InteractionAttempt>();
 
         void Start()
         {
@@ -42,10 +53,17 @@ namespace VRT.Pilots.Trolley
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnInaction;
             interactable.OnTriggered += OnLocalActionTriggered;
+
+            // Self-harm asymmetric control: disable interactable for the non-controlling participant.
+            bool isSelfHarm = scenarioID == "selfharm";
+            bool isPaired   = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
+            bool isMaster   = OrchestratorController.Instance.UserIsMaster;
+            bool hasControl = !isSelfHarm || !isPaired || TrolleyGameState.Instance.IsSelfHarmController(isMaster);
             interactable.SetActive(false);
+            if (!hasControl) interactable.enabled = false;
+
             _state = State.Narration;
 
-            // Wait for fade-in to complete before starting narration + train
             if (SceneFader.Instance != null)
                 SceneFader.Instance.OnFadeInComplete += BeginNarration;
             else
@@ -78,6 +96,8 @@ namespace VRT.Pilots.Trolley
 
         void OnNarrationComplete()
         {
+            _narrationEndTime = DateTime.Now;
+            _windowStartTime  = DateTime.Now;
             _state = State.Decision;
             interactable.SetActive(true);
 #if xxxjack_needs_fixing
@@ -92,9 +112,15 @@ namespace VRT.Pilots.Trolley
         void OnLocalActionTriggered()
         {
             if (_state != State.Decision) return;
-            string myId = VRTOrchestratorSingleton.Comm.SelfUser.userId;
+            string myId  = OrchestratorController.Instance.SelfUser.userId;
+            long   nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Record and broadcast this attempt before applying the decision,
+            // so the remote client can include it in competition detection.
+            _interactionAttempts.Add(new InteractionAttempt { participantId = myId, unixMs = nowMs });
 #if xxxjack_needs_fixing
-            VRTOrchestratorSingleton.Comm.SendMessageToAll($"decision:action:{myId}");
+            OrchestratorController.Instance.SendMessageToAll($"interaction:attempt:{myId}:{nowMs}");
+            OrchestratorController.Instance.SendMessageToAll($"decision:action:{myId}");
 #endif
             ApplyAction(myId);
         }
@@ -107,18 +133,34 @@ namespace VRT.Pilots.Trolley
             ApplyInaction();
         }
 
-        // ── Outcome application (called locally and on network receipt) ────
+        // ── Outcome application ────────────────────────────────────────────
 
         void ApplyAction(string triggeredByPlayerId)
         {
             if (_state == State.Outcome || _state == State.Transition) return;
             _state = State.Outcome;
+
+            DateTime windowEndTime = DateTime.Now;
             float rt = decisionTimer.GetElapsedTime();
+
+            bool competitionFlag = false;
+            if (_interactionAttempts.Count >= 2)
+            {
+                long t0 = _interactionAttempts[0].unixMs;
+                long t1 = _interactionAttempts[1].unixMs;
+                competitionFlag = Math.Abs(t1 - t0) <= 500;
+            }
+
             decisionTimer.Stop();
             interactable.SetActive(false);
             trainController.ExecuteAction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
-            DataLogger.Instance.LogDecision(scenarioID, "action", triggeredByPlayerId, rt);
+
+            DataLogger.Instance.LogDecision(
+                scenarioID, "action", triggeredByPlayerId, rt,
+                _narrationEndTime, _windowStartTime, windowEndTime,
+                _interactionAttempts, competitionFlag);
+
             Invoke(nameof(TransitionOut), 5f);
         }
 
@@ -126,11 +168,20 @@ namespace VRT.Pilots.Trolley
         {
             if (_state == State.Outcome || _state == State.Transition) return;
             _state = State.Outcome;
+
+            DateTime windowEndTime = DateTime.Now;
+            float rt = decisionTimer.GetElapsedTime();
+
             decisionTimer.Stop();
             interactable.SetActive(false);
             trainController.ExecuteInaction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
-            DataLogger.Instance.LogDecision(scenarioID, "inaction", "", 5f);
+
+            DataLogger.Instance.LogDecision(
+                scenarioID, "inaction", "", rt,
+                _narrationEndTime, _windowStartTime, windowEndTime,
+                _interactionAttempts, false);
+
             Invoke(nameof(TransitionOut), 5f);
         }
 
@@ -160,11 +211,23 @@ namespace VRT.Pilots.Trolley
                 string playerID = msg.message.Substring("decision:action:".Length);
                 ApplyAction(playerID);
             }
+            else if (msg.message.StartsWith("interaction:attempt:"))
+            {
+                // Log remote attempt for competition detection; does not trigger the decision.
+                string[] parts = msg.message.Split(':');
+                if (parts.Length >= 4 && long.TryParse(parts[3], out long remoteMs))
+                {
+                    _interactionAttempts.Add(new InteractionAttempt
+                    {
+                        participantId = parts[2],
+                        unixMs        = remoteMs
+                    });
+                }
+            }
             else if (msg.message == "timer:start")
             {
                 decisionTimer.StartCountdown();
             }
         }
-
     }
 }

@@ -55,7 +55,7 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Button startButtonB;
 
         [Header("Timing")]
-        [SerializeField] float reflectionDuration = 15f;
+        [SerializeField] float reflectionDuration = 60f;
 
         const string DonePrefix = "questionnaire:done:";
 
@@ -143,7 +143,18 @@ namespace VRT.Pilots.Trolley
 
             int offset = questionSet.postScenarioCommon.Length;
             if (_isPaired)
+            {
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
+                offset += questionSet.postScenarioPairedOnly.Length;
+            }
+
+            // Q10: threat perception — self-harm scenario only
+            if (_completedScenario == "selfharm")
+                yield return StartCoroutine(ShowQuestions(questionSet.postScenarioSelfHarmOnly, offset));
+
+            // ITC-SOPI co-presence + closeness item — paired, between scenarios 2 and 3 only
+            if (_isPaired && TrolleyGameState.Instance?.currentScenarioIndex == 2)
+                yield return StartCoroutine(ShowITCSOPI());
 
             string myId = VRTOrchestratorSingleton.Comm.SelfUser.userId;
 #if xxxjack_needs_fixing
@@ -154,10 +165,20 @@ namespace VRT.Pilots.Trolley
             LoadNextScene();
         }
 
+        IEnumerator ShowITCSOPI()
+        {
+            // Index offset 100 avoids collision with per-scenario question indices in the log.
+            yield return StartCoroutine(ShowQuestions(questionSet.itcSopiItems, 100, "itcsopi"));
+            if (questionSet.closenessItem != null && questionSet.closenessItem.Length > 0)
+                yield return StartCoroutine(ShowQuestions(questionSet.closenessItem, 110, "itcsopi"));
+        }
+
         IEnumerator ShowReflection()
         {
             reflectionPanel.SetActive(true);
-            reflectionPromptText.text = BuildConsequenceText(_completedScenario, _lastDecision);
+            string prompt = BuildConsequenceText(_completedScenario, _lastDecision);
+            if (_isPaired) prompt += "\n\nDid the other person affect your decision? If so, how?";
+            reflectionPromptText.text = prompt;
 
             if (recordButton != null)
             {
@@ -207,11 +228,19 @@ namespace VRT.Pilots.Trolley
 
         string BuildConsequenceText(string scenarioID, string decision)
         {
-            string interactable = scenarioID == "driver" ? "button" : "lever";
-            if (decision == "action")
-                return $"You decided to pull the {interactable}, which resulted in killing one person.\n\nFor your action, please reflect aloud shortly.";
-            else
-                return $"You decided not to pull the {interactable}, which resulted in killing five people.\n\nFor your inaction, please reflect aloud shortly.";
+            const string prompt = "In a few sentences — what was going through your mind? What did you decide and why?";
+
+            if (scenarioID == "selfharm")
+            {
+                return decision == "action"
+                    ? $"You steered into the barrier, which saved the five workers but injured you.\n\n{prompt}"
+                    : $"You did not steer, and the vehicle continued toward the five workers.\n\n{prompt}";
+            }
+
+            string control = scenarioID == "driver" ? "button" : "lever";
+            return decision == "action"
+                ? $"You pressed the {control}, diverting the train and resulting in one person being harmed.\n\n{prompt}"
+                : $"You did not press the {control}, and the train continued toward the five workers.\n\n{prompt}";
         }
 
         void StartVoiceRecording()
@@ -246,14 +275,16 @@ namespace VRT.Pilots.Trolley
             _recording = null;
         }
 
-        IEnumerator ShowQuestions(QuestionSet.Question[] questions, int indexOffset)
+        IEnumerator ShowQuestions(QuestionSet.Question[] questions, int indexOffset,
+                                  string scenarioOverride = null)
         {
+            string scenario = scenarioOverride ?? _completedScenario;
             for (int i = 0; i < questions.Length; i++)
             {
                 string answer = null;
                 yield return StartCoroutine(ShowSingleQuestion(questions[i], i + indexOffset, a => answer = a));
                 DataLogger.Instance.LogQuestionnaireAnswer(
-                    _completedScenario, i + indexOffset, questions[i].text, answer);
+                    scenario, i + indexOffset, questions[i].text, answer);
             }
         }
 

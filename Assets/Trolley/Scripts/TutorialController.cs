@@ -64,10 +64,10 @@ namespace VRT.Pilots.Trolley
 
             var rels = new[]
             {
-                TrolleyGameState.RelationshipType.Friend,
                 TrolleyGameState.RelationshipType.Stranger,
-                TrolleyGameState.RelationshipType.Acquaintance,
-                TrolleyGameState.RelationshipType.Partner,
+                TrolleyGameState.RelationshipType.Colleague,
+                TrolleyGameState.RelationshipType.Friend,
+                TrolleyGameState.RelationshipType.RomanticPartner,
             };
             for (int i = 0; i < relationshipButtons.Length && i < rels.Length; i++)
             {
@@ -186,13 +186,8 @@ namespace VRT.Pilots.Trolley
             DataLogger.Instance?.StartSession();
             researcherPanel.SetActive(false);
             TrolleyGameState.Instance?.ResetSession();
-            string first = TrolleyGameState.Instance?.NextScenarioScene();
-            if (string.IsNullOrEmpty(first))
-            {
-                Debug.LogError("TutorialController: no scenario scene configured.");
-                return;
-            }
-            SceneManager.LoadScene(first);
+            string next = TrolleyGameState.Instance?.avatarSetupScene ?? "TrolleyAvatarSetup";
+            SceneManager.LoadScene(next);
         }
 
         static void HighlightOne(Button[] buttons, int selectedIndex)

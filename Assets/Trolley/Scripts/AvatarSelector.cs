@@ -5,48 +5,127 @@ using VRT.Pilots.Common;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Simple gender-based avatar selection panel shown at the start of the tutorial.
-    /// Researcher sets this for each participant before the session begins.
-    /// Swaps the SelfPlayerPrefab on SessionPlayersManager to the appropriate avatar.
+    /// Avatar customisation panel shown at the start of the tutorial.
+    /// Participants select body type, skin tone, hair colour, and height.
+    /// Body type swaps the SelfPlayerPrefab; the other dimensions are logged
+    /// as covariates. Visual application of skin/hair/height requires
+    /// material or blend-shape wiring on the specific avatar prefabs.
     /// </summary>
     public class AvatarSelector : MonoBehaviour
     {
         [SerializeField] GameObject selectionPanel;
-        [SerializeField] Button maleButton;
-        [SerializeField] Button femaleButton;
 
-        [Header("Avatar Prefabs (assign Mixamo-based prefabs)")]
-        [SerializeField] GameObject maleSelfPrefab;
-        [SerializeField] GameObject femaleSelfPrefab;
+        [Header("Body Type (required — swaps prefab)")]
+        [SerializeField] Button masculineButton;
+        [SerializeField] Button feminineButton;
+
+        [Header("Avatar Prefabs")]
+        [SerializeField] GameObject masculineSelfPrefab;
+        [SerializeField] GameObject feminineSelfPrefab;
+
+        [Header("Skin Tone (6 swatches — assign buttons left to right, index 0–5)")]
+        [SerializeField] Button[] skinToneButtons;   // length 6
+
+        [Header("Hair Colour (6 swatches — assign buttons left to right, index 0–5)")]
+        [SerializeField] Button[] hairColorButtons;  // length 6
+
+        [Header("Height (3 buttons)")]
+        [SerializeField] Button shortButton;
+        [SerializeField] Button mediumButton;
+        [SerializeField] Button tallButton;
 
         [SerializeField] SessionPlayersManager playersManager;
 
+        static readonly Color Selected  = new Color(0.1f, 0.6f, 0.1f);
+        static readonly Color Unselected = new Color(0.2f, 0.2f, 0.5f);
+
         void Start()
         {
-            maleButton.onClick.AddListener(() => Select(TrolleyGameState.Gender.Male));
-            femaleButton.onClick.AddListener(() => Select(TrolleyGameState.Gender.Female));
-            selectionPanel.SetActive(true);
+            if (masculineButton != null)
+                masculineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine));
+            if (feminineButton != null)
+                feminineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Feminine));
+
+            if (skinToneButtons != null)
+                for (int i = 0; i < skinToneButtons.Length; i++)
+                {
+                    if (skinToneButtons[i] == null) continue;
+                    int captured = i;
+                    skinToneButtons[i].onClick.AddListener(() => SelectSkinTone(captured));
+                }
+
+            if (hairColorButtons != null)
+                for (int i = 0; i < hairColorButtons.Length; i++)
+                {
+                    if (hairColorButtons[i] == null) continue;
+                    int captured = i;
+                    hairColorButtons[i].onClick.AddListener(() => SelectHairColor(captured));
+                }
+
+            if (shortButton != null)
+                shortButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Short));
+            if (mediumButton != null)
+                mediumButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Medium));
+            if (tallButton != null)
+                tallButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Tall));
+
+            if (selectionPanel != null) selectionPanel.SetActive(true);
         }
 
-        void Select(TrolleyGameState.Gender gender)
+        public void SelectBodyType(TrolleyGameState.AvatarBodyType bodyType)
         {
             if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.localGender = gender;
+                TrolleyGameState.Instance.avatarBodyType = bodyType;
 
             if (playersManager != null)
                 playersManager.SelfPlayerPrefab =
-                    gender == TrolleyGameState.Gender.Male ? maleSelfPrefab : femaleSelfPrefab;
+                    bodyType == TrolleyGameState.AvatarBodyType.Masculine
+                        ? masculineSelfPrefab
+                        : feminineSelfPrefab;
 
-            // Keep panel visible — just highlight the selected button.
-            SetHighlight(maleButton,   gender == TrolleyGameState.Gender.Male);
-            SetHighlight(femaleButton, gender == TrolleyGameState.Gender.Female);
+            SetHighlight(masculineButton, bodyType == TrolleyGameState.AvatarBodyType.Masculine);
+            SetHighlight(feminineButton,  bodyType == TrolleyGameState.AvatarBodyType.Feminine);
+        }
+
+        public void SelectSkinTone(int index)
+        {
+            if (TrolleyGameState.Instance != null)
+                TrolleyGameState.Instance.skinToneIndex = index;
+
+            // TODO: apply skin tone material to avatar renderer
+            HighlightGroup(skinToneButtons, index);
+        }
+
+        public void SelectHairColor(int index)
+        {
+            if (TrolleyGameState.Instance != null)
+                TrolleyGameState.Instance.hairColorIndex = index;
+
+            // TODO: apply hair colour material to avatar renderer
+            HighlightGroup(hairColorButtons, index);
+        }
+
+        public void SelectHeight(TrolleyGameState.AvatarHeight height)
+        {
+            if (TrolleyGameState.Instance != null)
+                TrolleyGameState.Instance.avatarHeight = height;
+
+            // TODO: apply height via avatar scale or blend shape
+            SetHighlight(shortButton,  height == TrolleyGameState.AvatarHeight.Short);
+            SetHighlight(mediumButton, height == TrolleyGameState.AvatarHeight.Medium);
+            SetHighlight(tallButton,   height == TrolleyGameState.AvatarHeight.Tall);
+        }
+
+        static void HighlightGroup(Button[] buttons, int selectedIndex)
+        {
+            for (int i = 0; i < buttons.Length; i++)
+                SetHighlight(buttons[i], i == selectedIndex);
         }
 
         static void SetHighlight(Button btn, bool selected)
         {
-            var img = btn.GetComponent<UnityEngine.UI.Image>();
-            if (img != null)
-                img.color = selected ? new Color(0.1f, 0.6f, 0.1f) : new Color(0.2f, 0.2f, 0.5f);
+            var img = btn.GetComponent<Image>();
+            if (img != null) img.color = selected ? Selected : Unselected;
         }
     }
 }
