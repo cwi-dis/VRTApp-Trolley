@@ -5,43 +5,42 @@ using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
 
-
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Run once via menu: Trolley > Wire Optional Scene
-    /// Same as Driver but the action path leads to a wall (hasWallCollision = true).
-    /// The train hits the wall if the participant presses the button.
+    /// Run once via menu: Trolley > Wire Selfharm Scene
+    /// Same mechanics as Driver. The inaction path leads to 5 workers;
+    /// the action path leads to a cliff/rocky mountain (participant harms themselves).
     /// </summary>
-    public static class TrolleyOptionalSetup
+    public static class TrolleySelfharmSetup
     {
-        const string ScenePath = "Assets/Trolley/Scenes/TrolleyOptional.unity";
+        const string ScenePath = "Assets/Trolley/Scenes/TrolleySelfharm.unity";
         const string WorkerFbxPath = "Assets/Trolley/Animations/Ch17_nonPBR.fbx";
         const string WorkerControllerPath = "Assets/Trolley/Animations/WorkerController.controller";
         const string TrainPrefabPath = "Assets/Polyeler/Simple Train Pack/Prefabs/Train/Train_Type B.prefab";
 
-        [MenuItem("Trolley/Wire Optional Scene")]
-        public static void WireOptionalScene()
+        [MenuItem("Trolley/Wire Selfharm Scene")]
+        public static void WireSelfharmScene()
         {
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
-                "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers",
-                "Button", "Wall", "WallCollisionEffect" })
+                "TrainPaths", "InactionTrackWorkers",
+                "Button", "Cliff", "CliffCollisionEffect" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
             }
 
-            const string menuItem = "Trolley/Wire Optional Scene";
+            const string menuItem = "Trolley/Wire Selfharm Scene";
 
             // ── TrolleyController ─────────────────────────────────────────────
             var controllerGO = new GameObject("TrolleyController");
             controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var controller = controllerGO.AddComponent<TrolleyController>();
-            controller.scenarioID = "optional";
+            controller.scenarioID = "selfharm";
 
             // ── NarrationPlayer ───────────────────────────────────────────────
             var narrationGO = new GameObject("NarrationPlayer");
@@ -106,14 +105,14 @@ namespace VRT.Pilots.Trolley.Editor
                 trainGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 trainGO.name = "Train_TypeB [PLACEHOLDER — assign real prefab]";
                 trainGO.transform.localScale = new Vector3(2f, 1.5f, 5f);
-                Debug.LogWarning("WireOptionalScene: Train_Type B prefab not found — created placeholder cube.");
+                Debug.LogWarning("WireSelfharmScene: Train_Type B prefab not found — created placeholder cube.");
             }
             trainGO.transform.position = new Vector3(0f, 0f, -15f);
             trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var trainController = trainGO.AddComponent<TrainController>();
 
             // ── Train waypoints ────────────────────────────────────────────────
-            // Action path ends at z=30 where the wall sits.
+            // Action path ends at the cliff face (z=30, offset x=4).
             var pathsGO = new GameObject("TrainPaths");
             pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
@@ -127,63 +126,69 @@ namespace VRT.Pilots.Trolley.Editor
             var inactionPathGO = new GameObject("InactionPath");
             inactionPathGO.transform.SetParent(pathsGO.transform);
             var inactionWPs = CreateWaypoints(inactionPathGO,
-                new Vector3(0f, 0f, 5f),
+                new Vector3(0f, 0f,  5f),
                 new Vector3(0f, 0f, 20f),
                 new Vector3(0f, 0f, 40f));
 
             var actionPathGO = new GameObject("ActionPath");
             actionPathGO.transform.SetParent(pathsGO.transform);
             var actionWPs = CreateWaypoints(actionPathGO,
-                new Vector3(1f, 0f, 5f),
+                new Vector3(1f, 0f,  5f),
                 new Vector3(4f, 0f, 15f),
-                new Vector3(4f, 0f, 30f));  // stops at wall
+                new Vector3(4f, 0f, 30f));  // cliff face
 
-            // ── Workers (only on inaction track — action track has a wall) ────
+            // ── Workers (inaction track only — action track leads to cliff) ───
             var workerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
             var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f, menuItem: menuItem);
+                center: new Vector3(0f, 0f, 22f), count: 5, spacing: 1.2f, menuItem: menuItem);
 
-            // Action track has no workers (train hits wall instead).
-            var actionWorkers = new Animator[0];
+            // ── Cliff / rocky mountain (placeholder geometry) ─────────────────
+            var cliffGO = new GameObject("Cliff");
+            cliffGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
-            // ── Wall at end of action path ────────────────────────────────────
-            var wallGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            wallGO.name = "Wall";
-            wallGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            wallGO.transform.position = new Vector3(4f, 1f, 31f);
-            wallGO.transform.localScale = new Vector3(4f, 3f, 0.3f);
+            var cliffFace = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cliffFace.name = "CliffFace";
+            cliffFace.transform.SetParent(cliffGO.transform, false);
+            cliffFace.transform.position = new Vector3(4f, 2f, 31f);
+            cliffFace.transform.localScale = new Vector3(5f, 6f, 2f);
+            var cliffMat = cliffFace.GetComponent<Renderer>();
+            if (cliffMat != null) cliffMat.material.color = new Color(0.45f, 0.38f, 0.30f);
 
-            // ── Collision effect (starts inactive, activated on impact) ────────
-            var effectGO = new GameObject("WallCollisionEffect");
+            var cliffEdge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cliffEdge.name = "CliffEdge";
+            cliffEdge.transform.SetParent(cliffGO.transform, false);
+            cliffEdge.transform.position = new Vector3(4f, -1f, 29f);
+            cliffEdge.transform.localScale = new Vector3(5f, 0.3f, 3f);
+
+            // ── Collision effect (activated on impact) ────────────────────────
+            var effectGO = new GameObject("CliffCollisionEffect");
             effectGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             effectGO.transform.position = new Vector3(4f, 1f, 30.5f);
             var ps = effectGO.AddComponent<ParticleSystem>();
-            // Simple burst: 50 particles, short lifetime
             var main = ps.main;
-            main.startLifetime = 0.8f;
-            main.startSpeed = 5f;
-            main.startSize = 0.2f;
-            main.startColor = new Color(1f, 0.4f, 0f);
+            main.startLifetime = 1.0f;
+            main.startSpeed = 4f;
+            main.startSize = 0.3f;
+            main.startColor = new Color(0.55f, 0.45f, 0.35f); // dusty brown
             main.loop = false;
             main.playOnAwake = false;
             var emission = ps.emission;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 50) });
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 60) });
             effectGO.SetActive(false);
 
-            // Collision audio on the train (TrainController expects AudioSource on same or child GO)
             var collisionAudioSrc = trainGO.AddComponent<AudioSource>();
             collisionAudioSrc.playOnAwake = false;
 
-            // Wire TrainController (with wall collision enabled)
+            // ── Wire TrainController ──────────────────────────────────────────
             var tcSO = new SerializedObject(trainController);
             tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
             SetTransformArray(tcSO, "approachPath", approachWPs);
             SetTransformArray(tcSO, "inactionPath", inactionWPs);
             SetTransformArray(tcSO, "actionPath", actionWPs);
             SetAnimatorArray(tcSO, "inactionTrackWorkers", inactionWorkers);
-            SetAnimatorArray(tcSO, "actionTrackWorkers", actionWorkers);
+            SetAnimatorArray(tcSO, "actionTrackWorkers", new Animator[0]);
             tcSO.FindProperty("hasWallCollision").boolValue = true;
             tcSO.FindProperty("wallCollisionEffect").objectReferenceValue = effectGO;
             tcSO.FindProperty("collisionAudio").objectReferenceValue = collisionAudioSrc;
@@ -204,7 +209,7 @@ namespace VRT.Pilots.Trolley.Editor
             var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
             SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
 
-            // ── Wire TrolleyController ─────────────────────────────────────────
+            // ── Wire TrolleyController ────────────────────────────────────────
             var cSO = new SerializedObject(controller);
             cSO.FindProperty("narrationPlayer").objectReferenceValue = narrationPlayer;
             cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
@@ -214,7 +219,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("TrolleyOptionalSetup: TrolleyOptional scene wired and saved.");
+            Debug.Log("TrolleySelfharmSetup: TrolleySelfharm scene wired and saved.");
         }
 
         static Transform[] CreateWaypoints(GameObject parent, params Vector3[] positions)
@@ -245,7 +250,7 @@ namespace VRT.Pilots.Trolley.Editor
                 else
                 {
                     w = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    Debug.LogWarning($"WireOptionalScene: worker prefab not found — created placeholder for {groupName}.");
+                    Debug.LogWarning($"WireSelfharmScene: worker prefab not found — created placeholder for {groupName}.");
                 }
                 w.name = $"Worker_{i + 1}";
                 w.transform.SetParent(group.transform);

@@ -60,11 +60,6 @@ namespace VRT.Pilots.Trolley
             WireBodyButton(selector, "MasculineButton", TrolleyGameState.AvatarBodyType.Masculine);
             WireBodyButton(selector, "FeminineButton",  TrolleyGameState.AvatarBodyType.Feminine);
 
-            // Height
-            WireHeightButton(selector, "ShortButton",  TrolleyGameState.AvatarHeight.Short);
-            WireHeightButton(selector, "MediumButton", TrolleyGameState.AvatarHeight.Medium);
-            WireHeightButton(selector, "TallButton",   TrolleyGameState.AvatarHeight.Tall);
-
             // Skin tone
             for (int i = 0; i < 6; i++)
             {
@@ -88,12 +83,6 @@ namespace VRT.Pilots.Trolley
         {
             var btn = FindButton(goName);
             if (btn != null) btn.onClick.AddListener(() => selector.SelectBodyType(type));
-        }
-
-        void WireHeightButton(AvatarSelector selector, string goName, TrolleyGameState.AvatarHeight height)
-        {
-            var btn = FindButton(goName);
-            if (btn != null) btn.onClick.AddListener(() => selector.SelectHeight(height));
         }
 
         // ── Confirm flow ───────────────────────────────────────────────────

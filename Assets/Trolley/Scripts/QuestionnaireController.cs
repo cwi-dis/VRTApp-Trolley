@@ -155,8 +155,8 @@ namespace VRT.Pilots.Trolley
             if (_completedScenario == "selfharm")
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioSelfHarmOnly, offset));
 
-            // ITC-SOPI co-presence + closeness item — paired, between scenarios 2 and 3 only
-            if (_isPaired && TrolleyGameState.Instance?.currentScenarioIndex == 2)
+            // ITC-SOPI co-presence + closeness — paired, after all 3 scenarios
+            if (_isPaired && !TrolleyGameState.Instance.HasMoreScenarios())
                 yield return StartCoroutine(ShowITCSOPI());
 
             var doneMsg = new TrolleyQuestionnaireDoneMessage();
@@ -237,8 +237,8 @@ namespace VRT.Pilots.Trolley
             if (scenarioID == "selfharm")
             {
                 return decision == "action"
-                    ? $"You steered into the barrier, which saved the five workers but injured you.\n\n{prompt}"
-                    : $"You did not steer, and the vehicle continued toward the five workers.\n\n{prompt}";
+                    ? $"You diverted the train into the cliff, saving the five workers. The impact put your own safety at risk.\n\n{prompt}"
+                    : $"You did not divert the train, and it continued toward the five workers.\n\n{prompt}";
             }
 
             string control = scenarioID == "driver" ? "button" : "lever";

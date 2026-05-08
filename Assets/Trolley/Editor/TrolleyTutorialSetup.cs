@@ -18,15 +18,15 @@ namespace VRT.Pilots.Trolley.Editor
     {
         const string ScenePath = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
 
-        static readonly string[] OrderLabels = { "B→D→O", "B→O→D", "D→B→O", "D→O→B", "O→B→D", "O→D→B" };
+        static readonly string[] OrderLabels = { "B→D→S", "B→S→D", "D→B→S", "D→S→B", "S→B→D", "S→D→B" };
         static readonly string[][] OrderScenes =
         {
-            new[] { "TrolleyBystander", "TrolleyDriver",    "TrolleyOptional"  },
-            new[] { "TrolleyBystander", "TrolleyOptional",  "TrolleyDriver"    },
-            new[] { "TrolleyDriver",    "TrolleyBystander", "TrolleyOptional"  },
-            new[] { "TrolleyDriver",    "TrolleyOptional",  "TrolleyBystander" },
-            new[] { "TrolleyOptional",  "TrolleyBystander", "TrolleyDriver"    },
-            new[] { "TrolleyOptional",  "TrolleyDriver",    "TrolleyBystander" },
+            new[] { "TrolleyBystander", "TrolleyDriver",    "TrolleySelfharm"  },
+            new[] { "TrolleyBystander", "TrolleySelfharm",  "TrolleyDriver"    },
+            new[] { "TrolleyDriver",    "TrolleyBystander", "TrolleySelfharm"  },
+            new[] { "TrolleyDriver",    "TrolleySelfharm",  "TrolleyBystander" },
+            new[] { "TrolleySelfharm",  "TrolleyBystander", "TrolleyDriver"    },
+            new[] { "TrolleySelfharm",  "TrolleyDriver",    "TrolleyBystander" },
         };
 
         static readonly string[] RelationshipLabels = { "Friend", "Stranger", "Acquaintance", "Partner" };
@@ -39,11 +39,21 @@ namespace VRT.Pilots.Trolley.Editor
             foreach (string name in new[] {
                 "TutorialController", "AvatarSelector",
                 "ResearcherCanvas", "AvatarCanvas",
-                "PracticeLever", "PracticeButton" })
+                "PracticeLever", "PracticeButton",
+                "TrolleyGameState", "DataLogger" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
             }
+
+            // ── Persistent singletons ─────────────────────────────────────────
+            var gameStateGO = new GameObject("TrolleyGameState");
+            gameStateGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
+            gameStateGO.AddComponent<TrolleyGameState>();
+
+            var dataLoggerGO = new GameObject("DataLogger");
+            dataLoggerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
+            dataLoggerGO.AddComponent<DataLogger>();
 
             // ── Single combined canvas ─────────────────────────────────────────
             var canvas = BuildCanvas("ResearcherCanvas",
@@ -68,28 +78,20 @@ namespace VRT.Pilots.Trolley.Editor
             var plusBtn = CreateButton("ParticipantPlus", panel, "+",
                 new Vector2(0.58f, 0.848f), new Vector2(0.70f, 0.908f), 40);
 
-            // ── Row: Avatar ───────────────────────────────────────────────────
-            CreateLabel("AvatarLabel", panel, "Avatar",
-                new Vector2(0.02f, 0.775f), new Vector2(0.25f, 0.84f), 26);
-            var maleBtn   = CreateButton("MaleButton",   panel, "Male",
-                new Vector2(0.26f, 0.775f), new Vector2(0.52f, 0.84f));
-            var femaleBtn = CreateButton("FemaleButton", panel, "Female",
-                new Vector2(0.54f, 0.775f), new Vector2(0.80f, 0.84f));
-
             // ── Row: Condition ────────────────────────────────────────────────
             CreateLabel("ConditionLabel", panel, "Condition",
-                new Vector2(0.02f, 0.705f), new Vector2(0.25f, 0.77f), 26);
+                new Vector2(0.02f, 0.775f), new Vector2(0.25f, 0.84f), 26);
             var soloBtn   = CreateButton("SoloButton",   panel, "Solo",
-                new Vector2(0.26f, 0.705f), new Vector2(0.52f, 0.77f));
+                new Vector2(0.26f, 0.775f), new Vector2(0.52f, 0.84f));
             var pairedBtn = CreateButton("PairedButton", panel, "Paired",
-                new Vector2(0.54f, 0.705f), new Vector2(0.80f, 0.77f));
+                new Vector2(0.54f, 0.775f), new Vector2(0.80f, 0.84f));
 
             // ── Row: Relationship (hidden until Paired) ───────────────────────
             var relPanel = new GameObject("RelationshipPanel");
             relPanel.transform.SetParent(panel.transform, false);
             var relRect = relPanel.AddComponent<RectTransform>();
-            relRect.anchorMin = new Vector2(0.02f, 0.635f);
-            relRect.anchorMax = new Vector2(0.98f, 0.70f);
+            relRect.anchorMin = new Vector2(0.02f, 0.705f);
+            relRect.anchorMax = new Vector2(0.98f, 0.77f);
             relRect.offsetMin = relRect.offsetMax = Vector2.zero;
 
             CreateLabel("RelLabel", relPanel, "Relationship",
@@ -104,13 +106,13 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Row: Scenario order (2 rows of 3) ─────────────────────────────
             CreateLabel("OrderLabel", panel, "Scenario Order",
-                new Vector2(0.02f, 0.575f), new Vector2(0.98f, 0.63f), 26);
+                new Vector2(0.02f, 0.645f), new Vector2(0.98f, 0.70f), 26);
             var orderButtons = new Button[6];
             for (int i = 0; i < 6; i++)
             {
                 int col = i % 3, row = i / 3;
                 float x0 = 0.02f + col * 0.328f;
-                float y1 = 0.575f - row * 0.075f;
+                float y1 = 0.645f - row * 0.075f;
                 orderButtons[i] = CreateButton($"Order_{i}", panel, OrderLabels[i],
                     new Vector2(x0, y1 - 0.065f), new Vector2(x0 + 0.318f, y1), 24);
             }
@@ -133,10 +135,7 @@ namespace VRT.Pilots.Trolley.Editor
                 Debug.LogWarning("WireTutorialScene: SessionPlayersManager not found — wire manually.");
 
             var asSO = new SerializedObject(avatarSelector);
-            asSO.FindProperty("selectionPanel").objectReferenceValue   = panel; // whole panel stays visible
-            asSO.FindProperty("masculineButton").objectReferenceValue = maleBtn;
-            asSO.FindProperty("feminineButton").objectReferenceValue  = femaleBtn;
-            asSO.FindProperty("playersManager").objectReferenceValue  = playersManager;
+            asSO.FindProperty("playersManager").objectReferenceValue = playersManager;
             asSO.ApplyModifiedProperties();
 
             // ── TutorialController ─────────────────────────────────────────────

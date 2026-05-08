@@ -24,7 +24,7 @@ namespace VRT.Pilots.Trolley.Editor
             "Assets/Trolley/Scenes/TrolleyAvatarSetup.unity",
             "Assets/Trolley/Scenes/TrolleyBystander.unity",
             "Assets/Trolley/Scenes/TrolleyDriver.unity",
-            "Assets/Trolley/Scenes/TrolleyOptional.unity",
+            "Assets/Trolley/Scenes/TrolleySelfharm.unity",
         };
 
         [MenuItem("Trolley/Set Player Positions")]

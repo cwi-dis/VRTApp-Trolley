@@ -20,7 +20,7 @@ namespace VRT.Pilots.Trolley.Editor
             "TrolleyTutorial",
             "TrolleyBystander",
             "TrolleyDriver",
-            "TrolleyOptional",
+            "TrolleySelfharm",
             "TrolleyQuestionnaire",
         };
 

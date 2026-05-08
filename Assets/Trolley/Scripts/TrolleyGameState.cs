@@ -13,7 +13,6 @@ namespace VRT.Pilots.Trolley
         public enum Condition { Solo, Paired }
         public enum RelationshipType { NotApplicable, Stranger, Colleague, Friend, RomanticPartner }
         public enum AvatarBodyType { Masculine, Feminine }
-        public enum AvatarHeight { Short, Medium, Tall }
 
         [Header("Session Config (set by researcher before starting)")]
         public Condition condition = Condition.Solo;
@@ -21,7 +20,7 @@ namespace VRT.Pilots.Trolley
         public RelationshipType relationshipType = RelationshipType.NotApplicable;
 
         [Header("Scenario Sequence (set by researcher; order is counterbalanced)")]
-        public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleySelfHarm" };
+        public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleySelfharm" };
         public int currentScenarioIndex = 0;
 
         [Header("Scene Names")]
@@ -33,7 +32,6 @@ namespace VRT.Pilots.Trolley
         public AvatarBodyType avatarBodyType = AvatarBodyType.Masculine;
         public int skinToneIndex = 0;    // 0–5
         public int hairColorIndex = 0;   // 0–5
-        public AvatarHeight avatarHeight = AvatarHeight.Medium;
 
         [Header("Self-harm Paired Control (counterbalanced per pair)")]
         [Tooltip("0 = Master player has the action control; 1 = Non-master player has it.")]
@@ -69,6 +67,6 @@ namespace VRT.Pilots.Trolley
             (selfHarmControllerSlot == 0) == isMaster;
 
         public string AvatarConfigString() =>
-            $"body:{avatarBodyType},skin:{skinToneIndex},hair:{hairColorIndex},height:{avatarHeight}";
+            $"body:{avatarBodyType},skin:{skinToneIndex},hair:{hairColorIndex}";
     }
 }

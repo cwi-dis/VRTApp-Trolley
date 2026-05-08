@@ -29,18 +29,20 @@ namespace VRT.Pilots.Trolley
         [Header("Hair Colour (6 swatches — assign buttons left to right, index 0–5)")]
         [SerializeField] Button[] hairColorButtons;  // length 6
 
-        [Header("Height (3 buttons)")]
-        [SerializeField] Button shortButton;
-        [SerializeField] Button mediumButton;
-        [SerializeField] Button tallButton;
-
         [SerializeField] SessionPlayersManager playersManager;
 
-        static readonly Color Selected  = new Color(0.1f, 0.6f, 0.1f);
+        static readonly Color Selected   = new Color(0.1f, 0.6f, 0.1f);
         static readonly Color Unselected = new Color(0.2f, 0.2f, 0.5f);
+        const float SwatchDimFactor = 0.4f;
+
+        Color[] _skinToneBaseColors;
+        Color[] _hairColorBaseColors;
 
         void Start()
         {
+            // Capture swatch base colors before any highlight calls overwrite them
+            _skinToneBaseColors = CaptureColors(skinToneButtons);
+            _hairColorBaseColors = CaptureColors(hairColorButtons);
             if (masculineButton != null)
                 masculineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine));
             if (feminineButton != null)
@@ -61,13 +63,6 @@ namespace VRT.Pilots.Trolley
                     int captured = i;
                     hairColorButtons[i].onClick.AddListener(() => SelectHairColor(captured));
                 }
-
-            if (shortButton != null)
-                shortButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Short));
-            if (mediumButton != null)
-                mediumButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Medium));
-            if (tallButton != null)
-                tallButton.onClick.AddListener(() => SelectHeight(TrolleyGameState.AvatarHeight.Tall));
 
             if (selectionPanel != null) selectionPanel.SetActive(true);
         }
@@ -93,7 +88,7 @@ namespace VRT.Pilots.Trolley
                 TrolleyGameState.Instance.skinToneIndex = index;
 
             // TODO: apply skin tone material to avatar renderer
-            HighlightGroup(skinToneButtons, index);
+            HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
         }
 
         public void SelectHairColor(int index)
@@ -102,18 +97,7 @@ namespace VRT.Pilots.Trolley
                 TrolleyGameState.Instance.hairColorIndex = index;
 
             // TODO: apply hair colour material to avatar renderer
-            HighlightGroup(hairColorButtons, index);
-        }
-
-        public void SelectHeight(TrolleyGameState.AvatarHeight height)
-        {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.avatarHeight = height;
-
-            // TODO: apply height via avatar scale or blend shape
-            SetHighlight(shortButton,  height == TrolleyGameState.AvatarHeight.Short);
-            SetHighlight(mediumButton, height == TrolleyGameState.AvatarHeight.Medium);
-            SetHighlight(tallButton,   height == TrolleyGameState.AvatarHeight.Tall);
+            HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
         }
 
         static void HighlightGroup(Button[] buttons, int selectedIndex)
@@ -122,10 +106,37 @@ namespace VRT.Pilots.Trolley
                 SetHighlight(buttons[i], i == selectedIndex);
         }
 
+        // For colour swatches: selected = full swatch colour, unselected = dimmed swatch colour.
+        // This preserves the visual identity of each swatch instead of overwriting with a flat colour.
+        static void HighlightSwatchGroup(Button[] buttons, Color[] baseColors, int selectedIndex)
+        {
+            if (buttons == null || baseColors == null) return;
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] == null) continue;
+                var img = buttons[i].GetComponent<Image>();
+                if (img == null) continue;
+                Color base_ = i < baseColors.Length ? baseColors[i] : Color.white;
+                img.color = (i == selectedIndex) ? base_ : base_ * SwatchDimFactor;
+            }
+        }
+
         static void SetHighlight(Button btn, bool selected)
         {
             var img = btn.GetComponent<Image>();
             if (img != null) img.color = selected ? Selected : Unselected;
+        }
+
+        static Color[] CaptureColors(Button[] buttons)
+        {
+            if (buttons == null) return new Color[0];
+            var colors = new Color[buttons.Length];
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                var img = buttons[i] != null ? buttons[i].GetComponent<Image>() : null;
+                colors[i] = img != null ? img.color : Color.white;
+            }
+            return colors;
         }
     }
 }

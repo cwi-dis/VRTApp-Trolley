@@ -120,16 +120,6 @@ namespace VRT.Pilots.Trolley.Editor
                     new Vector2(x0, 0.55f), new Vector2(x0 + 0.093f, 0.64f));
             }
 
-            // Height
-            MakeLabel("HeightLabel", panel, "Height",
-                new Vector2(0.02f, 0.43f), new Vector2(0.36f, 0.52f), 24);
-            var shortBtn  = MakeButton("ShortButton",  panel, "Short",
-                new Vector2(0.37f, 0.43f), new Vector2(0.55f, 0.52f));
-            var mediumBtn = MakeButton("MediumButton", panel, "Medium",
-                new Vector2(0.57f, 0.43f), new Vector2(0.76f, 0.52f));
-            var tallBtn   = MakeButton("TallButton",   panel, "Tall",
-                new Vector2(0.78f, 0.43f), new Vector2(0.97f, 0.52f));
-
             // Status + Confirm
             var statusText = MakeTMPLabel("StatusText", panel,
                 "Customise your avatar, then press Confirm.",
@@ -150,10 +140,6 @@ namespace VRT.Pilots.Trolley.Editor
             sSO.FindProperty("selectionPanel").objectReferenceValue  = panel;
             sSO.FindProperty("masculineButton").objectReferenceValue = mascBtn;
             sSO.FindProperty("feminineButton").objectReferenceValue  = femBtn;
-            sSO.FindProperty("shortButton").objectReferenceValue     = shortBtn;
-            sSO.FindProperty("mediumButton").objectReferenceValue    = mediumBtn;
-            sSO.FindProperty("tallButton").objectReferenceValue      = tallBtn;
-
             var skinProp = sSO.FindProperty("skinToneButtons");
             skinProp.arraySize = 6;
             for (int i = 0; i < 6; i++)

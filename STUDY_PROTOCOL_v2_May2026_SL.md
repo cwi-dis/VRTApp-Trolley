@@ -1,6 +1,16 @@
 # STUDY PROTOCOL — VERSION 2
 ## Moral Decision-Making Under Social Influence in Social VR
 
+**Sueyoon Lee (Susie)**
+CWI Amsterdam & TU Delft
+PhD: Designing Virtual Reality Environments for Sociality
+Supervisors: Irene Viola, Pablo Cesar, Alessandro Bozzon, Valeria Pannunzio
+
+Version: 2.0 — May 2026
+Target venue: CHI 2027
+Ethics board: TU Delft HREC
+
+---
 
 ## 1. Study Overview
 
@@ -12,7 +22,7 @@
 | Between-subjects factor | Condition: Solo vs. Paired |
 | Within-subjects factor | Scenario type: Bystander / Driver / Self-harm (3 levels, counterbalanced) |
 | Platform | Social VR with stylised customisable avatars, CWI Amsterdam + TU Delft |
-| Target N | 48 (24 solo; 24 paired — 12 pairs: 3 strangers, 3 colleagues, 3 friends, 3 romantic partners) |
+| Target N | 40 (20 solo; 20 paired — 10 pairs: 5 strangers, 5 close [friends + romantic partners merged]) |
 | Session duration | ~50 minutes |
 | Data storage | CWI only |
 | Target venue | CHI 2027 |
@@ -39,9 +49,11 @@ The Self-harm scenario introduces a theoretically distinct dynamic. Here, the ut
 
 **Diffusion of self-risk (toward inaction):** A partner may function as an implicit bystander — each participant waits for the other to act, reducing self-sacrifice rates in stranger pairs relative to solo.
 
-**Social Baseline Theory (toward action):** Coan and Beckes (2015) propose that the brain's threat-response system is calibrated assuming social access. When a trusted partner is present, perceived threat cost decreases. For close pairs (friends, romantic partners), the partner's presence may reduce the experienced cost of self-sacrifice, making it psychologically more accessible. Colleagues occupy an intermediate position — familiar but not intimate.
+**Social Baseline Theory (toward action):** Coan and Beckes (2015) propose that the brain's threat-response system is calibrated assuming social access. When a trusted partner is present, perceived threat cost decreases. For close pairs (friends, romantic partners), the partner's presence as a co-agent — someone who could also act — may reduce the experienced cost of self-sacrifice, making it psychologically more accessible.
 
-The predicted result is a **crossover interaction by relationship closeness**: stranger and colleague pairs show reduced or equivalent self-sacrifice compared to solo (diffusion dominates); friend and romantic partner pairs show maintained or increased self-sacrifice (social baseline dominates). The four-group design — strangers → colleagues → friends → romantic partners — allows this gradient to be described empirically for the first time. This prediction is novel and untested in the VR moral dilemma literature.
+The predicted result is a **crossover by relationship closeness**: stranger pairs show reduced or equivalent self-sacrifice compared to solo (diffusion dominates); close pairs (friends and romantic partners) show maintained or increased self-sacrifice (social baseline dominates). The two-group design — Strangers vs. Close — allows this contrast to be described empirically for the first time. This prediction is novel and untested in the VR moral dilemma literature.
+
+A secondary phenomenon expected within the paired condition is **moral coordination emergence**: pairs enter scenario 1 as individuals and develop an implicit coordination style by scenario 3. Close pairs are expected to establish coordination faster; stranger pairs may remain more independent throughout. Scenario position (1st / 2nd / 3rd in the counterbalanced sequence) is included as an analysis covariate to capture this arc.
 
 ### 2.4 Methodological Note: Time Window
 
@@ -78,19 +90,17 @@ No mention of moral dilemmas, ethics, trolley problems, or philosophy appears be
 
 ### 4.1 Sample Design
 
-**N = 48 total:**
-- Solo condition: 24 participants (each experiences all three scenarios alone)
-- Paired condition: 24 participants — 12 pairs, recruited across four relationship groups:
+**N = 40 total:**
+- Solo condition: 20 participants (each experiences all three scenarios alone)
+- Paired condition: 20 participants — 10 pairs, recruited across two relationship groups:
 
 | Relationship type | Pairs | Participants | Operational definition |
 |---|---|---|---|
-| Strangers | 3 | 6 | No prior acquaintance |
-| Colleagues | 3 | 6 | Work or study in the same team or department, interact at least several times per week, do not socialise outside of work or study |
-| Friends | 3 | 6 | Know each other for at least 6 months, socialise voluntarily outside of work or study, consider each other a friend |
-| Romantic partners | 3 | 6 | Current romantic relationship |
-| **Total paired** | **12** | **24** | |
+| Strangers | 5 | 10 | No prior acquaintance |
+| Close | 5 | 10 | Current romantic partners, OR know each other for at least 6 months and socialise voluntarily outside of work or study |
+| **Total paired** | **10** | **20** | |
 
-Relationship type is a **qualitative context variable only** — not a statistical independent variable. The four groups provide a typology of dyadic social dynamics across a closeness gradient (strangers → colleagues → friends → romantic partners), described and illustrated qualitatively rather than tested for significance.
+The Close group merges friends and romantic partners — the theoretically relevant distinction for Social Baseline Theory is trusted vs. non-trusted, not the specific form of close relationship. Relationship type is a **qualitative context variable only** — not a statistical independent variable. The two groups provide a Strangers vs. Close contrast described and illustrated qualitatively, and treated as hypothesis-generating for future work.
 
 ### 4.2 Recruitment
 
@@ -98,10 +108,10 @@ Data collection runs across two locations over approximately 6 days:
 
 | Location | Days | Sessions/day | Content |
 |---|---|---|---|
-| CWI Amsterdam | 4 | 6 | Solo sessions; 2 paired sessions (colleagues/friends from CWI network) |
-| TU Delft Design building | 2 | 5 | Paired sessions (strangers recruited on-site; friends and romantic partners pre-scheduled) |
+| CWI Amsterdam | 4 | 5 | Solo sessions (recruited from CWI and TU Delft researcher network) |
+| TU Delft Design building | 2 | 5 | Paired sessions (strangers recruited on-site; close pairs pre-scheduled) |
 
-Solo sessions at CWI are recruited from the CWI and TU Delft researcher network. Strangers at TU Delft are recruited on the day from the Design building. Friends and romantic partner pairs are pre-scheduled before data collection begins — these are the hardest to coordinate and should be confirmed first.
+Solo sessions run entirely at CWI to reduce logistics complexity. Stranger pairs are recruited on the day from the TU Delft Design building. Close pairs (friends and romantic partners) are pre-scheduled before data collection begins — these are the hardest to coordinate and should be confirmed first.
 
 Paired participants must attend simultaneously at the same lab location. Recruitment materials note: *"Pairs may be strangers, colleagues, friends, or romantic partners — all relationship types are welcome."*
 
@@ -114,13 +124,13 @@ A contingency day is reserved for attrition replacements. With 15% expected attr
 
 ### 4.4 Sample Size Justification
 
-For the primary between-subjects comparison (H1: solo vs. paired decision rates per scenario type), N=24 per group provides 80% power to detect a large effect (Cohen's h ≥ 0.64, alpha = .05, two-tailed). For a medium effect (h = 0.5), power is approximately 70%. Equal group sizes (24/24) are statistically optimal for this comparison.
+For the primary between-subjects comparison (H1: solo vs. paired decision rates per scenario type), N=20 per group provides 80% power to detect a large effect (Cohen's h ≥ 0.64, alpha = .05, two-tailed) — h = 0.64 requires n ≈ 20 per group by Cohen's formula. For a medium effect (h = 0.5), power is approximately 62%. Equal group sizes (20/20) are statistically optimal for this comparison.
 
-The large-effect justification is empirically grounded: prior VR moral dilemma studies report consistently large effect sizes — Francis et al. (2016) found a 53–60 percentage point difference in utilitarian choice between text and VR conditions; Niforatos et al. (2020) showed the same direction. Social influence effects on decision-making are expected to be of comparable magnitude. N=48 is consistent with the precedent of prior accepted VR studies in this paradigm (Miller, 2019).
+The large-effect justification is empirically grounded: prior VR moral dilemma studies report consistently large effect sizes — Francis et al. (2016) found a 53–60 percentage point difference in utilitarian choice between text and VR conditions; Niforatos et al. (2020) showed the same direction. Social influence effects on decision-making are expected to be of comparable magnitude. N=40 is consistent with the precedent of prior accepted VR studies in this paradigm (Miller, 2019) and reflects the practical recruitment constraint of 6 data collection days.
 
 The within-subjects structure (3 scenarios per participant) increases precision for within-person contrasts — H2a/H2b and decision latency — without inflating the between-subjects comparison. Mixed-effects logistic regression is the primary analysis approach, correctly accounting for the repeated-measures structure.
 
-Plan for up to 15% attrition (~7 participants); participants who cannot complete all three scenarios are replaced.
+Plan for up to 15% attrition (~6 participants); participants who cannot complete all three scenarios are replaced.
 
 ---
 
@@ -173,7 +183,7 @@ Adapted directly from Miller's (2019) driving simulator paradigm. Miller found t
 
 **Paired condition — Self-harm design note:**
 
-Both participants are passengers in the same vehicle. One participant has access to the steering control (counterbalanced across scenarios); the other is present as social co-presence but cannot physically act. This asymmetric design preserves the single shared action point while making the Social Baseline Theory prediction directly testable: does the non-controlling partner's presence affect the controlling partner's willingness to sacrifice themselves?
+Both participants are passengers in the same vehicle. Either participant can press the steering control — the first action registers as the pair's decision (same "first press wins" mechanic as Bystander and Driver). This symmetric design preserves full shared agency: both participants are simultaneously potential actors, which is the correct condition for Social Baseline Theory's load-sharing prediction. The question is whether a trusted partner's co-presence as a fellow potential actor reduces the perceived cost of self-sacrifice relative to deciding alone.
 
 ### 5.3 Victim Identity
 
@@ -266,7 +276,7 @@ Each scenario follows an identical five-sub-phase structure. Scenario order is c
 
 **Sub-phase A: Stage Setting and Voiceover (~60 seconds)**
 
-The scene loads. Ambient sounds play: railway noise, distant train, environmental context. The situation is visible before the voiceover begins — participants orient to the scene. Voiceover plays (~25 seconds, maximum 3 sentences). After the voiceover, the hazard appears in the far distance, approaching naturally. Sound and visual scale increase continuously. A visible countdown timer is displayed in-HUD during the decision window, showing remaining seconds and turning red during the final two seconds. The escalating train approach and the countdown together create time pressure while making the decision window explicit for participants.
+The scene loads. Ambient sounds play: railway noise, distant train, environmental context. The situation is visible before the voiceover begins — participants orient to the scene. Voiceover plays (~25 seconds, maximum 3 sentences). After the voiceover, the hazard appears in the far distance, approaching naturally. Sound and visual scale increase continuously. **There is no visible countdown timer.** The escalating approach creates urgency without the deliberative cue a visible timer would introduce.
 
 **Rationale:** Abrupt starts reduce ecological validity (Miller, 2019). Stage setting ensures participants are fully situated before the critical window opens.
 
@@ -362,6 +372,7 @@ Themes are ordered by priority. **Priority 1** (always ask, ~7 min): cover all r
 | Omission tendency | *"Did you consider not acting at all? What made you stay or change your mind?"* | All |
 | (Paired) Mutual influence | *"Did you and your partner discuss what to do? Who spoke first? Did the other person affect your decision?"* | Paired |
 | (Paired) Comparative experience | *"What would have felt different doing this alone? Did their presence change how you experienced the scenarios?"* | Paired |
+| (Paired) Coordination evolution | *"Did your approach change across the three scenarios — did you feel more like a team by the end?"* | Paired |
 
 **Priority 2 — If time allows:**
 
@@ -471,12 +482,12 @@ For the Bystander and Driver conditions, paired participants will show higher ut
 
 ### H2b — Self-Harm Condition Shows Relationship-Modulated Pattern (Exploratory)
 
-In the Self-harm condition, the direction of the social influence effect is predicted to depend on relationship closeness — producing a crossover pattern across relationship types:
+In the Self-harm condition, the direction of the social influence effect is predicted to depend on relationship closeness — producing a crossover pattern:
 
 - **Stranger pairs:** Reduced or equivalent self-sacrifice relative to solo. Each participant may wait for the other to act (diffusion of self-risk; implicit bystander effect).
-- **Friend and romantic partner pairs:** Maintained or increased self-sacrifice relative to solo. A trusted partner reduces the perceived threat cost of self-harm (Social Baseline Theory; Coan & Beckes, 2015).
+- **Close pairs (friends and romantic partners):** Maintained or increased self-sacrifice relative to solo. A trusted partner's co-presence as a fellow potential actor reduces the perceived threat cost of self-harm (Social Baseline Theory; Coan & Beckes, 2015).
 
-*This is an exploratory, descriptive prediction. With N=3–4 pairs per relationship group, statistical testing is not possible. The finding generates an empirical typology of dyadic self-sacrifice decisions — the first such typology in VR moral dilemma research — and is treated as hypothesis-generating for future work.*
+*This is an exploratory, descriptive prediction. With N=5 pairs per group, statistical testing is not appropriate. The finding generates the first empirical comparison of dyadic self-sacrifice decisions by relationship closeness in VR moral dilemma research — treated as hypothesis-generating for future work. Quantitative decision rates provide directional context; the primary contribution is qualitative, characterising how stranger vs. close pairs navigate shared self-sacrifice decisions through verbal negotiation, role emergence, and coordination dynamics.*
 
 ---
 
@@ -514,7 +525,9 @@ Within each condition (solo, paired), McNemar's test compares decision rates acr
 
 **H2b — Self-Harm Typology (Exploratory, Descriptive Only)**
 
-No inferential tests. Report decision rates per relationship group (stranger / colleague / friend / romantic partner) with exact counts and proportions. Relationship duration (in months, for colleagues, friends, and romantic partners) is reported as contextual information. Use the qualitative layer — verbal reflections, interview themes — to explain the observed pattern. Present as a cross-case typology across the closeness gradient, not a statistical comparison.
+No inferential tests. Report decision rates per group (Strangers / Close) with exact counts and proportions. Scenario position (1st / 2nd / 3rd in counterbalanced order) is included as a covariate — expected to reflect moral coordination emergence, with decision rates and conversation patterns shifting as pairs develop a shared approach across scenarios. Relationship duration (in months, for close pairs) is reported as contextual information. Use the qualitative layer — approach-phase in-scenario audio, verbal reflections, interview themes — to explain the observed pattern. Present as a cross-case typology contrasting Strangers vs. Close, not a statistical comparison.
+
+**Moral coordination emergence analysis:** Using the approach-phase audio (scene load to critical window), characterise whether and how pairs verbalise coordination across the three scenarios. Expected pattern: close pairs establish implicit roles by scenario 2; stranger pairs remain more independent. This is a secondary qualitative finding reported alongside H2b.
 
 **H3 — Partner Influence, Agency, Satisfaction**
 
@@ -649,6 +662,14 @@ All audio is recorded throughout the session:
 | Unity technical spec | Not specified | **New section — shared object synchronisation, logging requirements, competition definition** |
 | Self-harm paired design | Not specified | **Asymmetric: one participant controls, other is co-present** |
 | Sentiment analysis | Not included | **Added to voice analysis pipeline** |
+| Sample size | N=48 (24 solo + 24 paired = 12 pairs) | **N=40 (20 solo + 20 paired = 10 pairs)** — power for h≥0.64 maintained at N=20/group |
+| Relationship groups | 4 groups (strangers / colleagues / friends / romantic partners, 3 pairs each) | **2 groups (Strangers vs. Close, 5 pairs each)** — Close merges friends + romantic; colleagues dropped; contrast maps directly onto SBT trusted/non-trusted distinction |
+| Self-harm paired design | Asymmetric — one participant controls, other is co-present but cannot act | **Symmetric — either participant can act; first press wins** — restores full shared agency required by SBT load-sharing prediction |
+| H2b framing | Empirical typology across 4-group gradient | **Strangers vs. Close qualitative contrast** — quantitative rates as context; primary contribution is verbal negotiation and coordination emergence |
+| Scenario position | Not included | **Added as analysis covariate** — captures moral coordination emergence arc across scenarios 1→3 |
+| Interview | Priority 1: 6 themes | **Added: coordination evolution question** — "Did your approach change across the three scenarios — did you feel more like a team by the end?" |
+| SBT section | Colleagues as intermediate position | **Removed** — 2-group design makes intermediate category unnecessary |
+| Moral coordination emergence | Not included | **Added as secondary qualitative finding** — approach-phase audio used to characterise how stranger vs. close pairs develop shared decision style across scenarios |
 
 ---
 

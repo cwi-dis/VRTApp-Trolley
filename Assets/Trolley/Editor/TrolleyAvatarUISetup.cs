@@ -101,16 +101,6 @@ namespace VRT.Pilots.Trolley.Editor
                     new Vector2(x0, 0.50f), new Vector2(x0 + 0.093f, 0.60f));
             }
 
-            // ── Height ────────────────────────────────────────────────────────
-            MakeLabel("HeightLabel", panel, "Height",
-                new Vector2(0.02f, 0.37f), new Vector2(0.35f, 0.47f), 24);
-            var shortBtn  = MakeButton("ShortButton",  panel, "Short",
-                new Vector2(0.36f, 0.37f), new Vector2(0.55f, 0.47f));
-            var mediumBtn = MakeButton("MediumButton", panel, "Medium",
-                new Vector2(0.57f, 0.37f), new Vector2(0.76f, 0.47f));
-            var tallBtn   = MakeButton("TallButton",   panel, "Tall",
-                new Vector2(0.78f, 0.37f), new Vector2(0.96f, 0.47f));
-
             // ── Wire AvatarSelector ───────────────────────────────────────────
             var avatarSelectorGO = GameObject.Find("AvatarSelector");
             if (avatarSelectorGO == null)
@@ -131,10 +121,6 @@ namespace VRT.Pilots.Trolley.Editor
                     so.FindProperty("selectionPanel").objectReferenceValue    = panel;
                     so.FindProperty("masculineButton").objectReferenceValue   = mascBtn;
                     so.FindProperty("feminineButton").objectReferenceValue    = femBtn;
-                    so.FindProperty("shortButton").objectReferenceValue       = shortBtn;
-                    so.FindProperty("mediumButton").objectReferenceValue      = mediumBtn;
-                    so.FindProperty("tallButton").objectReferenceValue        = tallBtn;
-
                     var skinProp = so.FindProperty("skinToneButtons");
                     skinProp.arraySize = 6;
                     for (int i = 0; i < 6; i++)
