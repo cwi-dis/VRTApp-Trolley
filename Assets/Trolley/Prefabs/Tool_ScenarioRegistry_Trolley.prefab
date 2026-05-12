@@ -126,7 +126,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[8].scenarioName
-      value: TrolleyAvatar
+      value: TrolleyAvatarSetup
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[0].scenarioSceneName
@@ -162,7 +162,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[8].scenarioSceneName
-      value: TrolleyAvatar
+      value: TrolleyAvatarSetup
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[0].scenarioDescription
@@ -198,7 +198,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[8].scenarioDescription
-      value: TrolleyAvatar
+      value: TrolleyAvatarSetup
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
