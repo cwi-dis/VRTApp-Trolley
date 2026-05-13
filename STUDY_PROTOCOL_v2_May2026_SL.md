@@ -57,7 +57,9 @@ A secondary phenomenon expected within the paired condition is **moral coordinat
 
 ### 2.4 Methodological Note: Time Window
 
-The 3–5 second critical decision window serves both ecological validity and methodological function. Dual process theory (Evans & Stanovich, 2013) predicts that time pressure below approximately five seconds suppresses deliberative reasoning and exposes intuitive moral responses. Miller's (2019) preliminary study validated this empirically: 8 seconds produced fixed strategies; 3–4 seconds produced naturalistic responses. The window is timed from critical proximity — not scene start — giving participants full situational context before the pressure begins.
+The 8-second critical decision window serves both ecological validity and methodological function. Dual process theory (Evans & Stanovich, 2013) predicts that time pressure suppresses deliberative reasoning and exposes intuitive moral responses. Suter and Hertwig (2011) found no statistically significant difference in moral decision outcomes between 4-second and 8-second windows — both produce the same pattern of intuitive responding. Miller's (2019) preliminary study corroborated this directly: no significant difference in decision outcomes across 1-second, 4-second, and 8-second conditions. Eight seconds is therefore the upper bound of the suppressed-deliberation zone, not outside it.
+
+For the paired condition, 8 seconds is the deliberate choice: it allows approximately one brief verbal utterance without enabling a deliberative conversation. This captures in-window social coordination dynamics — who speaks first, who acts, who defers — that are a primary qualitative interest of this study. Solo participants remain within the same suppressed-deliberation regime as empirically established. The window is timed from critical proximity — not scene start — giving participants full situational context before the pressure begins.
 
 ### 2.5 Research Contributions
 
@@ -282,9 +284,9 @@ The scene loads. Ambient sounds play: railway noise, distant train, environmenta
 
 ---
 
-**Sub-phase B: Critical Decision Window (3–5 seconds)**
+**Sub-phase B: Critical Decision Window (8 seconds)**
 
-The hazard reaches critical proximity. The action point becomes urgent. This is the only window in which intervention is physically possible. Miller's (2019) preliminary study confirmed that 3–4 seconds suppresses deliberative reasoning and social desirability responding; 8 seconds was too long.
+The hazard reaches critical proximity. The action point becomes urgent. This is the only window in which intervention is physically possible. Eight seconds falls within the empirically validated suppressed-deliberation zone — Suter and Hertwig (2011) and Miller (2019) both found no significant difference in decision outcomes across 4-second and 8-second windows. In the paired condition, 8 seconds allows approximately one brief verbal utterance, capturing in-window coordination dynamics without enabling deliberative conversation.
 
 *Solo condition:* Participant acts or does not act independently.
 
@@ -313,13 +315,14 @@ For the paired condition, participants are teleported to **separate private virt
 | 1 | I felt in control of the decision I made. | Perceived agency | All |
 | 2 | I felt personally responsible for the outcome. | Perceived responsibility | All |
 | 3 | I am satisfied with the decision I made. | Decision satisfaction | All |
-| 4 | I carefully considered the consequences before deciding. | Consequence consideration | All |
+| 4 | I acted on instinct rather than deliberation. | Dual-process activation (System 1 vs. System 2) | All |
 | 5 | The time pressure significantly affected my decision. | Time pressure sensitivity | All |
-| 6 | I considered not acting at all. | Omission tendency | All |
+| 6 | I considered not acting at all. | Omission tendency (CNI I-parameter proxy) | All |
 | 7 | This situation felt real to me. | Ecological validity check | All |
 | 8 | My partner influenced my decision. | Perceived partner influence | Paired only |
 | 9 | I was aware of my partner's presence during the decision. | Per-scenario social presence proxy | Paired only |
-| 10 | I felt that my virtual self was in danger. | Threat perception | Self-harm scenario only |
+| 10 | I felt personally at risk during this scenario. | Threat perception | Self-harm scenario only |
+| 11 | My partner's presence made the situation feel less threatening. | SBT threat-reduction mechanism | Paired + Self-harm only |
 
 All items: 5-point Likert (1 = Strongly Disagree, 5 = Strongly Agree).
 
@@ -353,6 +356,7 @@ Headsets are removed. The experimenter checks in: *"How are you feeling? Take a 
 | This experience changed how I feel about my partner. | 5-pt Likert + optional free-text | Paired only |
 | What aspects of the VR environment made you most aware of your partner's presence? | Open-ended | Paired only |
 | At any point during the study, did you suspect its true purpose? If yes, when? | Yes/No + when | All |
+| I would make the same decision again. | 5-pt Likert | All |
 
 The first item is directly relevant to the thesis: does a shared moral dilemma experience in VR affect social bonds? The third item is a cover story effectiveness check.
 
@@ -373,6 +377,7 @@ Themes are ordered by priority. **Priority 1** (always ask, ~7 min): cover all r
 | (Paired) Mutual influence | *"Did you and your partner discuss what to do? Who spoke first? Did the other person affect your decision?"* | Paired |
 | (Paired) Comparative experience | *"What would have felt different doing this alone? Did their presence change how you experienced the scenarios?"* | Paired |
 | (Paired) Coordination evolution | *"Did your approach change across the three scenarios — did you feel more like a team by the end?"* | Paired |
+| (Paired + Self-harm) SBT threat cost | *"Did having your partner there change how much you felt you had to lose in that scenario?"* | Paired — Self-harm only |
 
 **Priority 2 — If time allows:**
 
@@ -430,13 +435,15 @@ Delivered verbally by the experimenter and provided as a written sheet.
 | Perceived agency | 5-pt Likert | ✓ | ✓ | Post-scenario |
 | Perceived responsibility | 5-pt Likert | ✓ | ✓ | Post-scenario |
 | Decision satisfaction | 5-pt Likert | ✓ | ✓ | Post-scenario |
-| Consequence consideration | 5-pt Likert | ✓ | ✓ | Post-scenario |
+| Dual-process activation ("acted on instinct") | 5-pt Likert | ✓ | ✓ | Post-scenario |
 | Time pressure sensitivity | 5-pt Likert | ✓ | ✓ | Post-scenario |
-| Omission tendency | 5-pt Likert | ✓ | ✓ | Post-scenario |
+| Omission tendency (CNI I-parameter proxy) | 5-pt Likert | ✓ | ✓ | Post-scenario |
 | Ecological validity check ("felt real") | 5-pt Likert | ✓ | ✓ | Post-scenario |
 | Perceived partner influence | 5-pt Likert | — | ✓ | Post-scenario |
 | Per-scenario social presence proxy | 5-pt Likert | — | ✓ | Post-scenario |
-| Threat perception | 5-pt Likert | — | ✓ | Self-harm scenario only |
+| Threat perception ("felt personally at risk") | 5-pt Likert | ✓ | ✓ | Self-harm scenario only |
+| SBT threat-reduction ("partner made it feel less threatening") | 5-pt Likert | — | ✓ | Paired + Self-harm only |
+| Moral certainty ("would make the same decision again") | 5-pt Likert | ✓ | ✓ | Post-experiment |
 | ITC-SOPI co-presence (6 items) | 5-pt Likert | — | ✓ | Between scenarios 2–3 |
 | "Close to partner right now" | 7-pt single item | — | ✓ | Between scenarios 2–3 |
 | Experience changed how I feel about partner | 5-pt Likert + free-text | — | ✓ | Post-experiment |
@@ -670,6 +677,12 @@ All audio is recorded throughout the session:
 | Interview | Priority 1: 6 themes | **Added: coordination evolution question** — "Did your approach change across the three scenarios — did you feel more like a team by the end?" |
 | SBT section | Colleagues as intermediate position | **Removed** — 2-group design makes intermediate category unnecessary |
 | Moral coordination emergence | Not included | **Added as secondary qualitative finding** — approach-phase audio used to characterise how stranger vs. close pairs develop shared decision style across scenarios |
+| Critical decision window | 3–5 seconds (Miller, 2019) | **Changed to 8 seconds** — Suter & Hertwig (2011) and Miller (2019) preliminary study both show no significant difference in decision outcomes across 4s and 8s; 8s chosen to allow one brief verbal utterance in paired condition while remaining within suppressed-deliberation zone for solo |
+| Post-scenario item 4 | "I carefully considered the consequences before deciding" (consequence consideration) | **Replaced** with "I acted on instinct rather than deliberation" — directly tests dual-process activation; original item does not discriminate under 3-5s time pressure |
+| Post-scenario item 10 | "I felt that my virtual self was in danger" | **Reworded** to "I felt personally at risk during this scenario" — removes awkward "virtual self" framing |
+| Post-scenario item 11 | Not included | **Added**: "My partner's presence made the situation feel less threatening" (Paired + Self-harm only) — direct SBT threat-reduction mechanism probe; previously absent despite SBT being the core H2b theory |
+| Post-experiment item | 3 items | **Added**: "I would make the same decision again" (all conditions) — moral certainty and regret; triangulates with decision satisfaction |
+| Interview Priority 1 | 7 themes | **Added**: SBT threat cost question — "Did having your partner there change how much you felt you had to lose in that scenario?" (Paired + Self-harm only) |
 
 ---
 
@@ -702,6 +715,8 @@ Navarrete, C.D., McDonald, M.M., Mott, M.L., & Asher, B. (2012). Virtual moralit
 Niforatos, E., Metsis, V., & Langheinrich, M. (2020). Would you do it? Enacting moral dilemmas in virtual reality for understanding ethical decision-making. *CHI 2020.*
 
 Rammstedt, B., & John, O.P. (2007). Measuring personality in one minute or less: A 10-item short version of the Big Five Inventory in English and German. *Journal of Research in Personality*, 41(1), 203–212.
+
+Suter, R.S., & Hertwig, R. (2011). Time and moral judgment. *Cognition*, 119(3), 454–458.
 
 Sütfeld, L.J.R., Gast, R., König, P., & Pipa, G. (2017). Using virtual reality to assess ethical decisions in road traffic scenarios. *Frontiers in Behavioral Neuroscience*, 11, 122.
 

@@ -135,13 +135,74 @@ Full protocol: `protocol.md`
 **STUDY_PROTOCOL_v2_May2026_SL.md:**
 - Corrected timer description: "no visible countdown timer" → accurate description of HUD timer that exists
 
+---
+
+### Day 5 (2026-05-08) — Scene recovery + TrolleySelfharm + questionnaire flow fix
+
+**Context:** Discovered commit c650eb9 (Jack's GraphicRaycaster fix) had re-run setup scripts and wiped all manual Inspector state from 4 scenes. Full recovery + several pending items from Day 4 completed.
+
+**Done:**
+
+**Scene recovery (c650eb9 damage):**
+- Restored TrolleyBystander, TrolleyDriver, TrolleyQuestionnaire, TrolleyAvatarSetup via `git checkout <pre-damage commit> -- <scene>` 
+- Manually reapplied DisableUserMovement prefab override (8-line YAML, fileID 1154743739069929190) to all 4 restored scenes
+
+**DisableUserMovement — all scenario scenes:**
+- Applied to: TrolleyBystander, TrolleyDriver, TrolleyQuestionnaire, TrolleyAvatarSetup
+- TrolleyTutorial excluded (researcher operates UI during setup)
+- Override: `m_Enabled: 1`, `autoDisable: 1` on DisableUserMovement component in P_Self_Player prefab
+
+**TrolleyOptional → TrolleySelfharm rename:**
+- `git mv` TrolleyOptionalSetup.cs → TrolleySelfharmSetup.cs; all references updated across 6 files
+- TrolleyOptional.unity deleted; TrolleySelfharm.unity is new (must run setup script to populate)
+
+**TrolleySelfharmSetup.cs (cliff variant of Driver):**
+- Menu: `Trolley > Wire Selfharm Scene`; ScenePath: `TrolleySelfharm.unity`
+- 5 workers on InactionTrackWorkers (center z=22, spacing 1.2); no action-track workers
+- Cliff geometry: CliffFace brown cube (5×6×2 at 4,2,31) + CliffEdge flat cube (at 4,−1,29)
+- CliffCollisionEffect: dusty brown particle burst; scenarioID: `"selfharm"`
+
+**Avatar swatch blackout bug — fixed (AvatarSelector.cs):**
+- Root cause: `SetHighlight()` overwrote swatch `Image.color` with flat blue/grey, losing original swatch colors permanently
+- Fix: `CaptureColors()` records base colors at `Start()`; `HighlightSwatchGroup()` dims unselected swatches to `base × 0.4f` instead of replacing with a flat color
+
+**TrolleyTutorialSetup.cs:**
+- Removed Male/Female avatar row (avatar selection is in AvatarSetup scene, not Tutorial)
+- All rows shifted up 0.07 to fill gap; OrderLabels/OrderScenes updated to TrolleySelfharm convention
+- Added TrolleyGameState + DataLogger singleton creation — no longer needs manual placement
+
+**QuestionnaireController.cs:**
+- ITC-SOPI moved from after scenario 2 to after all 3 scenarios (`!HasMoreScenarios()`)
+- Selfharm consequence text: "You diverted the train into the cliff, saving the five workers. The impact put your own safety at risk."
+
+**Height selection removed:**
+- `AvatarSelector.cs`: removed shortButton, mediumButton, tallButton, SelectHeight()
+- `TrolleyGameState.cs`: removed AvatarHeight enum and avatarHeight field
+- `AvatarSetupController.cs`, `TrolleyAvatarSetupSceneSetup.cs`, `TrolleyAvatarUISetup.cs`: all height wiring removed
+
+**Committed and pushed** to branch `1-vr2gather-14`.
+
+**Must do in Unity Editor before testing (deadline: 2026-05-15):**
+1. Re-run `Trolley > Wire Tutorial Scene`
+2. Run `Trolley > Wire Selfharm Scene` (new)
+3. Re-run `Trolley > Wire Avatar Setup Scene`
+4. Add `TrolleySelfharm.unity` to Build Settings manually
+5. Recreate `TrolleyQuestions` ScriptableObject (QuestionSet.cs fields changed)
+
+**Must test (deadline: 2026-05-15):**
+- Full flow: Tutorial → AvatarSetup → Scenario → Questionnaire × 3 → ITC-SOPI (paired) → end
+- CSV output: decisions + questionnaire files appear in `Application.persistentDataPath`
+- DisableUserMovement: no locomotion in scenario/questionnaire scenes
+- Swatch selection: original colors preserved; unselected swatches dimmed to 40%
+- TrolleySelfharm: cliff geometry, worker placement, button trigger, particle burst
+
 **Next session starts here:**
-- **Player positions:** Find actual player spawn path in VR2Gather scenes (not `Tool_SceneSetup/Player Initial Locations/Player 1` — that path doesn't exist). Check with other developer or inspect Bystander scene in Unity editor.
-- **TrolleyAvatarSetup in Build Settings:** Add `TrolleyAvatarSetup.unity` to Build Settings after running the Wire Avatar Setup Scene editor tool.
-- **TrolleyQuestions ScriptableObject:** Delete and recreate in Unity — `QuestionSet.cs` now has new question arrays that won't populate in the existing asset.
-- **UI interaction blocker:** Still unresolved — XRRayInteractor missing from VR2Gather player. Ask senior dev before May 14 holiday.
-- **Do NOT re-run old per-scene setup scripts** — manual Inspector assignments (audio clips, AudioSource) would be lost.
-- Wire Driver and SelfHarm scenarios (narration scripts not yet drafted).
+- **BLOCKER (highest priority):** XRRayInteractor missing from VR2Gather player — buttons unclickable in headset. Ask Jack before May 14 holiday.
+- Wire TrolleySelfharm scene narration (draft narration script; assign audio after running setup)
+- Driver narration script not yet drafted
+- Avatar body type prefab swap: not yet implemented (visual only — no functional gap in current flow)
+- Skin/hair color: visual application to avatar mesh not yet implemented
+- Quest build not attempted
 
 ---
 
@@ -201,8 +262,9 @@ Full protocol: `protocol.md`
 | 2 | Wire all 5 scenes + questionnaire UX + bug fixes | ✓ Done |
 | 3 | Narration audio + train timing + fade transitions + raycaster fix | ✓ Done |
 | 4 | Protocol alignment + avatar setup scene + DataLogger/QuestionSet rewrites | ✓ Done |
-| 5 | UI interaction fix + player spawn fix + Driver/SelfHarm scenes + narration | Next |
-| 6 | Quest build + on-device test | — |
-| 7 | Fixes from on-device test | — |
+| 5 | Scene recovery + TrolleySelfharm + swatch fix + questionnaire flow | ✓ Done |
+| 6 | Wire Tutorial/Selfharm/AvatarSetup in editor + test full flow + narration scripts | Next (by 2026-05-15) |
+| 7 | Quest build + on-device test | — |
+| 8 | Fixes from on-device test | — |
 
 Target completion: ~3–4 weeks from 2026-04-30.
