@@ -1,9 +1,9 @@
 {
-    "userName": "sap",
+    "userName": "VRTINY",
     "representation": 1,
     "representation_str": "SimpleAvatar",
     "webcamName": "",
-    "microphoneName": "",
+    "microphoneName": "Headset Microphone (Oculus Virtual Audio Device)",
     "userRepresentationTCPUrl": "",
     "RepresentationPointcloudConfig": {
         "variant": 0,
