@@ -5,8 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
 
-using VRT.Pilots.Common;
-
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
@@ -29,7 +27,7 @@ namespace VRT.Pilots.Trolley.Editor
             new[] { "TrolleySelfharm",  "TrolleyDriver",    "TrolleyBystander" },
         };
 
-        static readonly string[] RelationshipLabels = { "Friend", "Stranger", "Acquaintance", "Partner" };
+        static readonly string[] RelationshipLabels = { "Stranger", "Colleague", "Friend", "Romantic Partner" };
 
         [MenuItem("Trolley/Wire Researcher Setup Scene")]
         public static void WireTutorialScene()
