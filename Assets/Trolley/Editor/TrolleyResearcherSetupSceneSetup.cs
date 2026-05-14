@@ -27,7 +27,7 @@ namespace VRT.Pilots.Trolley.Editor
             new[] { "TrolleySelfharm",  "TrolleyDriver",    "TrolleyBystander" },
         };
 
-        static readonly string[] RelationshipLabels = { "Stranger", "Colleague", "Friend", "Romantic Partner" };
+        static readonly string[] RelationshipLabels = { "Stranger", "Close" };
 
         [MenuItem("Trolley/Wire Researcher Setup Scene")]
         public static void WireTutorialScene()
@@ -94,12 +94,12 @@ namespace VRT.Pilots.Trolley.Editor
 
             CreateLabel("RelLabel", relPanel, "Relationship",
                 new Vector2(0f, 0f), new Vector2(0.26f, 1f), 26);
-            var relButtons = new Button[4];
-            for (int i = 0; i < 4; i++)
+            var relButtons = new Button[2];
+            for (int i = 0; i < 2; i++)
             {
-                float x0 = 0.27f + i * 0.185f;
+                float x0 = 0.27f + i * 0.37f;
                 relButtons[i] = CreateButton($"Rel_{i}", relPanel, RelationshipLabels[i],
-                    new Vector2(x0, 0f), new Vector2(x0 + 0.175f, 1f), 24);
+                    new Vector2(x0, 0f), new Vector2(x0 + 0.35f, 1f), 26);
             }
 
             // ── Row: Scenario order (2 rows of 3) ─────────────────────────────

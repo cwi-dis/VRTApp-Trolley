@@ -62,9 +62,7 @@ namespace VRT.Pilots.Trolley
             var rels = new[]
             {
                 TrolleyGameState.RelationshipType.Stranger,
-                TrolleyGameState.RelationshipType.Colleague,
-                TrolleyGameState.RelationshipType.Friend,
-                TrolleyGameState.RelationshipType.RomanticPartner,
+                TrolleyGameState.RelationshipType.Close,
             };
             for (int i = 0; i < relationshipButtons.Length && i < rels.Length; i++)
             {

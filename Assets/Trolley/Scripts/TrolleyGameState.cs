@@ -11,7 +11,7 @@ namespace VRT.Pilots.Trolley
         public static TrolleyGameState Instance { get; private set; }
 
         public enum Condition { Solo, Paired }
-        public enum RelationshipType { NotApplicable, Stranger, Colleague, Friend, RomanticPartner }
+        public enum RelationshipType { NotApplicable, Stranger, Close }
         public enum AvatarBodyType { Masculine, Feminine }
 
         [Header("Session Config (set by researcher before starting)")]
