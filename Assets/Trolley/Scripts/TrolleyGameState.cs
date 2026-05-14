@@ -33,10 +33,6 @@ namespace VRT.Pilots.Trolley
         public int skinToneIndex = 0;    // 0–5
         public int hairColorIndex = 0;   // 0–5
 
-        [Header("Self-harm Paired Control (counterbalanced per pair)")]
-        [Tooltip("0 = Master player has the action control; 1 = Non-master player has it.")]
-        public int selfHarmControllerSlot = 0;
-
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
         public string lastDecision = "";    // "action" or "inaction"
@@ -61,10 +57,6 @@ namespace VRT.Pilots.Trolley
             currentScenarioIndex = 0;
             lastCompletedScenarioID = "";
         }
-
-        /// <summary>Returns true if the local client controls the shared action in the self-harm scenario.</summary>
-        public bool IsSelfHarmController(bool isMaster) =>
-            (selfHarmControllerSlot == 0) == isMaster;
 
         public string AvatarConfigString() =>
             $"body:{avatarBodyType},skin:{skinToneIndex},hair:{hairColorIndex}";

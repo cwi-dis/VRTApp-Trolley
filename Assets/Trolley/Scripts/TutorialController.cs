@@ -15,9 +15,6 @@ namespace VRT.Pilots.Trolley
         public Button participantPlusButton;
         public TextMeshProUGUI participantDisplay;
 
-        [Header("Avatar")]
-        public AvatarSelector avatarSelector;
-
         [Header("Condition")]
         public Button soloButton;
         public Button pairedButton;

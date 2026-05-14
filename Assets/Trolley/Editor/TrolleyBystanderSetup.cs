@@ -10,8 +10,8 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Run once via menu: Trolley > Wire Bystander Scene
-    /// Populates TrolleyBystander with all required GameObjects, components, and references.
-    /// </summary>
+    /// Same layout as Driver — uses TrolleyButton (XRSimpleInteractable), not a lever.
+    ///</summary>
     public static class TrolleyBystanderSetup
     {
         const string ScenePath = "Assets/Trolley/Scenes/TrolleyBystander.unity";
@@ -28,7 +28,7 @@ namespace VRT.Pilots.Trolley.Editor
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
-                "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers", "Lever" })
+                "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers", "Button", "Lever" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -160,32 +160,27 @@ namespace VRT.Pilots.Trolley.Editor
             SetAnimatorArray(tcSO, "actionTrackWorkers", actionWorkers);
             tcSO.ApplyModifiedProperties();
 
-            // ── Lever ─────────────────────────────────────────────────────────
-            var leverGO = new GameObject("Lever");
-            leverGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            leverGO.transform.position = new Vector3(-1.5f, 0.9f, -0.5f);
+            // ── Button ────────────────────────────────────────────────────────
+            var buttonGO = new GameObject("Button");
+            buttonGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            buttonGO.transform.position = new Vector3(0f, 1.0f, 0.6f);
 
-            var pivotGO = new GameObject("LeverPivot");
-            pivotGO.transform.SetParent(leverGO.transform, false);
+            var buttonMeshGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            buttonMeshGO.name = "ButtonMesh";
+            buttonMeshGO.transform.SetParent(buttonGO.transform, false);
+            buttonMeshGO.transform.localScale = new Vector3(0.12f, 0.04f, 0.12f);
+            buttonMeshGO.transform.localPosition = new Vector3(0f, 0.04f, 0f);
 
-            var meshGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            meshGO.name = "LeverMesh";
-            meshGO.transform.SetParent(pivotGO.transform, false);
-            meshGO.transform.localScale = new Vector3(0.07f, 0.45f, 0.07f);
-            meshGO.transform.localPosition = new Vector3(0f, 0.225f, 0f);
-            Object.DestroyImmediate(meshGO.GetComponent<BoxCollider>());
-            ColorMesh(meshGO, new Color(0.85f, 0.15f, 0.1f));
-
-            var grab = leverGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            var lever = leverGO.AddComponent<TrolleyLever>();
-            SetField(lever, "leverPivot", pivotGO.transform);
+            buttonGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
+            var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
+            SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
 
             // ── Wire TrolleyController ─────────────────────────────────────────
             var cSO = new SerializedObject(controller);
             cSO.FindProperty("narrationPlayer").objectReferenceValue = narrationPlayer;
             cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
             cSO.FindProperty("trainController").objectReferenceValue = trainController;
-            cSO.FindProperty("interactable").objectReferenceValue = lever;
+            cSO.FindProperty("interactable").objectReferenceValue = trolleyButton;
             cSO.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);

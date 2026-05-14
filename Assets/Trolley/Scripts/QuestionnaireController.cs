@@ -146,14 +146,7 @@ namespace VRT.Pilots.Trolley
 
             int offset = questionSet.postScenarioCommon.Length;
             if (_isPaired)
-            {
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
-                offset += questionSet.postScenarioPairedOnly.Length;
-            }
-
-            // Q10: threat perception — self-harm scenario only
-            if (_completedScenario == "selfharm")
-                yield return StartCoroutine(ShowQuestions(questionSet.postScenarioSelfHarmOnly, offset));
 
             // ITC-SOPI co-presence + closeness — paired, after all 3 scenarios
             if (_isPaired && !TrolleyGameState.Instance.HasMoreScenarios())
@@ -241,10 +234,9 @@ namespace VRT.Pilots.Trolley
                     : $"You did not divert the train, and it continued toward the five workers.\n\n{prompt}";
             }
 
-            string control = scenarioID == "driver" ? "button" : "lever";
             return decision == "action"
-                ? $"You pressed the {control}, diverting the train and resulting in one person being harmed.\n\n{prompt}"
-                : $"You did not press the {control}, and the train continued toward the five workers.\n\n{prompt}";
+                ? $"You pressed the button, diverting the train and resulting in one person being harmed.\n\n{prompt}"
+                : $"You did not press the button, and the train continued toward the five workers.\n\n{prompt}";
         }
 
         void StartVoiceRecording()

@@ -126,18 +126,6 @@ namespace VRT.Pilots.Trolley.Editor
                 new Vector2(0.42f, 0.02f), new Vector2(0.98f, 0.1f),
                 bgColor: new Color(0.1f, 0.55f, 0.1f), fontSize: 36);
 
-            // ── AvatarSelector component ──────────────────────────────────────
-            var avatarSelectorGO = new GameObject("AvatarSelector");
-            avatarSelectorGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
-            var avatarSelector = avatarSelectorGO.AddComponent<AvatarSelector>();
-            var playersManager = Object.FindObjectOfType<SessionPlayersManager>();
-            if (playersManager == null)
-                Debug.LogWarning("WireTutorialScene: SessionPlayersManager not found — wire manually.");
-
-            var asSO = new SerializedObject(avatarSelector);
-            asSO.FindProperty("playersManager").objectReferenceValue = playersManager;
-            asSO.ApplyModifiedProperties();
-
             // ── TutorialController ─────────────────────────────────────────────
             var controllerGO = new GameObject("TutorialController");
             controllerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
@@ -147,7 +135,6 @@ namespace VRT.Pilots.Trolley.Editor
             controller.soloButton             = soloBtn;
             controller.pairedButton           = pairedBtn;
             controller.beginStudyButton       = beginBtn;
-            controller.avatarSelector         = avatarSelector;
             controller.relationshipPanel      = relPanel;
             controller.participantMinusButton = minusBtn;
             controller.participantPlusButton  = plusBtn;
@@ -168,31 +155,6 @@ namespace VRT.Pilots.Trolley.Editor
             }
 
             EditorUtility.SetDirty(controller);
-
-            // ── Practice Lever ────────────────────────────────────────────────
-            var practiceLever = new GameObject("PracticeLever");
-            practiceLever.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
-            practiceLever.transform.position = new Vector3(-1.5f, 0.9f, 1f);
-            var leverPivot = new GameObject("LeverPivot");
-            leverPivot.transform.SetParent(practiceLever.transform, false);
-            var leverMesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            leverMesh.name = "LeverMesh";
-            leverMesh.transform.SetParent(leverPivot.transform, false);
-            leverMesh.transform.localScale    = new Vector3(0.07f, 0.45f, 0.07f);
-            leverMesh.transform.localPosition = new Vector3(0f, 0.225f, 0f);
-            Object.DestroyImmediate(leverMesh.GetComponent<BoxCollider>());
-            practiceLever.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-
-            // ── Practice Button ────────────────────────────────────────────────
-            var practiceButton = new GameObject("PracticeButton");
-            practiceButton.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
-            practiceButton.transform.position = new Vector3(1.5f, 0.9f, 1f);
-            var btnMesh = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            btnMesh.name = "ButtonMesh";
-            btnMesh.transform.SetParent(practiceButton.transform, false);
-            btnMesh.transform.localScale    = new Vector3(0.15f, 0.04f, 0.15f);
-            btnMesh.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-            practiceButton.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

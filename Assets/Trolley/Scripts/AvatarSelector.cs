@@ -5,17 +5,15 @@ using VRT.Pilots.Common;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Avatar customisation panel shown at the start of the tutorial.
-    /// Participants select body type, skin tone, hair colour, and height.
-    /// Body type swaps the SelfPlayerPrefab; the other dimensions are logged
-    /// as covariates. Visual application of skin/hair/height requires
-    /// material or blend-shape wiring on the specific avatar prefabs.
+    /// Avatar customisation panel in the AvatarSetup scene.
+    /// Body type swaps the VR2Gather SelfPlayerPrefab; skin tone and hair colour
+    /// are logged as covariates (visual application not yet implemented).
     /// </summary>
     public class AvatarSelector : MonoBehaviour
     {
         [SerializeField] GameObject selectionPanel;
 
-        [Header("Body Type (required — swaps prefab)")]
+        [Header("Body Type")]
         [SerializeField] Button masculineButton;
         [SerializeField] Button feminineButton;
 
@@ -24,10 +22,10 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject feminineSelfPrefab;
 
         [Header("Skin Tone (6 swatches — assign buttons left to right, index 0–5)")]
-        [SerializeField] Button[] skinToneButtons;   // length 6
+        [SerializeField] Button[] skinToneButtons;
 
         [Header("Hair Colour (6 swatches — assign buttons left to right, index 0–5)")]
-        [SerializeField] Button[] hairColorButtons;  // length 6
+        [SerializeField] Button[] hairColorButtons;
 
         [SerializeField] SessionPlayersManager playersManager;
 

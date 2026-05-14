@@ -69,13 +69,7 @@ namespace VRT.Pilots.Trolley
             decisionTimer.OnTimerExpired += OnInaction;
             interactable.OnTriggered += OnLocalActionTriggered;
 
-            // Self-harm asymmetric control: disable interactable for the non-controlling participant.
-            bool isSelfHarm = scenarioID == "selfharm";
-            bool isPaired   = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
-            bool isMaster   = VRTOrchestratorSingleton.Comm.UserIsMaster;
-            bool hasControl = !isSelfHarm || !isPaired || TrolleyGameState.Instance.IsSelfHarmController(isMaster);
             interactable.SetActive(false);
-            if (!hasControl) interactable.enabled = false;
 
             _state = State.Narration;
 

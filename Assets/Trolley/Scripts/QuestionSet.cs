@@ -25,7 +25,7 @@ namespace VRT.Pilots.Trolley
 
         // ── Post-scenario: shown after every scenario, solo and paired ────────
 
-        [Header("Post-scenario — all participants (Q1–Q7)")]
+        [Header("Post-scenario — all participants (Q1–Q7, Q10)")]
         public Question[] postScenarioCommon = new Question[]
         {
             new Question { text = "I felt in control of the decision I made.",
@@ -34,7 +34,7 @@ namespace VRT.Pilots.Trolley
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
             new Question { text = "I am satisfied with the decision I made.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "I carefully considered the consequences before deciding.",
+            new Question { text = "I acted on instinct rather than deliberation.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
             new Question { text = "The time pressure significantly affected my decision.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
@@ -42,25 +42,20 @@ namespace VRT.Pilots.Trolley
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
             new Question { text = "This situation felt real to me.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
+            new Question { text = "I felt personally at risk during this scenario.",
+                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
         };
 
         // ── Post-scenario: paired condition only ──────────────────────────────
 
-        [Header("Post-scenario — paired condition only (Q8–Q9)")]
+        [Header("Post-scenario — paired condition only (Q8–Q9, Q11)")]
         public Question[] postScenarioPairedOnly = new Question[]
         {
             new Question { text = "My partner influenced my decision.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
             new Question { text = "I was aware of my partner's presence during the decision.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-        };
-
-        // ── Post-scenario: self-harm scenario only ────────────────────────────
-
-        [Header("Post-scenario — self-harm scenario only (Q10)")]
-        public Question[] postScenarioSelfHarmOnly = new Question[]
-        {
-            new Question { text = "I felt that my virtual self was in danger.",
+            new Question { text = "My partner's presence made the situation feel less threatening.",
                            scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
         };
 

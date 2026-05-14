@@ -20,8 +20,6 @@ namespace VRT.Pilots.Trolley.Editor
 
         static readonly string[] ScenarioScenes =
         {
-            "Assets/Trolley/Scenes/TrolleyTutorial.unity",
-            "Assets/Trolley/Scenes/TrolleyAvatarSetup.unity",
             "Assets/Trolley/Scenes/TrolleyBystander.unity",
             "Assets/Trolley/Scenes/TrolleyDriver.unity",
             "Assets/Trolley/Scenes/TrolleySelfharm.unity",

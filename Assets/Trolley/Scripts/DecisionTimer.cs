@@ -12,7 +12,7 @@ namespace VRT.Pilots.Trolley
     {
         [SerializeField] TextMeshProUGUI timerText;
         [SerializeField] TextMeshProUGUI statusText;
-        [SerializeField] float duration = 5f;
+        [SerializeField] float duration = 8f;
         [SerializeField] Color normalColor = Color.white;
         [SerializeField] Color urgentColor = Color.red;
         [SerializeField] float urgentThreshold = 2f;
