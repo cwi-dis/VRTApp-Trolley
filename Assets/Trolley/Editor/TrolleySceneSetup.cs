@@ -17,7 +17,7 @@ namespace VRT.Pilots.Trolley.Editor
 
         static readonly string[] SceneNames =
         {
-            "TrolleyTutorial",
+            "TrolleyResearcherSetup",
             "TrolleyBystander",
             "TrolleyDriver",
             "TrolleySelfharm",

@@ -16,7 +16,7 @@ namespace VRT.Pilots.Trolley
 
     /// <summary>
     /// Singleton that writes decision and questionnaire data to CSV.
-    /// Call StartSession() from TutorialController when Begin Study is pressed.
+    /// Call StartSession() from ResearcherSetupController when Begin Study is pressed.
     /// If exportEnabled is false, data is only logged to the console.
     /// </summary>
     public class DataLogger : MonoBehaviour

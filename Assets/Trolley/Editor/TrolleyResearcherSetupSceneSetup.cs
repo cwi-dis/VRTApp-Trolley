@@ -10,13 +10,13 @@ using VRT.Pilots.Common;
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Run once via menu: Trolley > Wire Tutorial Scene
-    /// Single combined researcher canvas: participant #, avatar, condition,
+    /// Run once via menu: Trolley > Wire Researcher Setup Scene
+    /// Single combined researcher canvas: participant #, condition,
     /// relationship (paired only), scenario order, Begin Study.
     /// </summary>
-    public static class TrolleyTutorialSetup
+    public static class TrolleyResearcherSetupSceneSetup
     {
-        const string ScenePath = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string ScenePath = "Assets/Trolley/Scenes/TrolleyResearcherSetup.unity";
 
         static readonly string[] OrderLabels = { "B→D→S", "B→S→D", "D→B→S", "D→S→B", "S→B→D", "S→D→B" };
         static readonly string[][] OrderScenes =
@@ -31,13 +31,13 @@ namespace VRT.Pilots.Trolley.Editor
 
         static readonly string[] RelationshipLabels = { "Friend", "Stranger", "Acquaintance", "Partner" };
 
-        [MenuItem("Trolley/Wire Tutorial Scene")]
+        [MenuItem("Trolley/Wire Researcher Setup Scene")]
         public static void WireTutorialScene()
         {
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
             foreach (string name in new[] {
-                "TutorialController", "AvatarSelector",
+                "ResearcherSetupController", "AvatarSelector",
                 "ResearcherCanvas", "AvatarCanvas",
                 "PracticeLever", "PracticeButton",
                 "TrolleyGameState", "DataLogger" })
@@ -48,18 +48,18 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Persistent singletons ─────────────────────────────────────────
             var gameStateGO = new GameObject("TrolleyGameState");
-            gameStateGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
+            gameStateGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
             gameStateGO.AddComponent<TrolleyGameState>();
 
             var dataLoggerGO = new GameObject("DataLogger");
-            dataLoggerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
+            dataLoggerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
             dataLoggerGO.AddComponent<DataLogger>();
 
             // ── Single combined canvas ─────────────────────────────────────────
             var canvas = BuildCanvas("ResearcherCanvas",
                 position: new Vector3(0f, 1.6f, 2f),
                 size: new Vector2(960f, 860f));
-            canvas.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
+            canvas.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
 
             var panel = CreatePanel("ResearcherPanel", canvas, new Color(0.08f, 0.08f, 0.08f, 0.97f));
 
@@ -126,10 +126,10 @@ namespace VRT.Pilots.Trolley.Editor
                 new Vector2(0.42f, 0.02f), new Vector2(0.98f, 0.1f),
                 bgColor: new Color(0.1f, 0.55f, 0.1f), fontSize: 36);
 
-            // ── TutorialController ─────────────────────────────────────────────
-            var controllerGO = new GameObject("TutorialController");
-            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Tutorial Scene";
-            var controller   = controllerGO.AddComponent<TutorialController>();
+            // ── ResearcherSetupController ─────────────────────────────────────────────
+            var controllerGO = new GameObject("ResearcherSetupController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
+            var controller   = controllerGO.AddComponent<ResearcherSetupController>();
 
             controller.researcherPanel        = panel;
             controller.soloButton             = soloBtn;
@@ -144,10 +144,10 @@ namespace VRT.Pilots.Trolley.Editor
             controller.relationshipButtons    = relButtons;
             controller.orderButtons           = orderButtons;
 
-            controller.scenarioOrders = new TutorialController.ScenarioOrder[6];
+            controller.scenarioOrders = new ResearcherSetupController.ScenarioOrder[6];
             for (int i = 0; i < 6; i++)
             {
-                controller.scenarioOrders[i] = new TutorialController.ScenarioOrder
+                controller.scenarioOrders[i] = new ResearcherSetupController.ScenarioOrder
                 {
                     label  = OrderLabels[i],
                     scenes = (string[])OrderScenes[i].Clone(),
@@ -158,7 +158,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("TrolleyTutorialSetup: TrolleyTutorial scene wired and saved.");
+            Debug.Log("TrolleyResearcherSetupSceneSetup: TrolleyResearcherSetup scene wired and saved.");
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

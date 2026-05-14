@@ -9,12 +9,12 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Run once via menu: Trolley > Wire Avatar Setup Scene
-    /// Duplicates TrolleyTutorial (preserving VR2Gather / XR rig setup),
+    /// Duplicates TrolleyResearcherSetup (preserving VR2Gather / XR rig setup),
     /// strips the researcher UI, and replaces it with the avatar selection canvas.
     /// </summary>
     public static class TrolleyAvatarSetupSceneSetup
     {
-        const string SourceScene = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string SourceScene = "Assets/Trolley/Scenes/TrolleyResearcherSetup.unity";
         const string TargetScene = "Assets/Trolley/Scenes/TrolleyAvatarSetup.unity";
 
         static readonly Color PanelBg     = new Color(0.08f, 0.08f, 0.08f, 0.97f);
@@ -51,7 +51,7 @@ namespace VRT.Pilots.Trolley.Editor
                 if (!copied)
                 {
                     Debug.LogError($"WireAvatarSetupScene: could not copy {SourceScene}. " +
-                                   "Make sure TrolleyTutorial.unity exists.");
+                                   "Make sure TrolleyResearcherSetup.unity exists.");
                     return;
                 }
                 AssetDatabase.Refresh();
@@ -62,7 +62,7 @@ namespace VRT.Pilots.Trolley.Editor
             // ── Strip Tutorial-specific objects ───────────────────────────────
             foreach (string n in new[] {
                 "ResearcherCanvas", "AvatarCanvas",
-                "TutorialController", "AvatarSelector", "AvatarSetupController",
+                "ResearcherSetupController", "AvatarSelector", "AvatarSetupController",
                 "PracticeLever", "PracticeButton" })
             {
                 var go = GameObject.Find(n);

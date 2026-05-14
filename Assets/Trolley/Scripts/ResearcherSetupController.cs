@@ -5,7 +5,7 @@ using TMPro;
 
 namespace VRT.Pilots.Trolley
 {
-    public class TutorialController : MonoBehaviour
+    public class ResearcherSetupController : MonoBehaviour
     {
         [Header("Researcher Panel (root)")]
         public GameObject researcherPanel;
@@ -50,7 +50,7 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             if (TrolleyGameState.Instance == null)
-                Debug.LogError("TutorialController: TrolleyGameState not found.");
+                Debug.LogError("ResearcherSetupController: TrolleyGameState not found.");
 
             participantMinusButton.onClick.AddListener(DecrementParticipant);
             participantPlusButton.onClick.AddListener(IncrementParticipant);

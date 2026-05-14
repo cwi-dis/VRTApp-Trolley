@@ -14,7 +14,7 @@ namespace VRT.Pilots.Trolley.Editor
     /// </summary>
     public static class TrolleyAvatarUISetup
     {
-        const string ScenePath = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string ScenePath = "Assets/Trolley/Scenes/TrolleyResearcherSetup.unity";
 
         // Skin tone swatches (light → dark)
         static readonly Color[] SkinTones =
