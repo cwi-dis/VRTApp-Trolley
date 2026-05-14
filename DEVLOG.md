@@ -206,6 +206,59 @@ Full protocol: `protocol.md`
 
 ---
 
+### Day 6 (2026-05-14) — Avatar Setup scene: two-station layout + material swap
+
+**Context:** Continued avatar setup scene implementation. Protocol fixes from previous sessions now applied; focus was on getting real-time avatar customisation working in the scene.
+
+**Done:**
+
+**Scene renames finalised:**
+- `TrolleyTutorial` → `TrolleyResearcherSetup` (researcher operates this, not participant)
+- `TutorialController` → `ResearcherSetupController`
+- `TrolleyTutorialSetup.cs` → `TrolleyResearcherSetupSceneSetup.cs`
+- Build Settings updated; `TrolleyPlayerPositions.cs` updated to exclude ResearcherSetup and AvatarSetup from auto-position script
+
+**Protocol fixes applied:**
+- `QuestionSet.cs`: Q4 text corrected; Q10 moved to postScenarioCommon; Q11 (partner presence) added to postScenarioPairedOnly; postScenarioSelfHarmOnly removed
+- `QuestionnaireController.cs`: removed selfharm-only block; all scenarios say "button" in consequence text; null guard on DataLogger.Instance
+- `TrolleyController.cs`: removed self-harm asymmetric control block
+- `TrolleyGameState.cs`: removed selfHarmControllerSlot; RelationshipType simplified to `{ NotApplicable, Stranger, Close }`
+- `DecisionTimer.cs`: duration 5s → 8s
+- `ResearcherSetupController.cs`: relationship buttons simplified to Stranger/Close only
+
+**AvatarSetupController.cs — complete rewrite:**
+- Removed all `GameObject.Find()` calls
+- Two-station architecture: `stationARoot`, `selectorA`, `confirmButtonA`, `statusTextA` + B equivalents
+- Solo: only Station A active; Paired: both active
+- In paired: master's confirm button = Station A; non-master = Station B (other disabled)
+- Network sync via `TrolleyAvatarReadyMessage`; master relays to all; both load next scene when both confirmed
+
+**AvatarSelector.cs — material swap approach:**
+- Removed `MaterialPropertyBlock` entirely (was causing serialisation exception)
+- Added `skinToneMaterials[6]` and `hairColorMaterials[6]` SerializedFields
+- `SelectSkinTone` / `SelectHairColor` now call `SwapMaterial` → sets `renderer.sharedMaterial`
+- `Awake()` removed; `_mpb` removed; `_BaseColor` push removed
+
+**TrolleyAvatarSetupSceneSetup.cs — full rewrite:**
+- Single wide canvas (1440×680) with two sub-panels: StationA (left, blue P1 header) and StationB (right, brown P2 header)
+- Each panel: body type buttons, 6 skin swatch buttons, 6 hair swatch buttons, status text, Confirm button
+- `AvatarPreview_A` and `AvatarPreview_B` placeholder GameObjects at (±1.1, 0, 3.2) facing participants
+- `AvatarSelector_A` and `AvatarSelector_B` created and wired via `SerializedObject`
+- `AvatarSetupController` wired with all SerializedField refs
+
+**TrolleyAvatarMaterialsCreate.cs — new Editor script:**
+- Menu: `Trolley > Create Avatar Materials`
+- Creates 6 skin tone mats (Light → Darkest) and 6 hair colour mats (Black → Grey)
+- Clones `M_Lever.mat` via `AssetDatabase.CopyAsset` (avoids Shader.Find null), then clears all inherited textures and sets `_Color` / `_BaseColor`
+- 12 `.mat` files saved to `Assets/Trolley/Materials/`
+
+**Pending (carry to next session):**
+- `skinToneButtons` array on `AvatarSelector_A` is likely empty — swatch button clicks not reaching listener
+- Fix: re-run `Trolley > Wire Avatar Setup Scene`, then reassign avatar previews and renderers manually
+- Avatar body renderers and hair renderers still need assigning in Inspector after FBX hierarchy inspection
+
+---
+
 ## Key Decisions & Patterns
 
 **Network sync pattern (TrolleyController):**
@@ -263,7 +316,8 @@ Full protocol: `protocol.md`
 | 3 | Narration audio + train timing + fade transitions + raycaster fix | ✓ Done |
 | 4 | Protocol alignment + avatar setup scene + DataLogger/QuestionSet rewrites | ✓ Done |
 | 5 | Scene recovery + TrolleySelfharm + swatch fix + questionnaire flow | ✓ Done |
-| 6 | Wire Tutorial/Selfharm/AvatarSetup in editor + test full flow + narration scripts | Next (by 2026-05-15) |
+| 6 | Avatar setup scene: two-station layout, material swap, 12 materials created | ✓ Done |
+| 7 | Fix swatch wiring; wire Selfharm scene; test full flow; narration scripts | Next |
 | 7 | Quest build + on-device test | — |
 | 8 | Fixes from on-device test | — |
 
