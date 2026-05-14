@@ -9,17 +9,22 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Run once via menu: Trolley > Wire Avatar Setup Scene
-    /// Duplicates TrolleyResearcherSetup (preserving VR2Gather / XR rig setup),
-    /// strips the researcher UI, and replaces it with the avatar selection canvas.
+    /// Builds two side-by-side avatar stations on one world-space canvas.
+    /// Station A = P1 / master.  Station B = P2 / non-master (paired only).
+    /// After running, assign masculinePreview / femininePreview / bodyRenderers / hairRenderers
+    /// on each AvatarSelector in the Inspector once FBX models are added under the preview parents.
     /// </summary>
     public static class TrolleyAvatarSetupSceneSetup
     {
         const string SourceScene = "Assets/Trolley/Scenes/TrolleyResearcherSetup.unity";
         const string TargetScene = "Assets/Trolley/Scenes/TrolleyAvatarSetup.unity";
+        const string MenuItem    = "Trolley/Wire Avatar Setup Scene";
 
         static readonly Color PanelBg     = new Color(0.08f, 0.08f, 0.08f, 0.97f);
         static readonly Color BtnColor    = new Color(0.20f, 0.20f, 0.50f);
         static readonly Color ConfirmColor = new Color(0.10f, 0.55f, 0.10f);
+        static readonly Color P1Color     = new Color(0.10f, 0.30f, 0.60f);
+        static readonly Color P2Color     = new Color(0.50f, 0.20f, 0.10f);
 
         static readonly Color[] SkinTones =
         {
@@ -41,17 +46,14 @@ namespace VRT.Pilots.Trolley.Editor
             new Color(0.63f, 0.63f, 0.63f),
         };
 
-        [MenuItem("Trolley/Wire Avatar Setup Scene")]
+        [MenuItem(MenuItem)]
         public static void WireScene()
         {
-            // ── Duplicate Tutorial scene ──────────────────────────────────────
             if (!System.IO.File.Exists(TargetScene))
             {
-                bool copied = AssetDatabase.CopyAsset(SourceScene, TargetScene);
-                if (!copied)
+                if (!AssetDatabase.CopyAsset(SourceScene, TargetScene))
                 {
-                    Debug.LogError($"WireAvatarSetupScene: could not copy {SourceScene}. " +
-                                   "Make sure TrolleyResearcherSetup.unity exists.");
+                    Debug.LogError($"TrolleyAvatarSetupSceneSetup: could not copy {SourceScene}.");
                     return;
                 }
                 AssetDatabase.Refresh();
@@ -59,124 +61,206 @@ namespace VRT.Pilots.Trolley.Editor
 
             var scene = EditorSceneManager.OpenScene(TargetScene, OpenSceneMode.Single);
 
-            // ── Strip Tutorial-specific objects ───────────────────────────────
             foreach (string n in new[] {
-                "ResearcherCanvas", "AvatarCanvas",
-                "ResearcherSetupController", "AvatarSelector", "AvatarSetupController",
+                "ResearcherCanvas", "AvatarCanvas", "AvatarPreviews",
+                "ResearcherSetupController", "AvatarSetupController",
+                "AvatarSelector_A", "AvatarSelector_B",
                 "PracticeLever", "PracticeButton" })
             {
-                var go = GameObject.Find(n);
-                if (go != null) Object.DestroyImmediate(go);
+                var existing = GameObject.Find(n);
+                if (existing != null) Object.DestroyImmediate(existing);
             }
 
-            // ── Avatar canvas ─────────────────────────────────────────────────
-            const string menuItem = "Trolley/Wire Avatar Setup Scene";
-
+            // ── Wide canvas holding both stations ────────────────────────────
             var canvasGO = new GameObject("AvatarCanvas");
-            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var canvas   = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
+            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            canvasGO.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             canvasGO.AddComponent<CanvasScaler>();
             canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             var cRect = canvasGO.GetComponent<RectTransform>();
-            cRect.sizeDelta = new Vector2(700f, 620f);
+            cRect.sizeDelta = new Vector2(1440f, 680f);
             canvasGO.transform.position   = new Vector3(0f, 1.6f, 2f);
             canvasGO.transform.rotation   = Quaternion.Euler(0f, 180f, 0f);
             canvasGO.transform.localScale = Vector3.one * 0.003f;
 
-            var panel = MakePanel("AvatarPanel", canvasGO, PanelBg);
+            // ── Build Station A (left half) ──────────────────────────────────
+            var stationARoot = MakeSubPanel("StationA", canvasGO,
+                new Vector2(0.01f, 0f), new Vector2(0.49f, 1f), PanelBg);
 
-            MakeLabel("Title", panel, "CHOOSE YOUR AVATAR",
-                new Vector2(0f, 0.90f), new Vector2(1f, 1f), 38);
+            Button mascBtnA, femBtnA, confirmBtnA;
+            Button[] skinBtnsA, hairBtnsA;
+            TextMeshProUGUI statusA;
+            BuildStationPanel(stationARoot, "P1", P1Color,
+                out mascBtnA, out femBtnA, out skinBtnsA, out hairBtnsA,
+                out statusA, out confirmBtnA);
+
+            // ── Build Station B (right half) ─────────────────────────────────
+            var stationBRoot = MakeSubPanel("StationB", canvasGO,
+                new Vector2(0.51f, 0f), new Vector2(0.99f, 1f), PanelBg);
+
+            Button mascBtnB, femBtnB, confirmBtnB;
+            Button[] skinBtnsB, hairBtnsB;
+            TextMeshProUGUI statusB;
+            BuildStationPanel(stationBRoot, "P2", P2Color,
+                out mascBtnB, out femBtnB, out skinBtnsB, out hairBtnsB,
+                out statusB, out confirmBtnB);
+
+            // ── Avatar preview placeholder parents ────────────────────────────
+            // Place them in front of each station (facing toward participants).
+            // Add your FBX models as children after running this script.
+            var previewsRoot = new GameObject("AvatarPreviews");
+            previewsRoot.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+
+            var previewA = new GameObject("AvatarPreview_A");
+            previewA.transform.SetParent(previewsRoot.transform, false);
+            previewA.transform.position = new Vector3(-1.1f, 0f, 3.2f);
+            previewA.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // facing participant
+
+            var previewB = new GameObject("AvatarPreview_B");
+            previewB.transform.SetParent(previewsRoot.transform, false);
+            previewB.transform.position = new Vector3(1.1f, 0f, 3.2f);
+            previewB.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
+            // ── AvatarSelector A ──────────────────────────────────────────────
+            var selAGO = new GameObject("AvatarSelector_A");
+            selAGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            var selA = selAGO.AddComponent<AvatarSelector>();
+            WireSelector(selA, mascBtnA, femBtnA, skinBtnsA, hairBtnsA);
+
+            // ── AvatarSelector B ──────────────────────────────────────────────
+            var selBGO = new GameObject("AvatarSelector_B");
+            selBGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            var selB = selBGO.AddComponent<AvatarSelector>();
+            WireSelector(selB, mascBtnB, femBtnB, skinBtnsB, hairBtnsB);
+
+            // ── AvatarSetupController ─────────────────────────────────────────
+            var controllerGO = new GameObject("AvatarSetupController");
+            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            var controller = controllerGO.AddComponent<AvatarSetupController>();
+
+            var cSO = new SerializedObject(controller);
+            cSO.FindProperty("stationARoot").objectReferenceValue = stationARoot;
+            cSO.FindProperty("selectorA").objectReferenceValue    = selA;
+            cSO.FindProperty("confirmButtonA").objectReferenceValue = confirmBtnA;
+            cSO.FindProperty("statusTextA").objectReferenceValue  = statusA;
+            cSO.FindProperty("stationBRoot").objectReferenceValue = stationBRoot;
+            cSO.FindProperty("selectorB").objectReferenceValue    = selB;
+            cSO.FindProperty("confirmButtonB").objectReferenceValue = confirmBtnB;
+            cSO.FindProperty("statusTextB").objectReferenceValue  = statusB;
+            cSO.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(controller);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("TrolleyAvatarSetupSceneSetup: done.\n" +
+                      "TODO: add FBX children under AvatarPreview_A / AvatarPreview_B, " +
+                      "then assign masculinePreview, femininePreview, bodyRenderers, hairRenderers " +
+                      "on AvatarSelector_A and AvatarSelector_B in the Inspector.");
+        }
+
+        // ── Station builder ───────────────────────────────────────────────────
+
+        static void BuildStationPanel(GameObject parent, string playerLabel, Color headerColor,
+            out Button mascBtn, out Button femBtn,
+            out Button[] skinBtns, out Button[] hairBtns,
+            out TextMeshProUGUI statusText, out Button confirmBtn)
+        {
+            // Header bar
+            var header = new GameObject("Header");
+            header.transform.SetParent(parent.transform, false);
+            var hr = header.AddComponent<RectTransform>();
+            hr.anchorMin = new Vector2(0f, 0.90f); hr.anchorMax = Vector2.one;
+            hr.offsetMin = hr.offsetMax = Vector2.zero;
+            header.AddComponent<Image>().color = headerColor;
+            MakeLabel("PlayerLabel", header, playerLabel,
+                Vector2.zero, Vector2.one, 36);
+
+            MakeLabel("Title", parent, "CHOOSE YOUR AVATAR",
+                new Vector2(0.02f, 0.79f), new Vector2(0.98f, 0.89f), 26);
 
             // Body type
-            MakeLabel("BodyLabel", panel, "Body type",
-                new Vector2(0.02f, 0.79f), new Vector2(0.36f, 0.88f), 24);
-            var mascBtn = MakeButton("MasculineButton", panel, "Masculine",
-                new Vector2(0.37f, 0.79f), new Vector2(0.66f, 0.88f));
-            var femBtn  = MakeButton("FeminineButton",  panel, "Feminine",
-                new Vector2(0.68f, 0.79f), new Vector2(0.97f, 0.88f));
+            MakeLabel("BodyLabel", parent, "Body type",
+                new Vector2(0.02f, 0.68f), new Vector2(0.38f, 0.77f), 22);
+            mascBtn = MakeButton($"MasculineButton_{playerLabel}", parent, "Masculine",
+                new Vector2(0.40f, 0.68f), new Vector2(0.69f, 0.77f));
+            femBtn = MakeButton($"FeminineButton_{playerLabel}", parent, "Feminine",
+                new Vector2(0.71f, 0.68f), new Vector2(0.98f, 0.77f));
 
             // Skin tone
-            MakeLabel("SkinLabel", panel, "Skin tone",
-                new Vector2(0.02f, 0.67f), new Vector2(0.36f, 0.76f), 24);
-            var skinBtns = new Button[6];
+            MakeLabel("SkinLabel", parent, "Skin tone",
+                new Vector2(0.02f, 0.56f), new Vector2(0.38f, 0.65f), 22);
+            skinBtns = new Button[6];
             for (int i = 0; i < 6; i++)
             {
-                float x0 = 0.37f + i * 0.103f;
-                skinBtns[i] = MakeSwatch($"SkinTone_{i}", panel, SkinTones[i],
-                    new Vector2(x0, 0.67f), new Vector2(x0 + 0.093f, 0.76f));
+                float x0 = 0.40f + i * 0.098f;
+                skinBtns[i] = MakeSwatch($"SkinTone_{playerLabel}_{i}", parent, SkinTones[i],
+                    new Vector2(x0, 0.56f), new Vector2(x0 + 0.088f, 0.65f));
             }
 
             // Hair colour
-            MakeLabel("HairLabel", panel, "Hair colour",
-                new Vector2(0.02f, 0.55f), new Vector2(0.36f, 0.64f), 24);
-            var hairBtns = new Button[6];
+            MakeLabel("HairLabel", parent, "Hair colour",
+                new Vector2(0.02f, 0.44f), new Vector2(0.38f, 0.53f), 22);
+            hairBtns = new Button[6];
             for (int i = 0; i < 6; i++)
             {
-                float x0 = 0.37f + i * 0.103f;
-                hairBtns[i] = MakeSwatch($"HairColor_{i}", panel, HairColors[i],
-                    new Vector2(x0, 0.55f), new Vector2(x0 + 0.093f, 0.64f));
+                float x0 = 0.40f + i * 0.098f;
+                hairBtns[i] = MakeSwatch($"HairColor_{playerLabel}_{i}", parent, HairColors[i],
+                    new Vector2(x0, 0.44f), new Vector2(x0 + 0.088f, 0.53f));
             }
 
-            // Status + Confirm
-            var statusText = MakeTMPLabel("StatusText", panel,
+            // Status
+            statusText = MakeTMPLabel("StatusText_" + playerLabel, parent,
                 "Customise your avatar, then press Confirm.",
-                new Vector2(0.02f, 0.20f), new Vector2(0.98f, 0.30f), 24);
-            statusText.color     = new Color(0.8f, 0.8f, 0.8f);
+                new Vector2(0.02f, 0.20f), new Vector2(0.98f, 0.30f), 22);
+            statusText.color     = new Color(0.75f, 0.75f, 0.75f);
             statusText.alignment = TextAlignmentOptions.Center;
 
-            var confirmBtn = MakeButton("ConfirmButton", panel, "CONFIRM",
-                new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.17f),
-                fontSize: 34, bgColor: ConfirmColor);
+            // Confirm
+            confirmBtn = MakeButton($"ConfirmButton_{playerLabel}", parent, "CONFIRM",
+                new Vector2(0.15f, 0.05f), new Vector2(0.85f, 0.17f),
+                fontSize: 30, bgColor: ConfirmColor);
+        }
 
-            // ── AvatarSelector ────────────────────────────────────────────────
-            var selectorGO = new GameObject("AvatarSelector");
-            selectorGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var selector   = selectorGO.AddComponent<AvatarSelector>();
+        // ── Selector wiring ───────────────────────────────────────────────────
 
-            var sSO = new SerializedObject(selector);
-            sSO.FindProperty("selectionPanel").objectReferenceValue  = panel;
-            sSO.FindProperty("masculineButton").objectReferenceValue = mascBtn;
-            sSO.FindProperty("feminineButton").objectReferenceValue  = femBtn;
-            var skinProp = sSO.FindProperty("skinToneButtons");
+        static void WireSelector(AvatarSelector selector,
+            Button mascBtn, Button femBtn, Button[] skinBtns, Button[] hairBtns)
+        {
+            var so = new SerializedObject(selector);
+            so.FindProperty("masculineButton").objectReferenceValue = mascBtn;
+            so.FindProperty("feminineButton").objectReferenceValue  = femBtn;
+
+            var skinProp = so.FindProperty("skinToneButtons");
             skinProp.arraySize = 6;
             for (int i = 0; i < 6; i++)
                 skinProp.GetArrayElementAtIndex(i).objectReferenceValue = skinBtns[i];
 
-            var hairProp = sSO.FindProperty("hairColorButtons");
+            var hairProp = so.FindProperty("hairColorButtons");
             hairProp.arraySize = 6;
             for (int i = 0; i < 6; i++)
                 hairProp.GetArrayElementAtIndex(i).objectReferenceValue = hairBtns[i];
 
-            sSO.ApplyModifiedProperties();
-
-            // ── AvatarSetupController ─────────────────────────────────────────
-            var controllerGO = new GameObject("AvatarSetupController");
-            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var controller   = controllerGO.AddComponent<AvatarSetupController>();
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Debug.Log("WireAvatarSetupScene: done. Add TrolleyAvatarSetup to Build Settings.");
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(selector);
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // ── UI helpers ────────────────────────────────────────────────────────
 
-        static GameObject MakePanel(string name, GameObject parent, Color bg)
+        static GameObject MakeSubPanel(string name, GameObject parent,
+            Vector2 anchorMin, Vector2 anchorMax, Color bg)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
             var r = go.AddComponent<RectTransform>();
-            r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one;
+            r.anchorMin = anchorMin; r.anchorMax = anchorMax;
             r.offsetMin = r.offsetMax = Vector2.zero;
             go.AddComponent<Image>().color = bg;
             return go;
         }
 
         static void MakeLabel(string name, GameObject parent, string text,
-                              Vector2 min, Vector2 max, float fontSize)
+            Vector2 min, Vector2 max, float fontSize)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
@@ -186,11 +270,11 @@ namespace VRT.Pilots.Trolley.Editor
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text; tmp.fontSize = fontSize;
             tmp.color = Color.white;
-            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+            tmp.alignment = TextAlignmentOptions.Center;
         }
 
         static TextMeshProUGUI MakeTMPLabel(string name, GameObject parent, string text,
-                                            Vector2 min, Vector2 max, float fontSize)
+            Vector2 min, Vector2 max, float fontSize)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
@@ -204,8 +288,7 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         static Button MakeButton(string name, GameObject parent, string label,
-                                 Vector2 min, Vector2 max,
-                                 float fontSize = 26, Color? bgColor = null)
+            Vector2 min, Vector2 max, float fontSize = 24, Color? bgColor = null)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
@@ -226,7 +309,7 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         static Button MakeSwatch(string name, GameObject parent, Color color,
-                                 Vector2 min, Vector2 max)
+            Vector2 min, Vector2 max)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);

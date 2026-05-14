@@ -279,7 +279,7 @@ namespace VRT.Pilots.Trolley
             {
                 string answer = null;
                 yield return StartCoroutine(ShowSingleQuestion(questions[i], i + indexOffset, a => answer = a));
-                DataLogger.Instance.LogQuestionnaireAnswer(
+                DataLogger.Instance?.LogQuestionnaireAnswer(
                     scenario, i + indexOffset, questions[i].text, answer);
             }
         }

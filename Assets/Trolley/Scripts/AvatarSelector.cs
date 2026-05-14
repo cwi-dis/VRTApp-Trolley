@@ -5,32 +5,47 @@ using VRT.Pilots.Common;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Avatar customisation panel in the AvatarSetup scene.
-    /// Body type swaps the VR2Gather SelfPlayerPrefab; skin tone and hair colour
-    /// are logged as covariates (visual application not yet implemented).
+    /// Avatar customisation for one participant station.
+    /// Body type swaps the visible preview model and the VR2Gather SelfPlayerPrefab.
+    /// Skin tone and hair colour swap sharedMaterial on the assigned renderers in real time.
+    /// Assign skinToneMaterials[6] and hairColorMaterials[6] in the Inspector.
+    /// Assign bodyRenderers and hairRenderers after inspecting the FBX hierarchy.
     /// </summary>
     public class AvatarSelector : MonoBehaviour
     {
-        [SerializeField] GameObject selectionPanel;
-
-        [Header("Body Type")]
+        [Header("Body Type Buttons")]
         [SerializeField] Button masculineButton;
         [SerializeField] Button feminineButton;
 
-        [Header("Avatar Prefabs")]
+        [Header("VR2Gather Prefabs (body type swap on confirm)")]
         [SerializeField] GameObject masculineSelfPrefab;
         [SerializeField] GameObject feminineSelfPrefab;
-
-        [Header("Skin Tone (6 swatches — assign buttons left to right, index 0–5)")]
-        [SerializeField] Button[] skinToneButtons;
-
-        [Header("Hair Colour (6 swatches — assign buttons left to right, index 0–5)")]
-        [SerializeField] Button[] hairColorButtons;
-
         [SerializeField] SessionPlayersManager playersManager;
 
-        static readonly Color Selected   = new Color(0.1f, 0.6f, 0.1f);
-        static readonly Color Unselected = new Color(0.2f, 0.2f, 0.5f);
+        [Header("Preview Avatar (3D models facing participant)")]
+        [SerializeField] GameObject masculinePreview;
+        [SerializeField] GameObject femininePreview;
+
+        [Header("Preview Renderers — assign after inspecting FBX hierarchy")]
+        [Tooltip("Body mesh renderers from both preview models")]
+        [SerializeField] Renderer[] bodyRenderers;
+        [Tooltip("Hair mesh renderers from both preview models")]
+        [SerializeField] Renderer[] hairRenderers;
+
+        [Header("Skin Tone Materials (index 0–5, lightest to darkest)")]
+        [SerializeField] Material[] skinToneMaterials;
+
+        [Header("Hair Colour Materials (index 0–5)")]
+        [SerializeField] Material[] hairColorMaterials;
+
+        [Header("Skin Tone Swatch Buttons (6 — left to right)")]
+        [SerializeField] Button[] skinToneButtons;
+
+        [Header("Hair Colour Swatch Buttons (6 — left to right)")]
+        [SerializeField] Button[] hairColorButtons;
+
+        static readonly Color Selected      = new Color(0.1f, 0.6f, 0.1f);
+        static readonly Color Unselected    = new Color(0.2f, 0.2f, 0.5f);
         const float SwatchDimFactor = 0.4f;
 
         Color[] _skinToneBaseColors;
@@ -38,9 +53,9 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
-            // Capture swatch base colors before any highlight calls overwrite them
-            _skinToneBaseColors = CaptureColors(skinToneButtons);
+            _skinToneBaseColors  = CaptureColors(skinToneButtons);
             _hairColorBaseColors = CaptureColors(hairColorButtons);
+
             if (masculineButton != null)
                 masculineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine));
             if (feminineButton != null)
@@ -62,7 +77,7 @@ namespace VRT.Pilots.Trolley
                     hairColorButtons[i].onClick.AddListener(() => SelectHairColor(captured));
                 }
 
-            if (selectionPanel != null) selectionPanel.SetActive(true);
+            SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine);
         }
 
         public void SelectBodyType(TrolleyGameState.AvatarBodyType bodyType)
@@ -70,42 +85,59 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance != null)
                 TrolleyGameState.Instance.avatarBodyType = bodyType;
 
-            if (playersManager != null)
-                playersManager.SelfPlayerPrefab =
-                    bodyType == TrolleyGameState.AvatarBodyType.Masculine
-                        ? masculineSelfPrefab
-                        : feminineSelfPrefab;
+            bool isMasc = bodyType == TrolleyGameState.AvatarBodyType.Masculine;
+            if (masculinePreview != null) masculinePreview.SetActive(isMasc);
+            if (femininePreview  != null) femininePreview.SetActive(!isMasc);
 
-            SetHighlight(masculineButton, bodyType == TrolleyGameState.AvatarBodyType.Masculine);
-            SetHighlight(feminineButton,  bodyType == TrolleyGameState.AvatarBodyType.Feminine);
+            if (playersManager != null)
+                playersManager.SelfPlayerPrefab = isMasc ? masculineSelfPrefab : feminineSelfPrefab;
+
+            SetHighlight(masculineButton, isMasc);
+            SetHighlight(feminineButton,  !isMasc);
         }
 
         public void SelectSkinTone(int index)
         {
+            Debug.Log($"[AvatarSelector] SelectSkinTone({index}) — bodyRenderers:{bodyRenderers?.Length} skinToneMaterials:{skinToneMaterials?.Length}");
             if (TrolleyGameState.Instance != null)
                 TrolleyGameState.Instance.skinToneIndex = index;
-
-            // TODO: apply skin tone material to avatar renderer
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
+            SwapMaterial(bodyRenderers, skinToneMaterials, index);
         }
 
         public void SelectHairColor(int index)
         {
             if (TrolleyGameState.Instance != null)
                 TrolleyGameState.Instance.hairColorIndex = index;
-
-            // TODO: apply hair colour material to avatar renderer
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
+            SwapMaterial(hairRenderers, hairColorMaterials, index);
         }
 
-        static void HighlightGroup(Button[] buttons, int selectedIndex)
+        [ContextMenu("Debug: Log Wiring")]
+        void DebugLogWiring()
         {
-            for (int i = 0; i < buttons.Length; i++)
-                SetHighlight(buttons[i], i == selectedIndex);
+            Debug.Log($"[AvatarSelector] skinToneButtons: {skinToneButtons?.Length}, hairColorButtons: {hairColorButtons?.Length}");
+            Debug.Log($"[AvatarSelector] skinToneMaterials: {skinToneMaterials?.Length}, hairColorMaterials: {hairColorMaterials?.Length}");
+            Debug.Log($"[AvatarSelector] bodyRenderers: {bodyRenderers?.Length}, hairRenderers: {hairRenderers?.Length}");
+            if (bodyRenderers != null)
+                foreach (var r in bodyRenderers)
+                    Debug.Log($"  bodyRenderer: {(r != null ? r.gameObject.name : "NULL")} sharedMaterial={r?.sharedMaterial?.name}");
+            if (skinToneMaterials != null)
+                for (int i = 0; i < skinToneMaterials.Length; i++)
+                    Debug.Log($"  skinToneMaterials[{i}]: {(skinToneMaterials[i] != null ? skinToneMaterials[i].name : "NULL")}");
         }
 
-        // For colour swatches: selected = full swatch colour, unselected = dimmed swatch colour.
-        // This preserves the visual identity of each swatch instead of overwriting with a flat colour.
+        static void SwapMaterial(Renderer[] renderers, Material[] materials, int index)
+        {
+            if (renderers == null || materials == null || index >= materials.Length) return;
+            var mat = materials[index];
+            foreach (var r in renderers)
+            {
+                if (r == null || mat == null) continue;
+                r.sharedMaterial = mat;
+            }
+        }
+
         static void HighlightSwatchGroup(Button[] buttons, Color[] baseColors, int selectedIndex)
         {
             if (buttons == null || baseColors == null) return;
@@ -115,12 +147,13 @@ namespace VRT.Pilots.Trolley
                 var img = buttons[i].GetComponent<Image>();
                 if (img == null) continue;
                 Color base_ = i < baseColors.Length ? baseColors[i] : Color.white;
-                img.color = (i == selectedIndex) ? base_ : base_ * SwatchDimFactor;
+                img.color = i == selectedIndex ? base_ : base_ * SwatchDimFactor;
             }
         }
 
         static void SetHighlight(Button btn, bool selected)
         {
+            if (btn == null) return;
             var img = btn.GetComponent<Image>();
             if (img != null) img.color = selected ? Selected : Unselected;
         }

@@ -5,29 +5,44 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using VRT.Orchestrator;
 using VRT.OrchestratorComm;
+
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Controls the avatar customisation scene (Phase 1, Step 3).
-    /// Finds all UI references by GameObject name — no Inspector wiring needed.
-    /// Solo: Confirm immediately loads the first scenario.
-    /// Paired: both must confirm before either proceeds.
+    /// Controls the avatar customisation scene.
+    /// Solo: Station A confirm → immediate scene load.
+    /// Paired: master uses Station A, non-master uses Station B.
+    /// Both must confirm before either proceeds (network sync via TrolleyAvatarReadyMessage).
+    /// Body/skin/hair wiring is handled internally by each AvatarSelector.
     /// </summary>
     public class AvatarSetupController : MonoBehaviour
     {
-        bool _remoteReady = false;
-        bool _isPaired    = false;
+        [Header("Station A — Solo player / Paired P1 (master)")]
+        [SerializeField] GameObject stationARoot;
+        [SerializeField] AvatarSelector selectorA;
+        [SerializeField] Button confirmButtonA;
+        [SerializeField] TextMeshProUGUI statusTextA;
 
-        TextMeshProUGUI _statusText;
+        [Header("Station B — Paired P2 (non-master) only")]
+        [SerializeField] GameObject stationBRoot;
+        [SerializeField] AvatarSelector selectorB;
+        [SerializeField] Button confirmButtonB;
+        [SerializeField] TextMeshProUGUI statusTextB;
+
+        bool _isPaired;
+        bool _localConfirmed;
+        bool _remoteConfirmed;
 
         void Awake()
         {
-            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.AvatarReady, typeof(TrolleyAvatarReadyMessage));
+            if (VRTOrchestratorSingleton.Comm != null)
+                VRTOrchestratorSingleton.Comm.RegisterEventType(
+                    (MessageTypeID)TrolleyMsgID.AvatarReady, typeof(TrolleyAvatarReadyMessage));
         }
 
         void OnEnable()
         {
-            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyAvatarReadyMessage>(OnAvatarReady);
+            VRTOrchestratorSingleton.Comm?.Subscribe<TrolleyAvatarReadyMessage>(OnAvatarReady);
         }
 
         void OnDisable()
@@ -38,67 +53,42 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
-            // Find UI by name
-            _statusText = FindTMP("StatusText");
 
-            var confirmBtn = FindButton("ConfirmButton");
-            if (confirmBtn != null)
-                confirmBtn.onClick.AddListener(OnConfirm);
-
-            WireAvatarSelector();
-            SetStatus("Customise your avatar, then press Confirm.");
-        }
-
-        // ── Avatar selector wiring ─────────────────────────────────────────
-
-        void WireAvatarSelector()
-        {
-            var selector = FindObjectOfType<AvatarSelector>();
-            if (selector == null) return;
-
-            // Body type
-            WireBodyButton(selector, "MasculineButton", TrolleyGameState.AvatarBodyType.Masculine);
-            WireBodyButton(selector, "FeminineButton",  TrolleyGameState.AvatarBodyType.Feminine);
-
-            // Skin tone
-            for (int i = 0; i < 6; i++)
-            {
-                int captured = i;
-                var btn = FindButton($"SkinTone_{i}");
-                if (btn != null)
-                    btn.onClick.AddListener(() => selector.SelectSkinTone(captured));
-            }
-
-            // Hair colour
-            for (int i = 0; i < 6; i++)
-            {
-                int captured = i;
-                var btn = FindButton($"HairColor_{i}");
-                if (btn != null)
-                    btn.onClick.AddListener(() => selector.SelectHairColor(captured));
-            }
-        }
-
-        void WireBodyButton(AvatarSelector selector, string goName, TrolleyGameState.AvatarBodyType type)
-        {
-            var btn = FindButton(goName);
-            if (btn != null) btn.onClick.AddListener(() => selector.SelectBodyType(type));
-        }
-
-        // ── Confirm flow ───────────────────────────────────────────────────
-
-        void OnConfirm()
-        {
-            var confirmBtn = FindButton("ConfirmButton");
-            if (confirmBtn != null) confirmBtn.interactable = false;
+            if (stationBRoot != null) stationBRoot.SetActive(_isPaired);
 
             if (_isPaired && VRTOrchestratorSingleton.Comm != null)
             {
+                bool isMaster = VRTOrchestratorSingleton.Comm.UserIsMaster;
+                // Each player can only confirm their own station
+                if (confirmButtonA != null) confirmButtonA.interactable = isMaster;
+                if (confirmButtonB != null) confirmButtonB.interactable = !isMaster;
+            }
+
+            if (confirmButtonA != null) confirmButtonA.onClick.AddListener(OnLocalConfirm);
+            if (confirmButtonB != null) confirmButtonB.onClick.AddListener(OnLocalConfirm);
+
+            SetStatus(statusTextA, "Customise your avatar, then press Confirm.");
+            if (_isPaired) SetStatus(statusTextB, "Customise your avatar, then press Confirm.");
+        }
+
+        void OnLocalConfirm()
+        {
+            _localConfirmed = true;
+
+            // Disable both confirm buttons so it cannot be pressed again
+            if (confirmButtonA != null) confirmButtonA.interactable = false;
+            if (confirmButtonB != null) confirmButtonB.interactable = false;
+
+            if (_isPaired && VRTOrchestratorSingleton.Comm != null)
+            {
+                SetStatus(statusTextA, "Waiting for partner…");
+                SetStatus(statusTextB, "Waiting for partner…");
+
                 if (VRTOrchestratorSingleton.Comm.UserIsMaster)
                     VRTOrchestratorSingleton.Comm.SendTypeEventToAll(new TrolleyAvatarReadyMessage());
                 else
                     VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(new TrolleyAvatarReadyMessage());
-                SetStatus("Waiting for your partner…");
+
                 StartCoroutine(WaitForPartner());
             }
             else
@@ -109,7 +99,7 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator WaitForPartner()
         {
-            yield return new WaitUntil(() => _remoteReady);
+            yield return new WaitUntil(() => _remoteConfirmed);
             LoadNext();
         }
 
@@ -118,7 +108,7 @@ namespace VRT.Pilots.Trolley
             string next = TrolleyGameState.Instance?.NextScenarioScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogError("AvatarSetupController: no next scene configured.");
+                Debug.LogError("AvatarSetupController: no next scene in TrolleyGameState.");
                 return;
             }
             if (SceneFader.Instance == null)
@@ -126,33 +116,20 @@ namespace VRT.Pilots.Trolley
             SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
         }
 
-        // ── Network ────────────────────────────────────────────────────────
-
         void OnAvatarReady(TrolleyAvatarReadyMessage msg)
         {
+            if (VRTOrchestratorSingleton.Comm == null) return;
+            // Master relays to all so both machines receive it
             if (VRTOrchestratorSingleton.Comm.UserIsMaster)
                 VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
+            // Ignore echoed self-message
             if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
-            _remoteReady = true;
+            _remoteConfirmed = true;
         }
 
-        // ── Helpers ────────────────────────────────────────────────────────
-
-        void SetStatus(string msg)
+        static void SetStatus(TextMeshProUGUI label, string text)
         {
-            if (_statusText != null) _statusText.text = msg;
-        }
-
-        static Button FindButton(string goName)
-        {
-            var go = GameObject.Find(goName);
-            return go != null ? go.GetComponent<Button>() : null;
-        }
-
-        static TextMeshProUGUI FindTMP(string goName)
-        {
-            var go = GameObject.Find(goName);
-            return go != null ? go.GetComponent<TextMeshProUGUI>() : null;
+            if (label != null) label.text = text;
         }
     }
 }
