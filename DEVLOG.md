@@ -206,6 +206,44 @@ Full protocol: `protocol.md`
 
 ---
 
+### Day 7 (2026-05-21) — Bystander scene finishing + Driver scene environment-movement rewrite
+
+**Context:** Continued from Day 6. Finished Bystander scene CCTV monitor layout. Rewrote Driver scene to use environment-movement approach (TrackEnvironment moves toward stationary player) to simulate driver-cab first-person perspective. Multiple console error fixes for solo editor testing.
+
+**Done:**
+
+**TrolleyBystanderSetup.cs — CCTV monitor layout:**
+- 4 RenderTextures + 4 CCTV cameras in 2×2 grid mounted on control room wall
+- Monitor grid derived from manually placed single monitor in scene (position extracted from scene YAML)
+- All container `SetParent` calls use `false` — fixes `(-1000,0,0)` offset bug caused by `worldPositionStays=true` default when parenting to TrackEnvironment at x=1000
+
+**Console error fixes (solo editor testing without VR2Gather backend):**
+- `TrolleyController.cs`: null-safe all `VRTOrchestratorSingleton.Comm` accesses; added `hasSession` guard so `SendTypeEventToAll` is only called when `SelfUser != null`; `DataLogger.Instance?.LogDecision()`
+- `TrainController.cs`: added `modelForwardYaw` field; `TriggerWorkers` now checks animator parameter existence before calling `SetTrigger` — prevents hash-not-found errors
+- `TrolleyController.cs`: `trainController` null check in `BeginNarration()`
+
+**TrolleyDriverSetup.cs — environment-movement rewrite:**
+- `TrackEnvironment` root starts at world `(0,0,60)` and moves toward player at origin — environment slides past as if you're in the cab
+- Workers (`InactionTrackWorkers` ×5, `ActionTrackWorkers` ×1) are children of `TrackEnvironment` at local positions; ride with the environment until the fork
+- Waypoints (`TrackPaths`) are root-level world-space objects — fixed targets for `TrainController`
+- Approach: `z=60 → z=30 → z=0`; Inaction: `z=-20 → z=-50`; Action: `(3,0,-15) → (6,0,-40)`
+- `TrainController.train` = `TrackEnvironment.transform` (no train mesh needed)
+- Setup script reuses existing `TrackEnvironment` instead of destroying it — preserves manually placed track geometry (StraightRail)
+- `OpenScene` skipped if scene already open — prevents reload discarding unsaved manual changes
+- Old root-level `TrainPaths`, `InactionTrackWorkers`, `ActionTrackWorkers` added to cleanup list
+- Approach duration: 76s (half speed from original 38s)
+- GitHub issues #6 (Bystander) and #7 (Driver) updated with progress comments
+
+**Committed and pushed:** `TrolleyDriverSetup.cs`, `TrolleyDriver.unity`, `TrolleyBystander.unity`
+
+**Next session starts here:**
+- Wire SelfHarm scene (replicate Driver environment-movement approach into `TrolleySelfharmSetup.cs`)
+- Draft narration scripts for Driver and SelfHarm scenes
+- Avatar setup swatch wiring fix (carry from Day 6)
+- Quest build + on-device test
+
+---
+
 ### Day 6 (2026-05-14) — Avatar Setup scene: two-station layout + material swap
 
 **Context:** Continued avatar setup scene implementation. Protocol fixes from previous sessions now applied; focus was on getting real-time avatar customisation working in the scene.
@@ -317,8 +355,9 @@ Full protocol: `protocol.md`
 | 4 | Protocol alignment + avatar setup scene + DataLogger/QuestionSet rewrites | ✓ Done |
 | 5 | Scene recovery + TrolleySelfharm + swatch fix + questionnaire flow | ✓ Done |
 | 6 | Avatar setup scene: two-station layout, material swap, 12 materials created | ✓ Done |
-| 7 | Fix swatch wiring; wire Selfharm scene; test full flow; narration scripts | Next |
-| 7 | Quest build + on-device test | — |
-| 8 | Fixes from on-device test | — |
+| 7 | Bystander CCTV monitors; Driver environment-movement rewrite; solo editor fixes | ✓ Done |
+| 8 | Fix swatch wiring; wire Selfharm scene; narration scripts | Next |
+| 9 | Quest build + on-device test | — |
+| 10 | Fixes from on-device test | — |
 
 Target completion: ~3–4 weeks from 2026-04-30.
