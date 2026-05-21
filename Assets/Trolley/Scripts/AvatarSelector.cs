@@ -26,17 +26,17 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject masculinePreview;
         [SerializeField] GameObject femininePreview;
 
-        [Header("Preview Renderers — assign after inspecting FBX hierarchy")]
-        [Tooltip("Body mesh renderers from both preview models")]
-        [SerializeField] Renderer[] bodyRenderers;
-        [Tooltip("Hair mesh renderers from both preview models")]
-        [SerializeField] Renderer[] hairRenderers;
+        [Header("Preview Child Names — Body and Hair mesh object names under each prefab")]
+        [SerializeField] string masculineBodyChild = "Body";
+        [SerializeField] string masculineHairChild = "Hair";
+        [SerializeField] string feminineBodyChild  = "Body";
+        [SerializeField] string feminineHairChild  = "Hair";
 
-        [Header("Skin Tone Materials (index 0–5, lightest to darkest)")]
-        [SerializeField] Material[] skinToneMaterials;
+        [Header("Skin Tone Colors (index 0–5, lightest to darkest)")]
+        [SerializeField] Color[] skinToneColors;
 
-        [Header("Hair Colour Materials (index 0–5)")]
-        [SerializeField] Material[] hairColorMaterials;
+        [Header("Hair Colors (index 0–5)")]
+        [SerializeField] Color[] hairColors;
 
         [Header("Skin Tone Swatch Buttons (6 — left to right)")]
         [SerializeField] Button[] skinToneButtons;
@@ -50,6 +50,9 @@ namespace VRT.Pilots.Trolley
 
         Color[] _skinToneBaseColors;
         Color[] _hairColorBaseColors;
+
+        static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
+        static readonly int ColorID     = Shader.PropertyToID("_Color");
 
         void Start()
         {
@@ -98,11 +101,11 @@ namespace VRT.Pilots.Trolley
 
         public void SelectSkinTone(int index)
         {
-            Debug.Log($"[AvatarSelector] SelectSkinTone({index}) — bodyRenderers:{bodyRenderers?.Length} skinToneMaterials:{skinToneMaterials?.Length}");
             if (TrolleyGameState.Instance != null)
                 TrolleyGameState.Instance.skinToneIndex = index;
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
-            SwapMaterial(bodyRenderers, skinToneMaterials, index);
+            if (index < skinToneColors.Length)
+                TintPreviewChild("Body", skinToneColors[index]);
         }
 
         public void SelectHairColor(int index)
@@ -110,32 +113,46 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance != null)
                 TrolleyGameState.Instance.hairColorIndex = index;
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
-            SwapMaterial(hairRenderers, hairColorMaterials, index);
+            if (index < hairColors.Length)
+                TintPreviewChild("Hair", hairColors[index]);
         }
 
         [ContextMenu("Debug: Log Wiring")]
         void DebugLogWiring()
         {
             Debug.Log($"[AvatarSelector] skinToneButtons: {skinToneButtons?.Length}, hairColorButtons: {hairColorButtons?.Length}");
-            Debug.Log($"[AvatarSelector] skinToneMaterials: {skinToneMaterials?.Length}, hairColorMaterials: {hairColorMaterials?.Length}");
-            Debug.Log($"[AvatarSelector] bodyRenderers: {bodyRenderers?.Length}, hairRenderers: {hairRenderers?.Length}");
-            if (bodyRenderers != null)
-                foreach (var r in bodyRenderers)
-                    Debug.Log($"  bodyRenderer: {(r != null ? r.gameObject.name : "NULL")} sharedMaterial={r?.sharedMaterial?.name}");
-            if (skinToneMaterials != null)
-                for (int i = 0; i < skinToneMaterials.Length; i++)
-                    Debug.Log($"  skinToneMaterials[{i}]: {(skinToneMaterials[i] != null ? skinToneMaterials[i].name : "NULL")}");
+            Debug.Log($"[AvatarSelector] skinToneColors: {skinToneColors?.Length}, hairColors: {hairColors?.Length}");
+            Debug.Log($"[AvatarSelector] masculinePreview: {masculinePreview?.name}, femininePreview: {femininePreview?.name}");
         }
 
-        static void SwapMaterial(Renderer[] renderers, Material[] materials, int index)
+        void TintPreviewChild(string meshType, Color color)
         {
-            if (renderers == null || materials == null || index >= materials.Length) return;
-            var mat = materials[index];
-            foreach (var r in renderers)
-            {
-                if (r == null || mat == null) continue;
-                r.sharedMaterial = mat;
-            }
+            bool isBody = meshType == "Body";
+            TintChild(masculinePreview, isBody ? masculineBodyChild : masculineHairChild, color);
+            TintChild(femininePreview,  isBody ? feminineBodyChild  : feminineHairChild,  color);
+        }
+
+        void TintChild(GameObject root, string childName, Color color)
+        {
+            if (root == null) return;
+            var smr = FindSkinnedMeshRenderer(root, childName);
+            if (smr == null) { Debug.LogWarning($"[AvatarSelector] '{childName}' not found under {root.name}"); return; }
+            var mpb = new MaterialPropertyBlock();
+            smr.GetPropertyBlock(mpb);
+            int propID = smr.sharedMaterial != null && smr.sharedMaterial.HasProperty(BaseColorID)
+                ? BaseColorID : ColorID;
+            mpb.SetColor(propID, color);
+            smr.SetPropertyBlock(mpb);
+        }
+
+        static SkinnedMeshRenderer FindSkinnedMeshRenderer(GameObject root, string childName)
+        {
+            var all = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            foreach (var smr in all)
+                if (smr.gameObject.name == childName) return smr;
+            var names = string.Join(", ", System.Array.ConvertAll(all, s => s.gameObject.name));
+            Debug.LogWarning($"[AvatarSelector] '{childName}' not found under {root.name}. Available: {names}");
+            return null;
         }
 
         static void HighlightSwatchGroup(Button[] buttons, Color[] baseColors, int selectedIndex)

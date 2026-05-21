@@ -84,10 +84,18 @@ namespace VRT.Pilots.Trolley
                 SetStatus(statusTextA, "Waiting for partner…");
                 SetStatus(statusTextB, "Waiting for partner…");
 
+                var state = TrolleyGameState.Instance;
+                var msg = new TrolleyAvatarReadyMessage
+                {
+                    bodyType       = (int)(state?.avatarBodyType ?? TrolleyGameState.AvatarBodyType.Masculine),
+                    skinToneIndex  = state?.skinToneIndex ?? 0,
+                    hairColorIndex = state?.hairColorIndex ?? 0,
+                };
+
                 if (VRTOrchestratorSingleton.Comm.UserIsMaster)
-                    VRTOrchestratorSingleton.Comm.SendTypeEventToAll(new TrolleyAvatarReadyMessage());
+                    VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg);
                 else
-                    VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(new TrolleyAvatarReadyMessage());
+                    VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(msg);
 
                 StartCoroutine(WaitForPartner());
             }
@@ -119,11 +127,18 @@ namespace VRT.Pilots.Trolley
         void OnAvatarReady(TrolleyAvatarReadyMessage msg)
         {
             if (VRTOrchestratorSingleton.Comm == null) return;
-            // Master relays to all so both machines receive it
             if (VRTOrchestratorSingleton.Comm.UserIsMaster)
                 VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
-            // Ignore echoed self-message
             if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
+
+            var state = TrolleyGameState.Instance;
+            if (state != null)
+            {
+                state.remoteAvatarBodyType  = (TrolleyGameState.AvatarBodyType)msg.bodyType;
+                state.remoteSkinToneIndex   = msg.skinToneIndex;
+                state.remoteHairColorIndex  = msg.hairColorIndex;
+            }
+
             _remoteConfirmed = true;
         }
 

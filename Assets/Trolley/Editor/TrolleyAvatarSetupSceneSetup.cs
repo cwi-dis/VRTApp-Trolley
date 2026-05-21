@@ -26,7 +26,8 @@ namespace VRT.Pilots.Trolley.Editor
         static readonly Color P1Color     = new Color(0.10f, 0.30f, 0.60f);
         static readonly Color P2Color     = new Color(0.50f, 0.20f, 0.10f);
 
-        static readonly Color[] SkinTones =
+        // Swatch button colors — shown on the UI, saturated for clarity
+        static readonly Color[] SkinToneSwatches =
         {
             new Color(1.00f, 0.86f, 0.71f),
             new Color(0.91f, 0.73f, 0.60f),
@@ -36,7 +37,19 @@ namespace VRT.Pilots.Trolley.Editor
             new Color(0.23f, 0.12f, 0.10f),
         };
 
-        static readonly Color[] HairColors =
+        // Tint colors — applied to avatar via MaterialPropertyBlock, lighter to preserve texture
+        static readonly Color[] SkinTones =
+        {
+            new Color(1.00f, 1.00f, 1.00f),
+            new Color(1.00f, 0.93f, 0.85f),
+            new Color(1.00f, 0.84f, 0.68f),
+            new Color(0.95f, 0.72f, 0.50f),
+            new Color(0.78f, 0.52f, 0.32f),
+            new Color(0.52f, 0.30f, 0.18f),
+        };
+
+        // Swatch button colors — shown on the UI
+        static readonly Color[] HairColorSwatches =
         {
             new Color(0.10f, 0.10f, 0.10f),
             new Color(0.23f, 0.17f, 0.10f),
@@ -44,6 +57,17 @@ namespace VRT.Pilots.Trolley.Editor
             new Color(0.77f, 0.64f, 0.35f),
             new Color(0.55f, 0.23f, 0.17f),
             new Color(0.63f, 0.63f, 0.63f),
+        };
+
+        // Tint colors — applied to avatar via MaterialPropertyBlock
+        static readonly Color[] HairColors =
+        {
+            new Color(0.20f, 0.20f, 0.20f),
+            new Color(0.42f, 0.30f, 0.18f),
+            new Color(0.65f, 0.48f, 0.28f),
+            new Color(0.92f, 0.78f, 0.48f),
+            new Color(0.75f, 0.35f, 0.25f),
+            new Color(0.75f, 0.75f, 0.75f),
         };
 
         [MenuItem(MenuItem)]
@@ -65,11 +89,31 @@ namespace VRT.Pilots.Trolley.Editor
                 "ResearcherCanvas", "AvatarCanvas", "AvatarPreviews",
                 "ResearcherSetupController", "AvatarSetupController",
                 "AvatarSelector_A", "AvatarSelector_B",
-                "PracticeLever", "PracticeButton" })
+                "PracticeLever", "PracticeButton",
+                "AvatarSetupLight", "AvatarSetupFillLight" })
             {
                 var existing = GameObject.Find(n);
                 if (existing != null) Object.DestroyImmediate(existing);
             }
+
+            // ── Directional lights ────────────────────────────────────────────
+            var lightGO = new GameObject("AvatarSetupLight");
+            lightGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            var light = lightGO.AddComponent<Light>();
+            light.type       = LightType.Directional;
+            light.intensity  = 1.2f;
+            light.color      = new Color(1f, 0.97f, 0.92f);
+            light.lightmapBakeType = LightmapBakeType.Realtime;
+            lightGO.transform.rotation = Quaternion.Euler(50f, 150f, 0f);
+
+            var fillLightGO = new GameObject("AvatarSetupFillLight");
+            fillLightGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
+            var fillLight = fillLightGO.AddComponent<Light>();
+            fillLight.type       = LightType.Directional;
+            fillLight.intensity  = 0.4f;
+            fillLight.color      = new Color(0.85f, 0.90f, 1f);
+            fillLight.lightmapBakeType = LightmapBakeType.Realtime;
+            fillLightGO.transform.rotation = Quaternion.Euler(30f, -30f, 0f);
 
             // ── Wide canvas holding both stations ────────────────────────────
             var canvasGO = new GameObject("AvatarCanvas");
@@ -194,7 +238,7 @@ namespace VRT.Pilots.Trolley.Editor
             for (int i = 0; i < 6; i++)
             {
                 float x0 = 0.40f + i * 0.098f;
-                skinBtns[i] = MakeSwatch($"SkinTone_{playerLabel}_{i}", parent, SkinTones[i],
+                skinBtns[i] = MakeSwatch($"SkinTone_{playerLabel}_{i}", parent, SkinToneSwatches[i],
                     new Vector2(x0, 0.56f), new Vector2(x0 + 0.088f, 0.65f));
             }
 
@@ -205,7 +249,7 @@ namespace VRT.Pilots.Trolley.Editor
             for (int i = 0; i < 6; i++)
             {
                 float x0 = 0.40f + i * 0.098f;
-                hairBtns[i] = MakeSwatch($"HairColor_{playerLabel}_{i}", parent, HairColors[i],
+                hairBtns[i] = MakeSwatch($"HairColor_{playerLabel}_{i}", parent, HairColorSwatches[i],
                     new Vector2(x0, 0.44f), new Vector2(x0 + 0.088f, 0.53f));
             }
 
@@ -231,15 +275,25 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty("masculineButton").objectReferenceValue = mascBtn;
             so.FindProperty("feminineButton").objectReferenceValue  = femBtn;
 
-            var skinProp = so.FindProperty("skinToneButtons");
-            skinProp.arraySize = 6;
+            var skinBtnProp = so.FindProperty("skinToneButtons");
+            skinBtnProp.arraySize = 6;
             for (int i = 0; i < 6; i++)
-                skinProp.GetArrayElementAtIndex(i).objectReferenceValue = skinBtns[i];
+                skinBtnProp.GetArrayElementAtIndex(i).objectReferenceValue = skinBtns[i];
 
-            var hairProp = so.FindProperty("hairColorButtons");
-            hairProp.arraySize = 6;
+            var hairBtnProp = so.FindProperty("hairColorButtons");
+            hairBtnProp.arraySize = 6;
             for (int i = 0; i < 6; i++)
-                hairProp.GetArrayElementAtIndex(i).objectReferenceValue = hairBtns[i];
+                hairBtnProp.GetArrayElementAtIndex(i).objectReferenceValue = hairBtns[i];
+
+            var skinColorProp = so.FindProperty("skinToneColors");
+            skinColorProp.arraySize = SkinTones.Length;
+            for (int i = 0; i < SkinTones.Length; i++)
+                skinColorProp.GetArrayElementAtIndex(i).colorValue = SkinTones[i];
+
+            var hairColorProp = so.FindProperty("hairColors");
+            hairColorProp.arraySize = HairColors.Length;
+            for (int i = 0; i < HairColors.Length; i++)
+                hairColorProp.GetArrayElementAtIndex(i).colorValue = HairColors[i];
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(selector);
