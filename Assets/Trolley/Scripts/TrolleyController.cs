@@ -47,14 +47,16 @@ namespace VRT.Pilots.Trolley
 
         void Awake()
         {
-            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.TimerStart, typeof(TrolleyTimerStartMessage));
-            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.Action,     typeof(TrolleyActionMessage));
+            var comm = VRTOrchestratorSingleton.Comm;
+            if (comm == null) return;
+            comm.RegisterEventType((MessageTypeID)TrolleyMsgID.TimerStart, typeof(TrolleyTimerStartMessage));
+            comm.RegisterEventType((MessageTypeID)TrolleyMsgID.Action,     typeof(TrolleyActionMessage));
         }
 
         void OnEnable()
         {
-            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyTimerStartMessage>(OnTimerStart);
-            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyActionMessage>(OnRemoteAction);
+            VRTOrchestratorSingleton.Comm?.Subscribe<TrolleyTimerStartMessage>(OnTimerStart);
+            VRTOrchestratorSingleton.Comm?.Subscribe<TrolleyActionMessage>(OnRemoteAction);
         }
 
         void OnDisable()
@@ -89,7 +91,8 @@ namespace VRT.Pilots.Trolley
         {
             if (SceneFader.Instance != null)
                 SceneFader.Instance.OnFadeInComplete -= BeginNarration;
-            trainController.StartApproach(narrationPlayer.TotalDuration);
+            if (trainController != null)
+                trainController.StartApproach(narrationPlayer.TotalDuration);
             narrationPlayer.Play();
         }
 
@@ -101,9 +104,12 @@ namespace VRT.Pilots.Trolley
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
             interactable.SetActive(true);
-            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+            var comm = VRTOrchestratorSingleton.Comm;
+            bool hasSession = comm != null && comm.SelfUser != null;
+            if (!hasSession || comm.UserIsMaster)
             {
-                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(new TrolleyTimerStartMessage());
+                // Solo (no session) or network master: own the timer
+                if (hasSession) comm.SendTypeEventToAll(new TrolleyTimerStartMessage());
                 decisionTimer.StartCountdown();
             }
             // non-master starts timer on receipt of TrolleyTimerStartMessage
@@ -114,17 +120,16 @@ namespace VRT.Pilots.Trolley
         void OnLocalActionTriggered()
         {
             if (_state != State.Decision) return;
-            string myId  = VRTOrchestratorSingleton.Comm.SelfUser.userId;
+            var  comm  = VRTOrchestratorSingleton.Comm;
+            string myId  = comm?.SelfUser?.userId ?? "solo";
             long   nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            // Record and broadcast this attempt before applying the decision,
-            // so the remote client can include it in competition detection.
             _interactionAttempts.Add(new InteractionAttempt { participantId = myId, unixMs = nowMs });
             var actionMsg = new TrolleyActionMessage { triggeredByPlayerId = myId, unixMs = nowMs };
-            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
-                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(actionMsg);
+            if (comm == null || comm.UserIsMaster)
+                comm?.SendTypeEventToAll(actionMsg);
             else
-                VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(actionMsg);
+                comm.SendTypeEventToMaster(actionMsg);
             ApplyAction(myId);
         }
 
@@ -159,7 +164,7 @@ namespace VRT.Pilots.Trolley
             trainController.ExecuteAction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
 
-            DataLogger.Instance.LogDecision(
+            DataLogger.Instance?.LogDecision(
                 scenarioID, "action", triggeredByPlayerId, rt,
                 _narrationEndTime, _windowStartTime, windowEndTime,
                 _interactionAttempts, competitionFlag);
@@ -180,7 +185,7 @@ namespace VRT.Pilots.Trolley
             trainController.ExecuteInaction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
 
-            DataLogger.Instance.LogDecision(
+            DataLogger.Instance?.LogDecision(
                 scenarioID, "inaction", "", rt,
                 _narrationEndTime, _windowStartTime, windowEndTime,
                 _interactionAttempts, false);

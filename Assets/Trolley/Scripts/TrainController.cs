@@ -18,6 +18,8 @@ namespace VRT.Pilots.Trolley
         [SerializeField] float trainSpeed = 6f;
         [Tooltip("Seconds the approach path takes. Auto-calculates speed from path length. Set to 0 to use trainSpeed directly.")]
         [SerializeField] float approachDuration = 38f;
+        [Tooltip("Rotate the model to match its visual forward. Set to -90 if the train faces +X, 90 if it faces -X.")]
+        [SerializeField] float modelForwardYaw = 0f;
 
         [Header("Approach path (shared — leads to fork)")]
         [SerializeField] Transform[] approachPath;
@@ -113,7 +115,8 @@ namespace VRT.Pilots.Trolley
                 while (Vector3.Distance(train.position, target) > 0.05f)
                 {
                     Vector3 dir = (target - train.position).normalized;
-                    if (dir != Vector3.zero) train.rotation = Quaternion.LookRotation(dir);
+                    if (dir != Vector3.zero)
+                        train.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(0f, modelForwardYaw, 0f);
                     train.position = Vector3.MoveTowards(
                         train.position, target, trainSpeed * Time.deltaTime);
                     yield return null;
@@ -130,10 +133,14 @@ namespace VRT.Pilots.Trolley
         void TriggerWorkers(Animator[] workers, bool safe)
         {
             if (workers == null) return;
+            int hash = safe ? SafeHash : DangerHash;
             foreach (var w in workers)
             {
                 if (w == null) continue;
-                w.SetTrigger(safe ? SafeHash : DangerHash);
+                foreach (var p in w.parameters)
+                {
+                    if (p.nameHash == hash) { w.SetTrigger(hash); break; }
+                }
             }
         }
     }
