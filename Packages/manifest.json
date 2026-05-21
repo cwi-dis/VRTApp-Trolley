@@ -2,6 +2,7 @@
   "dependencies": {
     "com.itisnajim.socketiounity": "git+https://github.com/troeggla/SocketIOUnity.git#b43e1fa081328eea08f8a7c05c54eba14c97ae22",
     "com.unity.cinemachine": "2.10.5",
+    "com.unity.cloud.gltfast": "6.19.0",
     "com.unity.collab-proxy": "2.11.3",
     "com.unity.feature.development": "1.0.2",
     "com.unity.ide.rider": "3.0.40",
