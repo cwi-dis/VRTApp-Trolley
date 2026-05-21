@@ -28,10 +28,15 @@ namespace VRT.Pilots.Trolley
         public string questionnaireScene = "TrolleyQuestionnaire";
         public string endScene = "VRTLoginManager";
 
-        [Header("Avatar Configuration (set during avatar selection)")]
+        [Header("Local Avatar Configuration (set during avatar selection)")]
         public AvatarBodyType avatarBodyType = AvatarBodyType.Masculine;
         public int skinToneIndex = 0;    // 0–5
         public int hairColorIndex = 0;   // 0–5
+
+        [Header("Remote Avatar Configuration (received from partner on confirm)")]
+        public AvatarBodyType remoteAvatarBodyType = AvatarBodyType.Masculine;
+        public int remoteSkinToneIndex = 0;
+        public int remoteHairColorIndex = 0;
 
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";

@@ -148,10 +148,6 @@ namespace VRT.Pilots.Trolley
             if (_isPaired)
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
 
-            // ITC-SOPI co-presence + closeness — paired, after all 3 scenarios
-            if (_isPaired && !TrolleyGameState.Instance.HasMoreScenarios())
-                yield return StartCoroutine(ShowITCSOPI());
-
             var doneMsg = new TrolleyQuestionnaireDoneMessage();
             if (VRTOrchestratorSingleton.Comm.UserIsMaster)
                 VRTOrchestratorSingleton.Comm.SendTypeEventToAll(doneMsg);
@@ -162,19 +158,11 @@ namespace VRT.Pilots.Trolley
             LoadNextScene();
         }
 
-        IEnumerator ShowITCSOPI()
-        {
-            // Index offset 100 avoids collision with per-scenario question indices in the log.
-            yield return StartCoroutine(ShowQuestions(questionSet.itcSopiItems, 100, "itcsopi"));
-            if (questionSet.closenessItem != null && questionSet.closenessItem.Length > 0)
-                yield return StartCoroutine(ShowQuestions(questionSet.closenessItem, 110, "itcsopi"));
-        }
-
         IEnumerator ShowReflection()
         {
             reflectionPanel.SetActive(true);
             string prompt = BuildConsequenceText(_completedScenario, _lastDecision);
-            if (_isPaired) prompt += "\n\nDid the other person affect your decision? If so, how?";
+            if (_isPaired) prompt += "\nDid another person affect your decision? If so, how?";
             reflectionPromptText.text = prompt;
 
             if (recordButton != null)
@@ -225,7 +213,7 @@ namespace VRT.Pilots.Trolley
 
         string BuildConsequenceText(string scenarioID, string decision)
         {
-            const string prompt = "In a few sentences — what was going through your mind? What did you decide and why?";
+            const string prompt = "Can you explain briefly why you made this decision?";
 
             if (scenarioID == "selfharm")
             {
