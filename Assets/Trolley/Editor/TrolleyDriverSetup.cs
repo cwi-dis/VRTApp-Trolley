@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
 
@@ -10,24 +11,33 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Run once via menu: Trolley > Wire Driver Scene
-    /// Same layout as Bystander but uses TrolleyButton (XRSimpleInteractable) instead of a lever.
+    /// Environment-movement approach: TrackEnvironment moves toward the stationary player,
+    /// simulating the view from inside a moving train cab.
+    /// Workers are children of TrackEnvironment so they ride along until the fork.
+    /// Waypoints are root-level (world-space fixed) so TrainController can steer
+    /// the environment root toward them.
     /// </summary>
     public static class TrolleyDriverSetup
     {
         const string ScenePath = "Assets/Trolley/Scenes/TrolleyDriver.unity";
         const string WorkerFbxPath = "Assets/Trolley/Animations/Ch17_nonPBR.fbx";
         const string WorkerControllerPath = "Assets/Trolley/Animations/WorkerController.controller";
-        const string TrainPrefabPath = "Assets/Polyeler/Simple Train Pack/Prefabs/Train/Train_Type B.prefab";
 
         [MenuItem("Trolley/Wire Driver Scene")]
         public static void WireDriverScene()
         {
-            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            // If the Driver scene is already open and active, use it as-is so that
+            // manually placed objects (e.g. StraightRail) are not lost by a reload.
+            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var scene = (activeScene.IsValid() && activeScene.path == ScenePath)
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
-                "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
-                "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers", "Button" })
+                "TrackPaths", "Button", "SceneDirectionalLight",
+                // legacy names from old setup runs
+                "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -92,66 +102,72 @@ namespace VRT.Pilots.Trolley.Editor
             dtSO.FindProperty("statusText").objectReferenceValue = statusTMP;
             dtSO.ApplyModifiedProperties();
 
-            // ── Train ─────────────────────────────────────────────────────────
-            var trainPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TrainPrefabPath);
-            GameObject trainGO;
-            if (trainPrefab != null)
+            // ── TrackEnvironment ──────────────────────────────────────────────
+            // Reuse the existing TrackEnvironment (with manually placed track/rail
+            // children) rather than destroying it. Just add TrainController on top.
+            var trackEnvGO = GameObject.Find("TrackEnvironment");
+            if (trackEnvGO == null)
             {
-                trainGO = (GameObject)PrefabUtility.InstantiatePrefab(trainPrefab);
-                trainGO.name = "Train_TypeB";
+                trackEnvGO = new GameObject("TrackEnvironment");
+                trackEnvGO.transform.position = new Vector3(0f, 0f, 60f);
+                Debug.LogWarning("WireDriverScene: no TrackEnvironment found — created empty one at (0,0,60). Add track geometry manually.");
             }
-            else
+            if (trackEnvGO.GetComponent<ManagedBySetupScript>() == null)
+                trackEnvGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            var trainController = trackEnvGO.GetComponent<TrainController>()
+                               ?? trackEnvGO.AddComponent<TrainController>();
+
+            // Workers as local children — destroy old groups first so re-runs are idempotent
+            foreach (string wg in new[] { "InactionTrackWorkers", "ActionTrackWorkers" })
             {
-                trainGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                trainGO.name = "Train_TypeB [PLACEHOLDER — assign real prefab]";
-                trainGO.transform.localScale = new Vector3(2f, 1.5f, 5f);
-                Debug.LogWarning("WireDriverScene: Train_Type B prefab not found — created placeholder cube.");
+                var t = trackEnvGO.transform.Find(wg);
+                if (t != null) Object.DestroyImmediate(t.gameObject);
             }
-            trainGO.transform.position = new Vector3(0f, 0f, -15f);
-            trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var trainController = trainGO.AddComponent<TrainController>();
 
-            // ── Train waypoints ────────────────────────────────────────────────
-            var pathsGO = new GameObject("TrainPaths");
-            pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-
-            var approachPathGO = new GameObject("ApproachPath");
-            approachPathGO.transform.SetParent(pathsGO.transform);
-            var approachWPs = CreateWaypoints(approachPathGO,
-                new Vector3(0f, 0f, -8f),
-                new Vector3(0f, 0f, -4f),
-                new Vector3(0f, 0f,  0f));
-
-            var inactionPathGO = new GameObject("InactionPath");
-            inactionPathGO.transform.SetParent(pathsGO.transform);
-            var inactionWPs = CreateWaypoints(inactionPathGO,
-                new Vector3(0f, 0f, 5f),
-                new Vector3(0f, 0f, 20f),
-                new Vector3(0f, 0f, 40f));
-
-            var actionPathGO = new GameObject("ActionPath");
-            actionPathGO.transform.SetParent(pathsGO.transform);
-            var actionWPs = CreateWaypoints(actionPathGO,
-                new Vector3(1f, 0f, 5f),
-                new Vector3(4f, 0f, 15f),
-                new Vector3(4f, 0f, 35f));
-
-            // ── Workers ───────────────────────────────────────────────────────
-            var workerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
+            var workerPrefab     = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
             var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(0f, 0f, 22f), count: 2, spacing: 1.2f, menuItem: menuItem);
+                parent: trackEnvGO.transform,
+                localCenter: new Vector3(0f, 0f, 15f), count: 5, spacing: 1.2f);
+
             var actionWorkers = SpawnWorkers("ActionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(4f, 0f, 17f), count: 2, spacing: 1.2f, menuItem: menuItem);
+                parent: trackEnvGO.transform,
+                localCenter: new Vector3(3f, 0f, 10f), count: 1, spacing: 1.2f);
+
+            // ── Track Paths (root-level, world-space) ─────────────────────────
+            // Waypoints are NOT children of TrackEnvironment — they stay fixed in
+            // world space so TrainController can use them as absolute targets.
+            var pathsGO = new GameObject("TrackPaths");
+            pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+
+            var approachPathGO = new GameObject("ApproachPath");
+            approachPathGO.transform.SetParent(pathsGO.transform, false);
+            var approachWPs = CreateWaypoints(approachPathGO,
+                new Vector3(0f, 0f, 60f),
+                new Vector3(0f, 0f, 30f),
+                new Vector3(0f, 0f,  0f));
+
+            var inactionPathGO = new GameObject("InactionPath");
+            inactionPathGO.transform.SetParent(pathsGO.transform, false);
+            var inactionWPs = CreateWaypoints(inactionPathGO,
+                new Vector3(0f, 0f, -20f),
+                new Vector3(0f, 0f, -50f));
+
+            var actionPathGO = new GameObject("ActionPath");
+            actionPathGO.transform.SetParent(pathsGO.transform, false);
+            var actionWPs = CreateWaypoints(actionPathGO,
+                new Vector3(3f, 0f, -15f),
+                new Vector3(6f, 0f, -40f));
 
             var tcSO = new SerializedObject(trainController);
-            tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
-            SetTransformArray(tcSO, "approachPath", approachWPs);
-            SetTransformArray(tcSO, "inactionPath", inactionWPs);
-            SetTransformArray(tcSO, "actionPath", actionWPs);
-            SetAnimatorArray(tcSO, "inactionTrackWorkers", inactionWorkers);
-            SetAnimatorArray(tcSO, "actionTrackWorkers", actionWorkers);
+            tcSO.FindProperty("train").objectReferenceValue = trackEnvGO.transform;
+            tcSO.FindProperty("approachDuration").floatValue = 76f;
+            SetTransformArray(tcSO, "approachPath",         approachWPs);
+            SetTransformArray(tcSO, "inactionPath",         inactionWPs);
+            SetTransformArray(tcSO, "actionPath",           actionWPs);
+            SetAnimatorArray(tcSO,  "inactionTrackWorkers", inactionWorkers);
+            SetAnimatorArray(tcSO,  "actionTrackWorkers",   actionWorkers);
             tcSO.ApplyModifiedProperties();
 
             // ── Button ────────────────────────────────────────────────────────
@@ -170,12 +186,29 @@ namespace VRT.Pilots.Trolley.Editor
             var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
             SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
 
+            // ── Lighting ──────────────────────────────────────────────────────
+            // Remove any existing directional light added by this script
+            var existingLight = GameObject.Find("SceneDirectionalLight");
+            if (existingLight != null) Object.DestroyImmediate(existingLight);
+
+            var lightGO = new GameObject("SceneDirectionalLight");
+            lightGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            var light = lightGO.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 1.2f;
+            light.color = new Color(1f, 0.95f, 0.85f); // warm daylight
+            lightGO.transform.rotation = Quaternion.Euler(45f, -30f, 0f);
+
+            // Ambient light so shadows aren't pitch black
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.3f, 0.3f, 0.35f);
+
             // ── Wire TrolleyController ─────────────────────────────────────────
             var cSO = new SerializedObject(controller);
-            cSO.FindProperty("narrationPlayer").objectReferenceValue = narrationPlayer;
-            cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
-            cSO.FindProperty("trainController").objectReferenceValue = trainController;
-            cSO.FindProperty("interactable").objectReferenceValue = trolleyButton;
+            cSO.FindProperty("narrationPlayer").objectReferenceValue  = narrationPlayer;
+            cSO.FindProperty("decisionTimer").objectReferenceValue    = decisionTimer;
+            cSO.FindProperty("trainController").objectReferenceValue  = trainController;
+            cSO.FindProperty("interactable").objectReferenceValue     = trolleyButton;
             cSO.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -196,12 +229,13 @@ namespace VRT.Pilots.Trolley.Editor
             return wps;
         }
 
+        // parentTransform: workers are direct children, positioned with localPosition
         static Animator[] SpawnWorkers(string groupName, GameObject prefab,
-            RuntimeAnimatorController animController, Vector3 center, int count, float spacing,
-            string menuItem = null)
+            RuntimeAnimatorController animController, Transform parent,
+            Vector3 localCenter, int count, float spacing)
         {
             var group = new GameObject(groupName);
-            if (menuItem != null) group.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            group.transform.SetParent(parent, false);
             var animators = new Animator[count];
             for (int i = 0; i < count; i++)
             {
@@ -211,12 +245,12 @@ namespace VRT.Pilots.Trolley.Editor
                 else
                 {
                     w = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    Debug.LogWarning($"WireDriverScene: worker prefab not found — created placeholder for {groupName}.");
+                    Debug.LogWarning($"WireDriverScene: worker prefab not found — placeholder for {groupName}.");
                 }
                 w.name = $"Worker_{i + 1}";
-                w.transform.SetParent(group.transform);
+                w.transform.SetParent(group.transform, false);
                 float offset = (i - (count - 1) * 0.5f) * spacing;
-                w.transform.position = center + new Vector3(offset, 0f, 0f);
+                w.transform.localPosition = localCenter + new Vector3(offset, 0f, 0f);
                 var anim = w.GetComponentInChildren<Animator>(true);
                 if (anim == null) anim = w.AddComponent<Animator>();
                 if (animController != null) anim.runtimeAnimatorController = animController;
