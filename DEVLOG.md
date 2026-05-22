@@ -263,6 +263,19 @@ Full protocol: `protocol.md`
 - Added explicit `audioSource.loop = false` before each clip plays
 - Renamed header to "Audio — narration (plays once, no loop)" to distinguish from ambient source
 
+**Also done (same session):**
+
+**TrolleyDriverSetup.cs — rewrite to match new TrainController API:**
+- Replaced `approachPath`/`inactionPath`/`actionPath` waypoint arrays with `StartPoint` (0,0,60) and `EndPoint` (0,0,−60)
+- Removed `approachDuration` — speed now auto-calculated by TrainController (distance ÷ narration + 8s)
+- Removed `inactionTrackWorkers`/`actionTrackWorkers` from TrainController wiring
+- Added ambient AudioSource on TrackEnvironment, wired to `ambientAudioSource`
+- Narration AudioSource: explicit `loop = false`, `playOnAwake = false`
+- Timer display corrected: "5.0" → "8.0"
+- Fixed Unity `??` null-check trap — replaced with explicit `if == null` guards
+- Added `SetSerializedProp` helper with null guard so missing fields warn instead of abort
+- Light creation moved to before TrainController wiring so it survives any later exception
+
 **Next session starts here (Day 9):**
 1. Wire Selfharm scene — run `Trolley > Wire Selfharm Scene`
 2. Fix swatch wiring — re-run Wire Avatar Setup Scene, reassign renderers
