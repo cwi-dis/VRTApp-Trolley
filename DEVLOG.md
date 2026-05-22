@@ -236,11 +236,38 @@ Full protocol: `protocol.md`
 
 **Committed and pushed:** `TrolleyDriverSetup.cs`, `TrolleyDriver.unity`, `TrolleyBystander.unity`
 
-**Next session starts here:**
-- Wire SelfHarm scene (replicate Driver environment-movement approach into `TrolleySelfharmSetup.cs`)
-- Draft narration scripts for Driver and SelfHarm scenes
-- Avatar setup swatch wiring fix (carry from Day 6)
-- Quest build + on-device test
+**Also done (Day 8 continuation):**
+- Added 81-720 Yauza tram GLB (via GLTFast package) as exterior in Driver scene
+- Tram exterior positioned outside front window; interior remains DriverCabShell with control panel adapted
+- Closes "Train_Type B not ideal" blocker
+
+### Day 8 (2026-05-22) — Bystander scene polish + TrainController rewrite
+
+**Done:**
+
+**TrolleyBystander.unity — coordinate cleanup:**
+- Rail coordinates aligned (x=0 main track, Rail.L x=101.6, z values regularised)
+- Monitor y positions fixed (floating-point artifact 1.7281251 → 1.728)
+- Train start position corrected (z=38 → z=−302); all approach waypoints moved to z=392
+- modelForwardYaw set to 180 (train mesh faces −Z)
+- New prefabs added: DivertingRail.prefab, TrackEnvironment.prefab
+
+**TrainController.cs — full rewrite:**
+- Replaced 3-phase approach/wait/branch logic with simple start→end linear movement
+- Fields: `train`, `startPoint`, `endPoint`, `decisionWindowSeconds` (8s), `ambientAudioSource`
+- Speed auto-calculated: distance / (narrationDuration + decisionWindowSeconds)
+- `StartApproach(float narrationDuration)` called by TrolleyController with NarrationPlayer.TotalDuration
+- Ambient audio loops while moving, stops on arrival
+
+**NarrationPlayer.cs — loop fix:**
+- Added explicit `audioSource.loop = false` before each clip plays
+- Renamed header to "Audio — narration (plays once, no loop)" to distinguish from ambient source
+
+**Next session starts here (Day 9):**
+1. Wire Selfharm scene — run `Trolley > Wire Selfharm Scene`
+2. Fix swatch wiring — re-run Wire Avatar Setup Scene, reassign renderers
+3. Draft Driver + Selfharm narration scripts
+4. Quest build + on-device test
 
 ---
 
@@ -341,7 +368,6 @@ Full protocol: `protocol.md`
 - **Driver + SelfHarm scenes** — not yet wired. Run setup scripts, assign audio manually (do NOT re-wire Bystander).
 - **Quest build** — not attempted yet.
 - **Driver scene perspective** — Train_Type B model not ideal for inside-the-cab view; may need rethinking.
-- **Another developer has open branch** — do not commit/push until branch is merged.
 
 ---
 

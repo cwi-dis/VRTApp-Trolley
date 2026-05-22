@@ -10,8 +10,9 @@ namespace VRT.Pilots.Trolley
     /// </summary>
     public class NarrationPlayer : MonoBehaviour
     {
+        [Header("Audio — narration (plays once, no loop)")]
         [SerializeField] AudioSource audioSource;
-        [Tooltip("Narration clips played in order. Assign scenario-specific audio here.")]
+        [Tooltip("Narration clips played in order.")]
         [SerializeField] AudioClip[] clips;
         [Tooltip("Seconds to wait when no clips are assigned (placeholder mode).")]
         [SerializeField] float placeholderDuration = 4f;
@@ -44,6 +45,7 @@ namespace VRT.Pilots.Trolley
             foreach (var clip in clips)
             {
                 if (clip == null) continue;
+                audioSource.loop = false;
                 audioSource.clip = clip;
                 audioSource.Play();
                 yield return new WaitForSeconds(clip.length + 0.2f);

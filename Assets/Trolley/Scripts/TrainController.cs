@@ -3,145 +3,55 @@ using UnityEngine;
 
 namespace VRT.Pilots.Trolley
 {
-    /// <summary>
-    /// Moves the train in three phases:
-    ///   1. Approach  — shared path leading to the fork (starts when narration ends)
-    ///   2. Wait      — holds at fork until a decision is made
-    ///   3. Branch    — follows action or inaction path based on the decision
-    ///
-    /// If approachPath is empty the train starts at the fork immediately.
-    /// </summary>
     public class TrainController : MonoBehaviour
     {
         [Header("Train")]
         [SerializeField] Transform train;
-        [SerializeField] float trainSpeed = 6f;
-        [Tooltip("Seconds the approach path takes. Auto-calculates speed from path length. Set to 0 to use trainSpeed directly.")]
-        [SerializeField] float approachDuration = 38f;
-        [Tooltip("Rotate the model to match its visual forward. Set to -90 if the train faces +X, 90 if it faces -X.")]
-        [SerializeField] float modelForwardYaw = 0f;
+        [Tooltip("Rotate the model to match its visual forward. Set to 180 if the train faces -Z.")]
+        [SerializeField] float modelForwardYaw = 180f;
 
-        [Header("Approach path (shared — leads to fork)")]
-        [SerializeField] Transform[] approachPath;
+        [Header("Path")]
+        [SerializeField] Transform startPoint;
+        [SerializeField] Transform endPoint;
 
-        [Header("Action path (divert track — after fork)")]
-        [SerializeField] Transform[] actionPath;
+        [Header("Timing")]
+        [Tooltip("Added to the narration clip length to get total travel time.")]
+        [SerializeField] float decisionWindowSeconds = 8f;
 
-        [Header("Inaction path (default track — after fork)")]
-        [SerializeField] Transform[] inactionPath;
+        [Header("Audio — ambient train sound (loops while train moves)")]
+        [SerializeField] AudioSource ambientAudioSource;
 
-        [Header("Train audio")]
-        [SerializeField] AudioSource trainAudioSource;
-
-        [Header("Optional: wall collision at end of action path")]
-        [SerializeField] bool hasWallCollision;
-        [SerializeField] GameObject wallCollisionEffect;
-        [SerializeField] AudioSource collisionAudio;
-
-        [Header("Workers")]
-        [Tooltip("Workers on the action (divert) track — endangered when action is taken")]
-        [SerializeField] Animator[] actionTrackWorkers;
-        [Tooltip("Workers on the inaction (default) track — endangered when no action")]
-        [SerializeField] Animator[] inactionTrackWorkers;
-
-        static readonly int DangerHash = Animator.StringToHash("Danger");
-        static readonly int SafeHash   = Animator.StringToHash("Safe");
-
-        Transform[] _decidedPath;
-        bool        _hitWall;
-        bool        _decisionMade;
-
-        // durationOverride: if > 0, overrides approachDuration (pass narration clip length).
-        public void StartApproach(float durationOverride = 0f)
+        public void StartApproach(float narrationDuration)
         {
-            if (durationOverride > 0f) approachDuration = durationOverride;
-            if (trainAudioSource != null) { trainAudioSource.loop = true; trainAudioSource.Play(); }
-            StartCoroutine(RunTrain());
+            if (train != null && startPoint != null)
+                train.position = startPoint.position;
+
+            if (ambientAudioSource != null) { ambientAudioSource.loop = true; ambientAudioSource.Play(); }
+            StartCoroutine(MoveTrain(narrationDuration + decisionWindowSeconds));
         }
 
-        // Called immediately when a decision is made — train switches path at fork.
-        public void ExecuteAction()
-        {
-            TriggerWorkers(inactionTrackWorkers, safe: true);
-            TriggerWorkers(actionTrackWorkers, safe: !hasWallCollision);
-            _decidedPath  = actionPath;
-            _hitWall      = hasWallCollision;
-            _decisionMade = true;
-        }
+        public void ExecuteAction()   { }
+        public void ExecuteInaction() { }
 
-        public void ExecuteInaction()
+        IEnumerator MoveTrain(float totalDuration)
         {
-            TriggerWorkers(inactionTrackWorkers, safe: false);
-            TriggerWorkers(actionTrackWorkers, safe: true);
-            _decidedPath  = inactionPath;
-            _hitWall      = false;
-            _decisionMade = true;
-        }
+            if (train == null || startPoint == null || endPoint == null) yield break;
 
-        // ── Internal ──────────────────────────────────────────────────────────
+            float speed = Vector3.Distance(startPoint.position, endPoint.position) / totalDuration;
+            Vector3 target = endPoint.position;
+            Vector3 dir = (target - startPoint.position).normalized;
 
-        IEnumerator RunTrain()
-        {
-            // Phase 1: approach — auto-calculate speed if approachDuration is set
-            if (approachPath != null && approachPath.Length > 0)
+            if (dir != Vector3.zero)
+                train.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(0f, modelForwardYaw, 0f);
+
+            while (Vector3.Distance(train.position, target) > 0.05f)
             {
-                if (approachDuration > 0 && train != null)
-                {
-                    float len = Vector3.Distance(train.position, approachPath[0].position);
-                    for (int i = 1; i < approachPath.Length; i++)
-                        len += Vector3.Distance(approachPath[i - 1].position, approachPath[i].position);
-                    if (len > 0) trainSpeed = len / approachDuration;
-                }
-                yield return StartCoroutine(FollowPath(approachPath, hitWall: false));
+                train.position = Vector3.MoveTowards(train.position, target, speed * Time.deltaTime);
+                yield return null;
             }
 
-            // Phase 2: wait at fork for decision
-            yield return new WaitUntil(() => _decisionMade);
-
-            // Phase 3: branch
-            if (_decidedPath != null && _decidedPath.Length > 0)
-                yield return StartCoroutine(FollowPath(_decidedPath, hitWall: _hitWall));
-
-            if (trainAudioSource != null) trainAudioSource.Stop();
-        }
-
-        IEnumerator FollowPath(Transform[] path, bool hitWall)
-        {
-            if (train == null) yield break;
-
-            foreach (var waypoint in path)
-            {
-                Vector3 target = waypoint.position;
-                while (Vector3.Distance(train.position, target) > 0.05f)
-                {
-                    Vector3 dir = (target - train.position).normalized;
-                    if (dir != Vector3.zero)
-                        train.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(0f, modelForwardYaw, 0f);
-                    train.position = Vector3.MoveTowards(
-                        train.position, target, trainSpeed * Time.deltaTime);
-                    yield return null;
-                }
-            }
-
-            if (hitWall)
-            {
-                if (wallCollisionEffect != null) wallCollisionEffect.SetActive(true);
-                if (collisionAudio != null) collisionAudio.Play();
-            }
-        }
-
-        void TriggerWorkers(Animator[] workers, bool safe)
-        {
-            if (workers == null) return;
-            int hash = safe ? SafeHash : DangerHash;
-            foreach (var w in workers)
-            {
-                if (w == null) continue;
-                foreach (var p in w.parameters)
-                {
-                    if (p.nameHash == hash) { w.SetTrigger(hash); break; }
-                }
-            }
+            train.position = target;
+            if (ambientAudioSource != null) ambientAudioSource.Stop();
         }
     }
 }
