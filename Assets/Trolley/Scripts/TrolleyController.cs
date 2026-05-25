@@ -69,6 +69,18 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
+            // Allow testing individual scenes without going through Tutorial first
+            if (TrolleyGameState.Instance == null)
+            {
+                new GameObject("TrolleyGameState").AddComponent<TrolleyGameState>();
+                Debug.LogWarning("[TrolleyController] TrolleyGameState not found — created for standalone test.");
+            }
+            if (DataLogger.Instance == null)
+            {
+                new GameObject("DataLogger").AddComponent<DataLogger>();
+                Debug.LogWarning("[TrolleyController] DataLogger not found — created for standalone test.");
+            }
+
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnWindowClose;
 

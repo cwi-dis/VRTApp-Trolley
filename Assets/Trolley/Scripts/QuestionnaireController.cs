@@ -105,6 +105,7 @@ namespace VRT.Pilots.Trolley
         {
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
+            Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}");
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
 
             bool useBoothA = !_isPaired || VRTOrchestratorSingleton.Comm.UserIsMaster;
