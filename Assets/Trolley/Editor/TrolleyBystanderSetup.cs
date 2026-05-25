@@ -147,7 +147,7 @@ namespace VRT.Pilots.Trolley.Editor
             var timerTextGO = new GameObject("TimerText");
             timerTextGO.transform.SetParent(canvasGO.transform, false);
             var timerTMP = timerTextGO.AddComponent<TextMeshProUGUI>();
-            timerTMP.text = "5.0";
+            timerTMP.text = "8.0";
             timerTMP.fontSize = 120;
             timerTMP.alignment = TextAlignmentOptions.Center;
             timerTMP.color = Color.white;
@@ -371,6 +371,315 @@ namespace VRT.Pilots.Trolley.Editor
                 animators[i] = anim;
             }
             return animators;
+        }
+
+        // ── Targeted fix: wire toggle decision buttons (A=inaction default, B=action) ──
+        [MenuItem("Trolley/Bystander – Wire Toggle Buttons")]
+        public static void WireToggleButtons()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            var scene = activeScene.path == ScenePath
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            var buttonA = GameObject.Find("OBJ_NetworkButton_A");
+            var buttonB = GameObject.Find("OBJ_NetworkButton_B");
+            if (buttonA == null || buttonB == null)
+            {
+                Debug.LogError("OBJ_NetworkButton_A or OBJ_NetworkButton_B not found in scene.");
+                return;
+            }
+
+            // Add XRSimpleInteractable to each button if missing
+            foreach (var btn in new[] { buttonA, buttonB })
+            {
+                if (btn.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>(true) == null)
+                    btn.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
+            }
+
+            // Create or find TrolleyToggleDecision GameObject
+            var existing = GameObject.Find("ToggleDecision");
+            if (existing != null) Object.DestroyImmediate(existing);
+            var toggleGO = new GameObject("ToggleDecision");
+            var toggle = toggleGO.AddComponent<TrolleyToggleDecision>();
+
+            var tSO = new SerializedObject(toggle);
+            tSO.FindProperty("buttonA").objectReferenceValue = buttonA;
+            tSO.FindProperty("buttonB").objectReferenceValue = buttonB;
+            tSO.ApplyModifiedProperties();
+
+            // Wire to TrolleyController — clear the lever interactable, set toggleDecision
+            var controller = Object.FindObjectOfType<TrolleyController>();
+            if (controller != null)
+            {
+                var cSO = new SerializedObject(controller);
+                cSO.FindProperty("interactable").objectReferenceValue    = null;
+                cSO.FindProperty("toggleDecision").objectReferenceValue  = toggle;
+                cSO.ApplyModifiedProperties();
+            }
+
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Bystander: toggle buttons wired. A=inaction (green), B=action (grey). Swap materials in Inspector if preferred.");
+        }
+
+        // ── Targeted fix: add green rim quads around Track A and Track B monitors ──
+        // Track A = Monitor_WestView (index 0, TL) — main track, 5 workers
+        // Track B = Monitor_Track2East (index 3, BR) — side track, 1 worker
+        [MenuItem("Trolley/Bystander – Add Monitor Rims")]
+        public static void AddMonitorRims()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            var scene = activeScene.path == ScenePath
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            var monitorGroup = GameObject.Find("MonitorGroup");
+            if (monitorGroup == null) { Debug.LogError("MonitorGroup not found."); return; }
+
+            const string rimMatPath = "Assets/Trolley/Materials/M_MonitorRim.mat";
+            var rimMat = AssetDatabase.LoadAssetAtPath<Material>(rimMatPath);
+            if (rimMat == null)
+            {
+                rimMat = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.2f, 0.75f, 0.2f) };
+                rimMat.name = "M_MonitorRim";
+                AssetDatabase.CreateAsset(rimMat, rimMatPath);
+            }
+
+            // Indices: 2 = Track1East (BL, Track A), 3 = Track2East (BR, Track B)
+            int[] rimIndices = { 2, 3 };
+            string[] rimNames = { "RimA", "RimB" };
+            var rims = new GameObject[2];
+
+            for (int r = 0; r < 2; r++)
+            {
+                int idx = rimIndices[r];
+                if (idx >= monitorGroup.transform.childCount) continue;
+                var monitor = monitorGroup.transform.GetChild(idx);
+
+                var existing = monitor.Find(rimNames[r]);
+                if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+                var rim = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                rim.name = rimNames[r];
+                rim.transform.SetParent(monitor, false);
+                // Slightly larger than monitor, slightly behind (z+ = further from player)
+                rim.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+                rim.transform.localScale    = new Vector3(1.06f, 1.06f, 1f);
+                rim.GetComponent<Renderer>().sharedMaterial = rimMat;
+                Object.DestroyImmediate(rim.GetComponent<MeshCollider>());
+                rim.SetActive(false); // enabled at runtime by TrolleyToggleDecision
+                rims[r] = rim;
+            }
+
+            // Wire to TrolleyToggleDecision if present
+            var toggle = Object.FindObjectOfType<TrolleyToggleDecision>();
+            if (toggle != null)
+            {
+                var tSO = new SerializedObject(toggle);
+                if (rims[0] != null) tSO.FindProperty("rimA").objectReferenceValue = rims[0];
+                if (rims[1] != null) tSO.FindProperty("rimB").objectReferenceValue = rims[1];
+                tSO.ApplyModifiedProperties();
+            }
+
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Bystander: monitor rims added. RimA on Monitor_WestView, RimB on Monitor_Track2East.");
+        }
+
+        // ── Targeted fix: update TrainController to new startPoint/endPoint API ──
+        // Run this instead of the full wire script — preserves manually placed geometry.
+        [MenuItem("Trolley/Bystander – Fix Train Controller")]
+        public static void FixTrainController()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            var scene = activeScene.path == ScenePath
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            var trainController = Object.FindObjectOfType<TrainController>();
+            if (trainController == null) { Debug.LogError("TrainController not found — run Wire Bystander Scene first."); return; }
+
+            var trackEnv = GameObject.Find("TrackEnvironment");
+            if (trackEnv == null) { Debug.LogError("TrackEnvironment not found."); return; }
+
+            // Remove old waypoint path objects if present
+            foreach (string n in new[] { "TrainPaths", "ApproachPath", "InactionPath", "ActionPath" })
+            {
+                var old = trackEnv.transform.Find(n)?.gameObject ?? GameObject.Find(n);
+                if (old != null) Object.DestroyImmediate(old);
+            }
+
+            // Start: far back so train isn't visible at scene open
+            // End: well past workers (workers are at local z=22)
+            // Speed is auto-calculated: distance / (narrationDuration + 8s)
+            // At ~21s narration + 8s window, train reaches workers (~z=22) ~3s into the window
+            var startPt = trackEnv.transform.Find("StartPoint")?.gameObject ?? new GameObject("StartPoint");
+            startPt.transform.SetParent(trackEnv.transform);
+            startPt.transform.localPosition = new Vector3(0f, 0f, -302f);
+
+            var endPt = trackEnv.transform.Find("EndPoint")?.gameObject ?? new GameObject("EndPoint");
+            endPt.transform.SetParent(trackEnv.transform);
+            endPt.transform.localPosition = new Vector3(0f, 0f, 80f);
+
+            var tcSO = new SerializedObject(trainController);
+            tcSO.FindProperty("train").objectReferenceValue = trainController.transform;
+            tcSO.FindProperty("startPoint").objectReferenceValue = startPt.transform;
+            tcSO.FindProperty("endPoint").objectReferenceValue = endPt.transform;
+            tcSO.FindProperty("decisionWindowSeconds").floatValue = 8f;
+            tcSO.ApplyModifiedProperties();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Bystander: TrainController wired — startPoint z=-302, endPoint z=80. Adjust endPoint z if timing feels off.");
+        }
+
+        // ── Targeted fix: add monitor labels matching the reference image ──────
+        [MenuItem("Trolley/Bystander – Add Monitor Labels")]
+        public static void AddMonitorLabels()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            var scene = activeScene.path == ScenePath
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            var monitorGroup = GameObject.Find("MonitorGroup");
+            if (monitorGroup == null) { Debug.LogError("MonitorGroup not found — run Wire Bystander Scene first."); return; }
+
+            // Remove existing label group
+            var existing = GameObject.Find("MonitorLabelGroup");
+            if (existing != null) Object.DestroyImmediate(existing);
+
+            string[] labelTexts = {
+                "Track 1 – West View",
+                "Tracks 1 & 2 – Switch Point",
+                "Track 1 – East View",
+                "Track 2 – East View",
+            };
+
+            // Place label canvases at same grid positions as monitors, slightly in front (z-)
+            var labelGroup = new GameObject("MonitorLabelGroup");
+            labelGroup.transform.position = MonitorGroupCenter + new Vector3(0f, 0f, -0.05f);
+
+            for (int i = 0; i < 4; i++)
+            {
+                var canvasGO = new GameObject($"Label_{i}");
+                canvasGO.transform.SetParent(labelGroup.transform);
+                canvasGO.transform.localPosition = new Vector3(GridOffsets[i].x, GridOffsets[i].y, 0f);
+                canvasGO.transform.localRotation = Quaternion.identity;
+
+                var canvas = canvasGO.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                // sizeDelta (200,200) × localScale 0.005 × parentScale (SubW,SubH) = (SubW, SubH) world
+                var canvasRect = canvasGO.GetComponent<RectTransform>();
+                canvasRect.sizeDelta = new Vector2(200f, 200f);
+                canvasGO.transform.localScale = new Vector3(0.005f / SubW, 0.005f / SubH, 0.005f);
+
+                // Red background panel — bottom-left anchor
+                var panelGO = new GameObject("Panel");
+                panelGO.transform.SetParent(canvasGO.transform, false);
+                var img = panelGO.AddComponent<Image>();
+                img.color = new Color(0.78f, 0.08f, 0.08f, 0.92f);
+                var panelRect = panelGO.GetComponent<RectTransform>();
+                panelRect.anchorMin = new Vector2(0f, 0f);
+                panelRect.anchorMax = new Vector2(0f, 0f);
+                panelRect.pivot     = new Vector2(0f, 0f);
+                panelRect.anchoredPosition = new Vector2(6f, 5f);
+                panelRect.sizeDelta = new Vector2(115f, 20f);
+
+                // White bold TMP text
+                var textGO = new GameObject("Text");
+                textGO.transform.SetParent(panelGO.transform, false);
+                var tmp = textGO.AddComponent<TextMeshProUGUI>();
+                tmp.text      = labelTexts[i];
+                tmp.fontSize  = 7f;
+                tmp.color     = Color.white;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.alignment = TextAlignmentOptions.MidlineLeft;
+                tmp.enableAutoSizing = true;
+                tmp.fontSizeMin = 4f;
+                tmp.fontSizeMax = 7f;
+                tmp.enableWordWrapping = false;
+                var textRect = textGO.GetComponent<RectTransform>();
+                textRect.anchorMin  = Vector2.zero;
+                textRect.anchorMax  = Vector2.one;
+                textRect.offsetMin  = new Vector2(4f, 2f);
+                textRect.offsetMax  = new Vector2(-3f, -2f);
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Bystander: monitor labels added. Adjust panel sizeDelta and font size in Inspector if needed.");
+        }
+
+        // ── Targeted fix: add CCTV blackout overlays and wire to TrolleyController ──
+        [MenuItem("Trolley/Bystander – Add CCTV Blackout")]
+        public static void AddCCTVBlackout()
+        {
+            var activeScene = EditorSceneManager.GetActiveScene();
+            var scene = activeScene.path == ScenePath
+                ? activeScene
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            var monitorGroup = GameObject.Find("MonitorGroup");
+            if (monitorGroup == null) { Debug.LogError("MonitorGroup not found."); return; }
+
+            var controller = Object.FindObjectOfType<TrolleyController>();
+            if (controller == null) { Debug.LogError("TrolleyController not found."); return; }
+
+            // Black material
+            const string blackMatPath = "Assets/Trolley/Materials/M_MonitorBlackout.mat";
+            var blackMat = AssetDatabase.LoadAssetAtPath<Material>(blackMatPath);
+            if (blackMat == null)
+            {
+                blackMat = new Material(Shader.Find("Unlit/Color")) { color = Color.black };
+                blackMat.name = "M_MonitorBlackout";
+                AssetDatabase.CreateAsset(blackMat, blackMatPath);
+            }
+
+            var overlays = new GameObject[4];
+            int count = Mathf.Min(4, monitorGroup.transform.childCount);
+
+            for (int i = 0; i < count; i++)
+            {
+                var monitor = monitorGroup.transform.GetChild(i);
+                var existingOverlay = monitor.Find("BlackoutOverlay");
+                if (existingOverlay != null) Object.DestroyImmediate(existingOverlay.gameObject);
+
+                var overlay = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                overlay.name = "BlackoutOverlay";
+                overlay.transform.SetParent(monitor, false);
+                overlay.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+                overlay.transform.localScale    = Vector3.one;
+                overlay.GetComponent<Renderer>().sharedMaterial = blackMat;
+                Object.DestroyImmediate(overlay.GetComponent<MeshCollider>());
+                overlay.SetActive(false);
+                overlays[i] = overlay;
+            }
+
+            // Add CCTVBlackout component on TrolleyController GameObject
+            var existing = controller.GetComponent<CCTVBlackout>();
+            if (existing != null) Object.DestroyImmediate(existing);
+            var cctvBlackout = controller.gameObject.AddComponent<CCTVBlackout>();
+
+            var bSO = new SerializedObject(cctvBlackout);
+            var overlaysProp = bSO.FindProperty("monitorOverlays");
+            overlaysProp.arraySize = count;
+            for (int i = 0; i < count; i++)
+                overlaysProp.GetArrayElementAtIndex(i).objectReferenceValue = overlays[i];
+            bSO.ApplyModifiedProperties();
+
+            // Wire CCTVBlackout to TrolleyController
+            var cSO = new SerializedObject(controller);
+            cSO.FindProperty("cctvBlackout").objectReferenceValue = cctvBlackout;
+            cSO.ApplyModifiedProperties();
+
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Bystander: CCTV blackout wired — monitors go black on decision.");
         }
 
         static void SetField(Object target, string fieldName, Object value)

@@ -154,7 +154,7 @@ namespace VRT.Pilots.Trolley.Editor
             cliffFace.transform.position = new Vector3(4f, 2f, 31f);
             cliffFace.transform.localScale = new Vector3(5f, 6f, 2f);
             var cliffMat = cliffFace.GetComponent<Renderer>();
-            if (cliffMat != null) cliffMat.material.color = new Color(0.45f, 0.38f, 0.30f);
+            if (cliffMat != null) cliffMat.sharedMaterial.color = new Color(0.45f, 0.38f, 0.30f);
 
             var cliffEdge = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cliffEdge.name = "CliffEdge";

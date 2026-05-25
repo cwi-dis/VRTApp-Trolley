@@ -30,7 +30,9 @@ namespace VRT.Pilots.Trolley
         [SerializeField] NarrationPlayer narrationPlayer;
         [SerializeField] DecisionTimer decisionTimer;
         [SerializeField] TrainController trainController;
-        [SerializeField] TrolleyInteractable interactable;
+        [SerializeField] TrolleyInteractable interactable;        // single-trigger (Driver / Selfharm)
+        [SerializeField] TrolleyToggleDecision toggleDecision;    // toggle A/B (Bystander)
+        [SerializeField] CCTVBlackout cctvBlackout;
 
         [Header("Scenario")]
         [Tooltip("Identifier written to the data log: bystander | driver | selfharm")]
@@ -68,10 +70,15 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
-            decisionTimer.OnTimerExpired += OnInaction;
-            interactable.OnTriggered += OnLocalActionTriggered;
+            decisionTimer.OnTimerExpired += OnWindowClose;
 
-            interactable.SetActive(false);
+            if (interactable != null)
+            {
+                interactable.OnTriggered += OnLocalActionTriggered;
+                interactable.SetActive(false);
+            }
+
+            toggleDecision?.SetInteractionEnabled(false);
 
             _state = State.Narration;
 
@@ -103,7 +110,8 @@ namespace VRT.Pilots.Trolley
             _narrationEndTime = DateTime.Now;
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
-            interactable.SetActive(true);
+            interactable?.SetActive(true);
+            toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;
             bool hasSession = comm != null && comm.SelfUser != null;
             if (!hasSession || comm.UserIsMaster)
@@ -133,12 +141,21 @@ namespace VRT.Pilots.Trolley
             ApplyAction(myId);
         }
 
-        // ── Timer expired (inaction) ───────────────────────────────────────
+        // ── Timer expired — read final toggle state or default to inaction ──
 
-        void OnInaction()
+        void OnWindowClose()
         {
             if (_state != State.Decision) return;
-            ApplyInaction();
+            Debug.Log($"[TrolleyController] OnWindowClose — toggleDecision={toggleDecision}, isAction={toggleDecision?.IsAction}");
+            if (toggleDecision != null && toggleDecision.IsAction)
+            {
+                string playerId = VRTOrchestratorSingleton.Comm?.SelfUser?.userId ?? "solo";
+                ApplyAction(playerId);
+            }
+            else
+            {
+                ApplyInaction();
+            }
         }
 
         // ── Outcome application ────────────────────────────────────────────
@@ -160,7 +177,9 @@ namespace VRT.Pilots.Trolley
             }
 
             decisionTimer.Stop();
-            interactable.SetActive(false);
+            interactable?.SetActive(false);
+            toggleDecision?.SetInteractionEnabled(false);
+            cctvBlackout?.Blackout();
             trainController.ExecuteAction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
 
@@ -181,7 +200,9 @@ namespace VRT.Pilots.Trolley
             float rt = decisionTimer.GetElapsedTime();
 
             decisionTimer.Stop();
-            interactable.SetActive(false);
+            interactable?.SetActive(false);
+            toggleDecision?.SetInteractionEnabled(false);
+            cctvBlackout?.Blackout();
             trainController.ExecuteInaction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
 
