@@ -18,10 +18,13 @@ namespace VRT.Pilots.Trolley.Editor
         static readonly Vector3    P2Pos = new Vector3(0.6f, 0f, -0.5f);
         static readonly Quaternion P2Rot = Quaternion.Euler(0, 0, 0);
 
+        // Driver scene floor top is at y=1.45 (Floor block raised to match cab height).
+        static readonly Vector3 P1PosDriver = new Vector3(0.0f, 2.95f, -0.5f);
+        static readonly Vector3 P2PosDriver = new Vector3(0.6f, 2.95f, -0.5f);
+
         static readonly string[] ScenarioScenes =
         {
             "Assets/Trolley/Scenes/TrolleyBystander.unity",
-            "Assets/Trolley/Scenes/TrolleyDriver.unity",
             "Assets/Trolley/Scenes/TrolleySelfharm.unity",
         };
 
@@ -37,6 +40,10 @@ namespace VRT.Pilots.Trolley.Editor
                 }
                 SetPositionsInScene(scenePath, P1Pos, P1Rot, P2Pos, P2Rot);
             }
+
+            // Driver scene has a raised floor — players spawn at y=1.45.
+            SetPositionsInScene("Assets/Trolley/Scenes/TrolleyDriver.unity",
+                P1PosDriver, P1Rot, P2PosDriver, P2Rot);
 
             // Questionnaire keeps its own booth positions.
             SetPositionsInScene(

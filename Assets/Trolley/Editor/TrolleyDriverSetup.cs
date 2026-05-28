@@ -228,6 +228,49 @@ namespace VRT.Pilots.Trolley.Editor
             }
         }
 
+        [MenuItem("Trolley/Driver – Wire Toggle Buttons")]
+        public static void WireToggleButtons()
+        {
+            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            if (!activeScene.IsValid() || activeScene.path != ScenePath)
+            {
+                Debug.LogWarning("Driver – Wire Toggle Buttons: open TrolleyDriver scene first.");
+                return;
+            }
+
+            var buttonA = GameObject.Find("Button_TrackA Variant");
+            var buttonB = GameObject.Find("Button_TrackB Variant");
+            if (buttonA == null || buttonB == null)
+            {
+                Debug.LogError("Button_TrackA Variant or Button_TrackB Variant not found in scene.");
+                return;
+            }
+
+            // Create or replace ToggleDecision
+            var existing = GameObject.Find("ToggleDecision");
+            if (existing != null) Object.DestroyImmediate(existing);
+            var toggleGO = new GameObject("ToggleDecision");
+            var toggle = toggleGO.AddComponent<TrolleyToggleDecision>();
+
+            // Wire buttonA and buttonB — Awake() will auto-find renderer and XRSimpleInteractable
+            var tSO = new SerializedObject(toggle);
+            tSO.FindProperty("buttonA").objectReferenceValue = buttonA;
+            tSO.FindProperty("buttonB").objectReferenceValue = buttonB;
+            tSO.ApplyModifiedProperties();
+
+            // Wire to TrolleyController — clear single-trigger interactable
+            var controller = Object.FindObjectOfType<TrolleyController>();
+            if (controller == null) { Debug.LogWarning("Driver – Wire Toggle Buttons: TrolleyController not found."); return; }
+            var cSO = new SerializedObject(controller);
+            cSO.FindProperty("toggleDecision").objectReferenceValue = toggle;
+            cSO.FindProperty("interactable").objectReferenceValue   = null;
+            cSO.ApplyModifiedProperties();
+
+            EditorSceneManager.MarkSceneDirty(activeScene);
+            EditorSceneManager.SaveScene(activeScene);
+            Debug.Log("Driver – Wire Toggle Buttons: done. A=inaction (green default), B=action (grey).\nNow wire Button_TrackA OnTrigger → PressA() and Button_TrackB OnTrigger → PressB() on the ToggleDecision object.");
+        }
+
         static void SetField(Object target, string fieldName, Object value)
         {
             var so = new SerializedObject(target);

@@ -42,24 +42,23 @@ namespace VRT.Pilots.Trolley
             if (buttonA != null)
             {
                 if (interactableA == null) interactableA = buttonA.GetComponentInChildren<XRSimpleInteractable>(true);
-                if (rendererA == null)     rendererA     = FindChildRenderer(buttonA, "Button");
+                if (rendererA == null)     rendererA     = FindButtonRenderer(buttonA);
             }
             if (buttonB != null)
             {
                 if (interactableB == null) interactableB = buttonB.GetComponentInChildren<XRSimpleInteractable>(true);
-                if (rendererB == null)     rendererB     = FindChildRenderer(buttonB, "Button");
+                if (rendererB == null)     rendererB     = FindButtonRenderer(buttonB);
             }
-            Debug.Log($"[ToggleDecision] Awake — interactableA={interactableA}, interactableB={interactableB}");
+            Debug.Log($"[ToggleDecision] Awake — rendererA={rendererA}, rendererB={rendererB}, interactableA={interactableA}, interactableB={interactableB}");
         }
 
-        static Renderer FindChildRenderer(GameObject root, string childName)
+        static Renderer FindButtonRenderer(GameObject root)
         {
-            var t = root.transform.Find(childName);
-            if (t != null) return t.GetComponent<Renderer>();
-            // fallback: search deeper
+            // First try child named "Button"
             foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-                if (child.name == childName) return child.GetComponent<Renderer>();
-            return null;
+                if (child.name == "Button") { var r = child.GetComponent<Renderer>(); if (r != null) return r; }
+            // Fallback: first MeshRenderer anywhere in children
+            return root.GetComponentInChildren<MeshRenderer>(true);
         }
 
         void OnEnable()

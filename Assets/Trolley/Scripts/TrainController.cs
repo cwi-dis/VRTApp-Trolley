@@ -15,19 +15,19 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Transform endPoint;
 
         [Header("Timing")]
-        [Tooltip("Added to the narration clip length to get total travel time.")]
+        [Tooltip("Total travel time from start to end point. Should match the decision window duration.")]
         [SerializeField] float decisionWindowSeconds = 8f;
 
         [Header("Audio — ambient train sound (loops while train moves)")]
         [SerializeField] AudioSource ambientAudioSource;
 
-        public void StartApproach(float narrationDuration)
+        public void StartApproach()
         {
             if (train != null && startPoint != null)
                 train.position = startPoint.position;
 
             if (ambientAudioSource != null) { ambientAudioSource.loop = true; ambientAudioSource.Play(); }
-            StartCoroutine(MoveTrain(narrationDuration + decisionWindowSeconds));
+            StartCoroutine(MoveTrain(decisionWindowSeconds));
         }
 
         public void ExecuteAction()   { }

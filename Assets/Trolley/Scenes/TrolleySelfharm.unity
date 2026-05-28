@@ -184,6 +184,8 @@ MonoBehaviour:
   decisionTimer: {fileID: 430455356}
   trainController: {fileID: 83666100}
   interactable: {fileID: 433322160}
+  toggleDecision: {fileID: 0}
+  cctvBlackout: {fileID: 0}
   scenarioID: selfharm
 --- !u!114 &65852855
 MonoBehaviour:
@@ -399,31 +401,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.TrainController
   train: {fileID: 83666098}
-  trainSpeed: 6
-  approachDuration: 38
-  approachPath:
-  - {fileID: 1324012318}
-  - {fileID: 369588123}
-  - {fileID: 1555747466}
-  actionPath:
-  - {fileID: 88368785}
-  - {fileID: 88572044}
-  - {fileID: 1599730194}
-  inactionPath:
-  - {fileID: 27997141}
-  - {fileID: 662544718}
-  - {fileID: 503790047}
-  trainAudioSource: {fileID: 0}
-  hasWallCollision: 1
-  wallCollisionEffect: {fileID: 419368652}
-  collisionAudio: {fileID: 83666099}
-  actionTrackWorkers: []
-  inactionTrackWorkers:
-  - {fileID: 933300865}
-  - {fileID: 1613483664}
-  - {fileID: 289513073}
-  - {fileID: 1516058223}
-  - {fileID: 1664519526}
+  modelForwardYaw: 180
+  startPoint: {fileID: 0}
+  endPoint: {fileID: 0}
+  decisionWindowSeconds: 8
+  ambientAudioSource: {fileID: 0}
 --- !u!114 &83666101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11911,7 +11893,7 @@ ParticleSystem:
           m_PostInfinity: 2
           m_RotationOrder: 4
       cycleCount: 1
-      repeatInterval: 0.0001
+      repeatInterval: 0.01
       probability: 1
   SizeModule:
     enabled: 0

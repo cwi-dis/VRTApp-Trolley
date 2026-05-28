@@ -276,11 +276,59 @@ Full protocol: `protocol.md`
 - Added `SetSerializedProp` helper with null guard so missing fields warn instead of abort
 - Light creation moved to before TrainController wiring so it survives any later exception
 
-**Next session starts here (Day 9):**
-1. Wire Selfharm scene — run `Trolley > Wire Selfharm Scene`
-2. Fix swatch wiring — re-run Wire Avatar Setup Scene, reassign renderers
-3. Draft Driver + Selfharm narration scripts
-4. Quest build + on-device test
+---
+
+### Day 9 (2026-05-25) — Bystander toggle buttons + narration scripts + end-to-end test
+
+**Done:**
+
+**Narration scripts — all three scenarios finalised:**
+- All ~21 seconds / ~47 words each. Saved to `NARRATION_SCRIPTS.md`.
+- Bystander: control room CCTV monitoring, Track A (5 workers) vs Track B (1 person), button press diverts
+- Driver: operating a tram with broken brakes, Track A vs side track, 8 seconds to decide
+- Self-harm: same but divert = tram falls off cliff (self at risk)
+
+**TrolleyToggleDecision.cs — new script:**
+- A/B toggle for Bystander scene. A = inaction (default, highlighted green). B = action.
+- `PressA()` / `PressB()` are public — wired to NetworkButton OnTrigger events in Inspector
+- `IsAction` bool read by TrolleyController at timer expiry (OnWindowClose)
+- Material color: `renderer.material.SetColor("_BaseColor")` with `"_Color"` fallback
+- `FindChildRenderer(go, "Button")` targets Button child mesh, not Rim
+- `rimA` / `rimB` GameObjects: green rim quads on Track 1 East and Track 2 East monitors, toggled with decision state
+
+**CCTVBlackout.cs — new script:**
+- `GameObject[] monitorOverlays` — black quads parented in front of each monitor quad
+- `Blackout()` enables all overlays when decision is made (called by TrolleyController)
+
+**TrolleyController.cs — updated:**
+- Added `[SerializeField] TrolleyToggleDecision toggleDecision` (optional, Bystander only)
+- Added `[SerializeField] CCTVBlackout cctvBlackout` (optional, Bystander only)
+- `OnWindowClose()`: reads `toggleDecision.IsAction` at timer expiry → routes to ApplyAction or ApplyInaction
+- Auto-creates TrolleyGameState + DataLogger in Start() if missing (enables standalone scene testing)
+- All interactable/toggleDecision/cctvBlackout accesses null-safe
+
+**TrolleyBystanderSetup.cs — new targeted menu items (non-destructive, preserve manual geometry):**
+- `Trolley > Bystander – Wire Toggle Buttons` — wires OBJ_NetworkButton_A/B to ToggleDecision
+- `Trolley > Bystander – Add Monitor Rims` — creates green rim quads on monitors [2] and [3]
+- `Trolley > Bystander – Add CCTV Blackout` — creates black overlay quads, wires CCTVBlackout
+- `Trolley > Bystander – Add Monitor Labels` — 4 world-space canvases: "Track 1 – West View", "Tracks 1 & 2 – Switch Point", "Track 1 – East View", "Track 2 – East View"
+- `Trolley > Bystander – Fix Train Controller` — wires startPoint(z=−302)/endPoint(z=80)
+
+**Bugs fixed:**
+- Pink materials: setup script used URP shader on Built-in RP project → switched to `Unlit/Color`
+- Button clicks not reaching console: VR2Gather NetworkButton uses its own OnTrigger UnityEvent, not XRSimpleInteractable.selectEntered → made PressA/PressB public, user wires them in Inspector
+- Wrong renderer (Rim grabbed instead of Button): `FindChildRenderer` searches by child name
+- Questionnaire showing scenario=unknown when testing standalone: TrolleyGameState singleton missing → fixed by auto-creating in TrolleyController.Start()
+
+**Issues closed:**
+- #3 Disable user movement — done Day 5, now closed
+- #6 Design Bystander scene — core flow confirmed working end-to-end
+
+**Next session (Tue 2026-05-27):**
+1. Driver scene — wire buttons, assign narration audio, test TrainController
+2. Self-harm scene — run `Trolley > Wire Selfharm Scene`, assign narration
+3. Tutorial scene — build/wire TrolleyTutorial
+4. Thu buffer: Quest build + on-device test
 
 ---
 

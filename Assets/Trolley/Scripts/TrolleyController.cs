@@ -110,8 +110,6 @@ namespace VRT.Pilots.Trolley
         {
             if (SceneFader.Instance != null)
                 SceneFader.Instance.OnFadeInComplete -= BeginNarration;
-            if (trainController != null)
-                trainController.StartApproach(narrationPlayer.TotalDuration);
             narrationPlayer.Play();
         }
 
@@ -122,6 +120,7 @@ namespace VRT.Pilots.Trolley
             _narrationEndTime = DateTime.Now;
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
+            trainController?.StartApproach();
             interactable?.SetActive(true);
             toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;
