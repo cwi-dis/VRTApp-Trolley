@@ -6,6 +6,7 @@ using UnityEngine.Serialization;
 using TMPro;
 using VRT.Orchestrator;
 using VRT.OrchestratorComm;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
 {
@@ -80,6 +81,7 @@ namespace VRT.Pilots.Trolley
         string _lastDecision;
         bool _isPaired;
         bool _remoteDone;
+        RecordUserVoice _recorder;
 
         void Awake()
         {
@@ -102,6 +104,8 @@ namespace VRT.Pilots.Trolley
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
             Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}");
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
+
+            _recorder = FindFirstObjectByType<RecordUserVoice>(FindObjectsInactive.Include);
 
             bool useBoothA = !_isPaired || VRTOrchestratorSingleton.Comm.UserIsMaster;
             reflectionDoneButton = useBoothA ? reflectionDoneButtonA : reflectionDoneButtonB;
@@ -168,7 +172,7 @@ namespace VRT.Pilots.Trolley
                 reflectionDoneButton.onClick.RemoveAllListeners();
                 reflectionDoneButton.onClick.AddListener(() =>
                 {
-                    // TODO: emit AddMarker("reflection_done") on RecordUserVoice when implemented
+                    _recorder?.AddMarker($"reflection_done_{_completedScenario}");
                     DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
                     done = true;
                 });
