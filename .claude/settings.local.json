@@ -10,7 +10,9 @@
       "Bash(grep -v \"\\\\.meta$\")",
       "Bash(mkdir -p /Users/sueyoonlee/Studio/Development/VRTApp-Trolley/Assets/Trolley/Audio)",
       "Bash(python3 -c ' *)",
-      "Bash(xargs ls)"
+      "Bash(xargs ls)",
+      "Read(//Users/jack/src/VRTogether/VRTstatistics/**)",
+      "Read(//Users/jack/src/VRTogether/TrolleyExperiment/**)"
     ]
   }
 }

@@ -40,5 +40,5 @@ When renaming a serialized field, add `[FormerlySerializedAs("oldName")]` (from 
 ## Open technical questions
 
 - **Recording file path** — `RecordUserVoice` passes the filename directly to `FileStream` with no path prefix. VRTConfig may remap this to the stats/log output directory (where VRTRun looks), but this needs to be verified in a Quest build.
-- **WAV flush on scene unload** — `RecordUserVoice` / `AsyncVoiceReader` has no `OnDestroy` that calls `StopRecording()`. Does the WAV file get written cleanly when a scene unloads, or do we need an explicit stop call before `SceneManager.LoadScene`? Needs testing.
+- **WAV flush on scene unload** — resolved. `VoicePipelineSelf.OnDestroy` calls `reader.Stop()` → `AsyncVoiceReader.AsyncOnStop()` → `StopRecording()` → `FinalizeWavFile`. WAV is written cleanly on scene unload; no explicit stop needed.
 - **Marker support in RecordUserVoice** — questionnaire reflection "Done" button has a `// TODO: emit AddMarker("reflection_done")` comment. This requires adding `AddMarker(string name)` to `RecordUserVoice` in the VR2Gather package (not this repo), which outputs a `stats:` line so VRTstatistics can locate the segment in the audio file.
