@@ -23,7 +23,7 @@ namespace VRT.Pilots.Trolley.Editor
         {
             public GameObject refPanel;
             public TextMeshProUGUI refPrompt, refTimer;
-            public Button recordButton, stopButton;
+            public Button doneButton;
             public GameObject qPanel;
             public TextMeshProUGUI qBody;
             public Button[] buttons;
@@ -97,8 +97,7 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty($"reflectionPanel{suffix}").objectReferenceValue      = r.refPanel;
             so.FindProperty($"reflectionPromptText{suffix}").objectReferenceValue = r.refPrompt;
             so.FindProperty($"reflectionTimerText{suffix}").objectReferenceValue  = r.refTimer;
-            so.FindProperty($"recordButton{suffix}").objectReferenceValue         = r.recordButton;
-            so.FindProperty($"stopButton{suffix}").objectReferenceValue           = r.stopButton;
+            so.FindProperty($"reflectionDoneButton{suffix}").objectReferenceValue = r.doneButton;
             so.FindProperty($"questionPanel{suffix}").objectReferenceValue        = r.qPanel;
             so.FindProperty($"questionBodyText{suffix}").objectReferenceValue     = r.qBody;
             so.FindProperty($"nextButton{suffix}").objectReferenceValue           = r.nextButton;
@@ -140,16 +139,13 @@ namespace VRT.Pilots.Trolley.Editor
             var refPanel  = CreatePanel("ReflectionPanel", canvasGO, Color.black);
             var refPrompt = CreateTMP("PromptText", refPanel,
                 new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.90f), 36,
-                "Reflect aloud: why did you make this decision?");
+                "Please think out loud: what was going through your mind? What did you decide, and why?");
             var refTimer  = CreateTMP("TimerText", refPanel,
-                new Vector2(0.35f, 0.05f), new Vector2(0.65f, 0.28f), 72, "15");
+                new Vector2(0.35f, 0.55f), new Vector2(0.65f, 0.78f), 72, "");
             refTimer.alignment = TextAlignmentOptions.Center;
 
-            var recordBtn = CreateButton("RecordButton", refPanel, "● RECORD",
-                new Vector2(0.10f, 0.05f), new Vector2(0.45f, 0.27f), new Color(0.7f, 0.1f, 0.1f), 30);
-            var stopBtn   = CreateButton("StopButton", refPanel, "■ STOP",
-                new Vector2(0.55f, 0.05f), new Vector2(0.90f, 0.27f), new Color(0.3f, 0.3f, 0.3f), 30);
-            stopBtn.gameObject.SetActive(false);
+            var doneBtn = CreateButton("DoneButton", refPanel, "DONE",
+                new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.27f), BtnGreen, 32);
 
             refPanel.SetActive(false);
 
@@ -240,8 +236,7 @@ namespace VRT.Pilots.Trolley.Editor
                 refPanel       = refPanel,
                 refPrompt      = refPrompt,
                 refTimer       = refTimer,
-                recordButton   = recordBtn,
-                stopButton     = stopBtn,
+                doneButton     = doneBtn,
                 qPanel         = qPanel,
                 qBody          = qBody,
                 buttons        = buttons,

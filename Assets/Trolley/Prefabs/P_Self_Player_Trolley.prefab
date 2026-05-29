@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1838982925145587368, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1838982925145587368, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: autoStartRecord
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1935332283100515003, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_Name
       value: P_Self_Player_Trolley
