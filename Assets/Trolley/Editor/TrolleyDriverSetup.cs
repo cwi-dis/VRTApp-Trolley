@@ -154,6 +154,11 @@ namespace VRT.Pilots.Trolley.Editor
             endPointGO.transform.SetParent(endpointsGO.transform, false);
             endPointGO.transform.position = new Vector3(0f, 0f, -60f);
 
+            // Action end point: side track direction (x matches ActionTrackWorkers x=12.5)
+            var actionEndPointGO = new GameObject("ActionEndPoint");
+            actionEndPointGO.transform.SetParent(endpointsGO.transform, false);
+            actionEndPointGO.transform.position = new Vector3(12.5f, 0f, -60f);
+
             // ── Lighting (created early so it survives any later exception) ────
             var lightGO = new GameObject("SceneDirectionalLight");
             lightGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
@@ -171,6 +176,7 @@ namespace VRT.Pilots.Trolley.Editor
             SetSerializedProp(tcSO, "train",               trackEnvGO.transform);
             SetSerializedProp(tcSO, "startPoint",          startPointGO.transform);
             SetSerializedProp(tcSO, "endPoint",            endPointGO.transform);
+            SetSerializedProp(tcSO, "actionEndPoint",      actionEndPointGO.transform);
             SetSerializedProp(tcSO, "ambientAudioSource",  ambientAudioSrc);
             tcSO.ApplyModifiedProperties();
 

@@ -443,8 +443,19 @@ Full protocol: `protocol.md`
 | 5 | Scene recovery + TrolleySelfharm + swatch fix + questionnaire flow | ✓ Done |
 | 6 | Avatar setup scene: two-station layout, material swap, 12 materials created | ✓ Done |
 | 7 | Bystander CCTV monitors; Driver environment-movement rewrite; solo editor fixes | ✓ Done |
-| 8 | Fix swatch wiring; wire Selfharm scene; narration scripts | Next |
-| 9 | Quest build + on-device test | — |
-| 10 | Fixes from on-device test | — |
+| 8 | Driver scene polish: room resize, toggle buttons, train-after-narration, track divert | ✓ Done |
+| — | Jun 1–2: Self-harm scene, ResearcherSetup scene, Driver narration, Quest build | — |
+| — | Jun 8–12: Conference (Athlone) — remote minor fixes only | — |
+| — | Jun 15: Pilot test with Jack | — |
+| — | Jun 22: Final fixes from pilot | — |
+| — | Jun 29: Experiments begin (2 weeks) | — |
 
-Target completion: ~3–4 weeks from 2026-04-30.
+**Division of labour (from Jun 1):**
+- Sueyoon: Unity scenes, scripts, Quest build
+- Jack: TrolleyExperiment repo, VRTStatistics experiment settings, XRRayInteractor blocker
+
+**Remaining critical items before Quest build:**
+- Self-harm scene: run `Trolley > Wire Selfharm Scene`, assign narration audio
+- ResearcherSetup scene: wire and test
+- Driver: assign narration audio clip
+- All scenes: on-device test, XRRayInteractor resolution (Jack)

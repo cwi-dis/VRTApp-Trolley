@@ -13,6 +13,8 @@ namespace VRT.Pilots.Trolley
         [Header("Path")]
         [SerializeField] Transform startPoint;
         [SerializeField] Transform endPoint;
+        [Tooltip("Where the train redirects on action. Leave empty for scenes with no divert (Bystander).")]
+        [SerializeField] Transform actionEndPoint;
 
         [Header("Timing")]
         [Tooltip("Total travel time from start to end point. Should match the decision window duration.")]
@@ -20,6 +22,9 @@ namespace VRT.Pilots.Trolley
 
         [Header("Audio — ambient train sound (loops while train moves)")]
         [SerializeField] AudioSource ambientAudioSource;
+
+        Vector3 _currentTarget;
+        float   _speed;
 
         public void StartApproach()
         {
@@ -30,23 +35,40 @@ namespace VRT.Pilots.Trolley
             StartCoroutine(MoveTrain(decisionWindowSeconds));
         }
 
-        public void ExecuteAction()   { }
+        public void ExecuteAction()
+        {
+            Debug.Log($"[TrainController] ExecuteAction — actionEndPoint={actionEndPoint}");
+            if (actionEndPoint == null) return;
+            StopAllCoroutines();
+            StartCoroutine(MoveToTarget(actionEndPoint.position));
+        }
+
         public void ExecuteInaction() { }
 
         IEnumerator MoveTrain(float totalDuration)
         {
             if (train == null || startPoint == null || endPoint == null) yield break;
 
-            float speed = Vector3.Distance(startPoint.position, endPoint.position) / totalDuration;
-            Vector3 target = endPoint.position;
-            Vector3 dir = (target - startPoint.position).normalized;
+            _speed = Vector3.Distance(startPoint.position, endPoint.position) / totalDuration;
 
+            Vector3 dir = (endPoint.position - startPoint.position).normalized;
             if (dir != Vector3.zero)
                 train.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(0f, modelForwardYaw, 0f);
 
+            yield return StartCoroutine(MoveToTarget(endPoint.position));
+        }
+
+        IEnumerator MoveToTarget(Vector3 target)
+        {
             while (Vector3.Distance(train.position, target) > 0.05f)
             {
-                train.position = Vector3.MoveTowards(train.position, target, speed * Time.deltaTime);
+                Vector3 moveDir = (target - train.position).normalized;
+                if (moveDir != Vector3.zero)
+                    train.rotation = Quaternion.Slerp(train.rotation,
+                        Quaternion.LookRotation(moveDir) * Quaternion.Euler(0f, modelForwardYaw, 0f),
+                        5f * Time.deltaTime);
+
+                train.position = Vector3.MoveTowards(train.position, target, _speed * Time.deltaTime);
                 yield return null;
             }
 
