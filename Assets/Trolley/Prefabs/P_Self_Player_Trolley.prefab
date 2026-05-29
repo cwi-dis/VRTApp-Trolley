@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1935332283100515003, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_Name
-      value: P_Self_Player_Trolley Variant
+      value: P_Self_Player_Trolley
       objectReference: {fileID: 0}
     - target: {fileID: 1935332283100515012, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -275,6 +275,14 @@ PrefabInstance:
     - target: {fileID: 6047612734182123287, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -23
+      objectReference: {fileID: 0}
+    - target: {fileID: 6695701840291593632, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6695701840291593632, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: autoDisable
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8547041186499601728, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_SizeDelta.x
