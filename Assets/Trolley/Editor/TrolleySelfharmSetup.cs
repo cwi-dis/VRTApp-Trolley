@@ -30,6 +30,7 @@ namespace VRT.Pilots.Trolley.Editor
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
                 "TrainPaths", "InactionTrackWorkers",
                 "Button", "Cliff", "CliffCollisionEffect",
+                "StartPoint", "EndPoint", "ActionEndPoint",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(name);
@@ -113,38 +114,25 @@ namespace VRT.Pilots.Trolley.Editor
             trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
             var trainController = trainGO.AddComponent<TrainController>();
 
-            // ── Train waypoints ────────────────────────────────────────────────
-            // Action path ends at the cliff face (z=30, offset x=4).
-            var pathsGO = new GameObject("TrainPaths");
-            pathsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-
-            var approachPathGO = new GameObject("ApproachPath");
-            approachPathGO.transform.SetParent(pathsGO.transform);
-            var approachWPs = CreateWaypoints(approachPathGO,
-                new Vector3(0f, 0f, -8f),
-                new Vector3(0f, 0f, -4f),
-                new Vector3(0f, 0f,  0f));
-
-            var inactionPathGO = new GameObject("InactionPath");
-            inactionPathGO.transform.SetParent(pathsGO.transform);
-            var inactionWPs = CreateWaypoints(inactionPathGO,
-                new Vector3(0f, 0f,  5f),
-                new Vector3(0f, 0f, 20f),
-                new Vector3(0f, 0f, 40f));
-
-            var actionPathGO = new GameObject("ActionPath");
-            actionPathGO.transform.SetParent(pathsGO.transform);
-            var actionWPs = CreateWaypoints(actionPathGO,
-                new Vector3(1f, 0f,  5f),
-                new Vector3(4f, 0f, 15f),
-                new Vector3(4f, 0f, 30f));  // cliff face
-
             // ── Workers (inaction track only — action track leads to cliff) ───
             var workerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
-            var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
+            SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
                 center: new Vector3(0f, 0f, 22f), count: 5, spacing: 1.2f, menuItem: menuItem);
+
+            // ── Train path points ──────────────────────────────────────────────
+            var startPt = new GameObject("StartPoint");
+            startPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            startPt.transform.position = new Vector3(0f, 0f, -302f);
+
+            var endPt = new GameObject("EndPoint");
+            endPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            endPt.transform.position = new Vector3(0f, 0f, 80f);   // inaction: past workers
+
+            var actionEndPt = new GameObject("ActionEndPoint");
+            actionEndPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            actionEndPt.transform.position = new Vector3(4f, 0f, 30f); // action: cliff face
 
             // ── Cliff / rocky mountain (placeholder geometry) ─────────────────
             var cliffGO = new GameObject("Cliff");
@@ -185,16 +173,15 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Wire TrainController ──────────────────────────────────────────
             var tcSO = new SerializedObject(trainController);
-            tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
-            SetTransformArray(tcSO, "approachPath", approachWPs);
-            SetTransformArray(tcSO, "inactionPath", inactionWPs);
-            SetTransformArray(tcSO, "actionPath", actionWPs);
-            SetAnimatorArray(tcSO, "inactionTrackWorkers", inactionWorkers);
-            SetAnimatorArray(tcSO, "actionTrackWorkers", new Animator[0]);
-            tcSO.FindProperty("hasWallCollision").boolValue = true;
-            tcSO.FindProperty("wallCollisionEffect").objectReferenceValue = effectGO;
-            tcSO.FindProperty("collisionAudio").objectReferenceValue = collisionAudioSrc;
+            tcSO.FindProperty("train").objectReferenceValue          = trainGO.transform;
+            tcSO.FindProperty("startPoint").objectReferenceValue     = startPt.transform;
+            tcSO.FindProperty("endPoint").objectReferenceValue       = endPt.transform;
+            tcSO.FindProperty("actionEndPoint").objectReferenceValue = actionEndPt.transform;
+            tcSO.FindProperty("decisionWindowSeconds").floatValue    = 8f;
             tcSO.ApplyModifiedProperties();
+            // TODO: CliffCollisionEffect and collisionAudio are in the scene but no longer
+            // wired through TrainController (those fields were removed). Wire them to
+            // TrolleyController or a separate collision trigger on the cliff geometry.
 
             // ── Button ────────────────────────────────────────────────────────
             var buttonGO = new GameObject("Button");
