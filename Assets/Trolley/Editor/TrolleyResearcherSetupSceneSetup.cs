@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -38,7 +39,8 @@ namespace VRT.Pilots.Trolley.Editor
                 "ResearcherSetupController", "AvatarSelector",
                 "ResearcherCanvas", "AvatarCanvas",
                 "PracticeLever", "PracticeButton",
-                "TrolleyGameState", "DataLogger" })
+                "TrolleyGameState", "DataLogger",
+                "BeginStudyNetworkTrigger" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -153,6 +155,13 @@ namespace VRT.Pilots.Trolley.Editor
             }
 
             EditorUtility.SetDirty(controller);
+
+            // ── NetworkTrigger for coordinated Begin Study transition ──────────
+            var triggerGO = new GameObject("BeginStudyNetworkTrigger");
+            triggerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
+            var networkTrigger = triggerGO.AddComponent<NetworkTrigger>();
+            controller.beginStudyNetworkTrigger = networkTrigger;
+            EditorUtility.SetDirty(networkTrigger);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
 {
@@ -31,6 +32,9 @@ namespace VRT.Pilots.Trolley
         public Button exportToggleButton;
         public TextMeshProUGUI exportToggleLabel;
         public Button beginStudyButton;
+
+        [Header("Scene Transition")]
+        public NetworkTrigger beginStudyNetworkTrigger;
 
         [System.Serializable]
         public struct ScenarioOrder
@@ -82,6 +86,7 @@ namespace VRT.Pilots.Trolley
 
             beginStudyButton.onClick.AddListener(BeginStudy);
             beginStudyButton.interactable = false;
+            beginStudyNetworkTrigger.OnTrigger.AddListener(ExecuteBeginStudy);
 
             if (relationshipPanel != null) relationshipPanel.SetActive(false);
             researcherPanel.SetActive(true);
@@ -180,9 +185,17 @@ namespace VRT.Pilots.Trolley
         {
             DataLogger.Instance?.StartSession();
             researcherPanel.SetActive(false);
+            beginStudyButton.interactable = false;
+            beginStudyNetworkTrigger.Trigger();
+        }
+
+        void ExecuteBeginStudy()
+        {
             TrolleyGameState.Instance?.ResetSession();
             string next = TrolleyGameState.Instance?.avatarSetupScene ?? "TrolleyAvatarSetup";
-            SceneManager.LoadScene(next);
+            if (SceneFader.Instance == null)
+                new GameObject("SceneFader").AddComponent<SceneFader>();
+            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
         }
 
         static void HighlightOne(Button[] buttons, int selectedIndex)
