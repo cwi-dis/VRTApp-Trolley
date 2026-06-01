@@ -229,7 +229,7 @@ namespace VRT.Pilots.Trolley.Editor
                 new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.88f), 36, "");
             transText.alignment = TextAlignmentOptions.Center;
 
-            var startBtn = CreateButton("StartButton", transPanel, "START",
+            var startBtn = CreateButton("StartButton", transPanel, "CONTINUE",
                 new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.25f), BtnGreen, 40);
 
             transPanel.SetActive(false);

@@ -40,11 +40,17 @@ namespace VRT.Pilots.Trolley.Editor
                 "ResearcherCanvas", "AvatarCanvas",
                 "PracticeLever", "PracticeButton",
                 "TrolleyGameState", "DataLogger",
-                "BeginStudyNetworkTrigger" })
+                "BeginStudyNetworkTrigger",
+                "TutorialController" })  // legacy name from before scene was renamed
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
             }
+
+            // Defensive sweep: destroy any stray ResearcherSetupController components
+            // left on GameObjects that don't appear in the teardown list above.
+            foreach (var stray in Object.FindObjectsOfType<ResearcherSetupController>())
+                Object.DestroyImmediate(stray.gameObject);
 
             // ── Persistent singletons ─────────────────────────────────────────
             var gameStateGO = new GameObject("TrolleyGameState");
