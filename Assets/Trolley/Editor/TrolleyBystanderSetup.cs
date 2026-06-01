@@ -187,46 +187,27 @@ namespace VRT.Pilots.Trolley.Editor
             trainGO.transform.localPosition = new Vector3(0f, 0f, -15f);
             var trainController = trainGO.AddComponent<TrainController>();
 
-            var pathsGO = new GameObject("TrainPaths");
-            pathsGO.transform.SetParent(trackRoot.transform, false);
-
-            var approachPathGO = new GameObject("ApproachPath");
-            approachPathGO.transform.SetParent(pathsGO.transform, false);
-            var approachWPs = CreateLocalWaypoints(approachPathGO,
-                new Vector3(0f, 0f, -8f),
-                new Vector3(0f, 0f, -4f),
-                new Vector3(0f, 0f,  0f));
-
-            var inactionPathGO = new GameObject("InactionPath");
-            inactionPathGO.transform.SetParent(pathsGO.transform, false);
-            var inactionWPs = CreateLocalWaypoints(inactionPathGO,
-                new Vector3(0f, 0f,  5f),
-                new Vector3(0f, 0f, 20f),
-                new Vector3(0f, 0f, 40f));
-
-            var actionPathGO = new GameObject("ActionPath");
-            actionPathGO.transform.SetParent(pathsGO.transform, false);
-            var actionWPs = CreateLocalWaypoints(actionPathGO,
-                new Vector3(1f, 0f,  5f),
-                new Vector3(4f, 0f, 15f),
-                new Vector3(4f, 0f, 35f));
-
             var workerPrefab     = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
             var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
 
-            var inactionWorkers = SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
+            SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
                 parent: trackRoot.transform, localCenter: new Vector3(0f, 0f, 22f), count: 5, spacing: 1.2f);
-            var actionWorkers = SpawnWorkers("ActionTrackWorkers", workerPrefab, workerController,
+            SpawnWorkers("ActionTrackWorkers", workerPrefab, workerController,
                 parent: trackRoot.transform, localCenter: new Vector3(4f, 0f, 17f), count: 1, spacing: 1.2f);
 
+            var startPt = new GameObject("StartPoint");
+            startPt.transform.SetParent(trackRoot.transform);
+            startPt.transform.localPosition = new Vector3(0f, 0f, -302f);
+
+            var endPt = new GameObject("EndPoint");
+            endPt.transform.SetParent(trackRoot.transform);
+            endPt.transform.localPosition = new Vector3(0f, 0f, 80f);
+
             var tcSO = new SerializedObject(trainController);
-            tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
-            tcSO.FindProperty("approachDuration").floatValue = 38f;
-            SetTransformArray(tcSO, "approachPath",    approachWPs);
-            SetTransformArray(tcSO, "inactionPath",    inactionWPs);
-            SetTransformArray(tcSO, "actionPath",      actionWPs);
-            SetAnimatorArray(tcSO,  "inactionTrackWorkers", inactionWorkers);
-            SetAnimatorArray(tcSO,  "actionTrackWorkers",   actionWorkers);
+            tcSO.FindProperty("train").objectReferenceValue       = trainGO.transform;
+            tcSO.FindProperty("startPoint").objectReferenceValue  = startPt.transform;
+            tcSO.FindProperty("endPoint").objectReferenceValue    = endPt.transform;
+            tcSO.FindProperty("decisionWindowSeconds").floatValue = 8f;
             tcSO.ApplyModifiedProperties();
 
             // ── Ensure Textures + Materials folders exist ──────────────────────
