@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -95,9 +96,10 @@ namespace VRT.Pilots.Trolley.Editor
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
                 "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers",
                 "Lever", "Button", "TrackEnvironment",
-                "CCTVCamera", "Monitor",       // old single-camera names
-                "MonitorGroup",                // new group name
-                "SceneDirectionalLight" })
+                "CCTVCamera", "Monitor",
+                "MonitorGroup",
+                "SceneDirectionalLight",
+                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -323,6 +325,7 @@ namespace VRT.Pilots.Trolley.Editor
             cSO.FindProperty("decisionTimer").objectReferenceValue    = decisionTimer;
             cSO.FindProperty("trainController").objectReferenceValue  = trainController;
             cSO.FindProperty("interactable").objectReferenceValue     = trolleyLever;
+            TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
             cSO.ApplyModifiedProperties();
 
             AssetDatabase.SaveAssets();

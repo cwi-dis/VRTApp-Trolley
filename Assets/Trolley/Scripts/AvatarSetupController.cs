@@ -1,10 +1,10 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using VRT.Orchestrator;
 using VRT.OrchestratorComm;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
 {
@@ -29,9 +29,12 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Button confirmButtonB;
         [SerializeField] TextMeshProUGUI statusTextB;
 
+        [Header("Scene Transition")]
+        [SerializeField] NetworkTrigger readyTrigger;
+        [SerializeField] BarrierController transitionBarrier;
+        [SerializeField] NetworkTrigger proceedTrigger;
+
         bool _isPaired;
-        bool _localConfirmed;
-        bool _remoteConfirmed;
 
         void Awake()
         {
@@ -54,12 +57,15 @@ namespace VRT.Pilots.Trolley
         {
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
 
+            readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
+            transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
+            proceedTrigger.OnTrigger.AddListener(ExecuteLoad);
+
             if (stationBRoot != null) stationBRoot.SetActive(_isPaired);
 
             if (_isPaired && VRTOrchestratorSingleton.Comm != null)
             {
                 bool isMaster = VRTOrchestratorSingleton.Comm.UserIsMaster;
-                // Each player can only confirm their own station
                 if (confirmButtonA != null) confirmButtonA.interactable = isMaster;
                 if (confirmButtonB != null) confirmButtonB.interactable = !isMaster;
             }
@@ -73,9 +79,6 @@ namespace VRT.Pilots.Trolley
 
         void OnLocalConfirm()
         {
-            _localConfirmed = true;
-
-            // Disable both confirm buttons so it cannot be pressed again
             if (confirmButtonA != null) confirmButtonA.interactable = false;
             if (confirmButtonB != null) confirmButtonB.interactable = false;
 
@@ -96,22 +99,12 @@ namespace VRT.Pilots.Trolley
                     VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg);
                 else
                     VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(msg);
+            }
 
-                StartCoroutine(WaitForPartner());
-            }
-            else
-            {
-                LoadNext();
-            }
+            readyTrigger.Trigger();
         }
 
-        IEnumerator WaitForPartner()
-        {
-            yield return new WaitUntil(() => _remoteConfirmed);
-            LoadNext();
-        }
-
-        void LoadNext()
+        void ExecuteLoad()
         {
             string next = TrolleyGameState.Instance?.NextScenarioScene();
             if (string.IsNullOrEmpty(next))
@@ -138,8 +131,6 @@ namespace VRT.Pilots.Trolley
                 state.remoteSkinToneIndex   = msg.skinToneIndex;
                 state.remoteHairColorIndex  = msg.hairColorIndex;
             }
-
-            _remoteConfirmed = true;
         }
 
         static void SetStatus(TextMeshProUGUI label, string text)

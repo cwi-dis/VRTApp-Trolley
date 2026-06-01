@@ -8,7 +8,7 @@ namespace VRT.Pilots.Trolley
     {
         public const int TimerStart  = 200;
         public const int Action      = 201;
-        public const int QuestDone   = 202;
+        // 202 was QuestDone — replaced by BarrierController + NetworkTrigger
         public const int AvatarReady = 203;
     }
 
@@ -19,8 +19,6 @@ namespace VRT.Pilots.Trolley
         public string triggeredByPlayerId;
         public long   unixMs;
     }
-
-    public class TrolleyQuestionnaireDoneMessage : BaseMessage { }
 
     public class TrolleyAvatarReadyMessage : BaseMessage
     {

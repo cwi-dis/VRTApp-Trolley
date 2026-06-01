@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRT.Orchestrator;
 using VRT.OrchestratorComm;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
 {
@@ -37,6 +38,11 @@ namespace VRT.Pilots.Trolley
         [Header("Scenario")]
         [Tooltip("Identifier written to the data log: bystander | driver | selfharm")]
         public string scenarioID = "unknown";
+
+        [Header("Scene Transition")]
+        [SerializeField] NetworkTrigger readyTrigger;
+        [SerializeField] BarrierController transitionBarrier;
+        [SerializeField] NetworkTrigger proceedTrigger;
 
         State _state = State.Idle;
 
@@ -80,6 +86,10 @@ namespace VRT.Pilots.Trolley
                 new GameObject("DataLogger").AddComponent<DataLogger>();
                 Debug.LogWarning("[TrolleyController] DataLogger not found — created for standalone test.");
             }
+
+            readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
+            transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
+            proceedTrigger.OnTrigger.AddListener(ExecuteSceneLoad);
 
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnWindowClose;
@@ -236,6 +246,11 @@ namespace VRT.Pilots.Trolley
                 TrolleyGameState.Instance.lastCompletedScenarioID = scenarioID;
                 TrolleyGameState.Instance.AdvanceScenario();
             }
+            readyTrigger.Trigger();
+        }
+
+        void ExecuteSceneLoad()
+        {
             string next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
             if (SceneFader.Instance == null)
                 new GameObject("SceneFader").AddComponent<SceneFader>();

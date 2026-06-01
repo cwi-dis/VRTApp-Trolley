@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -90,7 +91,8 @@ namespace VRT.Pilots.Trolley.Editor
                 "ResearcherSetupController", "AvatarSetupController",
                 "AvatarSelector_A", "AvatarSelector_B",
                 "PracticeLever", "PracticeButton",
-                "AvatarSetupLight", "AvatarSetupFillLight" })
+                "AvatarSetupLight", "AvatarSetupFillLight",
+                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(n);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -192,6 +194,7 @@ namespace VRT.Pilots.Trolley.Editor
             cSO.FindProperty("selectorB").objectReferenceValue    = selB;
             cSO.FindProperty("confirmButtonB").objectReferenceValue = confirmBtnB;
             cSO.FindProperty("statusTextB").objectReferenceValue  = statusB;
+            TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, MenuItem);
             cSO.ApplyModifiedProperties();
 
             EditorUtility.SetDirty(controller);

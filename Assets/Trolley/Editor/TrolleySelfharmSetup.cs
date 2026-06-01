@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -28,7 +29,8 @@ namespace VRT.Pilots.Trolley.Editor
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
                 "TrainPaths", "InactionTrackWorkers",
-                "Button", "Cliff", "CliffCollisionEffect" })
+                "Button", "Cliff", "CliffCollisionEffect",
+                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -215,6 +217,7 @@ namespace VRT.Pilots.Trolley.Editor
             cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
             cSO.FindProperty("trainController").objectReferenceValue = trainController;
             cSO.FindProperty("interactable").objectReferenceValue = trolleyButton;
+            TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
             cSO.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);

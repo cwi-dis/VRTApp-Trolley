@@ -58,6 +58,11 @@ namespace VRT.Pilots.Trolley
         [Header("Timing")]
         [SerializeField] float reflectionDuration = 60f;
 
+        [Header("Scene Transition")]
+        [SerializeField] NetworkTrigger readyTrigger;
+        [SerializeField] BarrierController transitionBarrier;
+        [SerializeField] NetworkTrigger proceedTrigger;
+
         static readonly Color DefaultBtnColor  = new Color(0.2f, 0.2f, 0.8f);
         static readonly Color SelectedBtnColor = new Color(0.1f, 0.6f, 0.1f);
 
@@ -80,23 +85,8 @@ namespace VRT.Pilots.Trolley
         string _completedScenario;
         string _lastDecision;
         bool _isPaired;
-        bool _remoteDone;
         RecordUserVoice _recorder;
 
-        void Awake()
-        {
-            VRTOrchestratorSingleton.Comm.RegisterEventType((MessageTypeID)TrolleyMsgID.QuestDone, typeof(TrolleyQuestionnaireDoneMessage));
-        }
-
-        void OnEnable()
-        {
-            VRTOrchestratorSingleton.Comm.Subscribe<TrolleyQuestionnaireDoneMessage>(OnQuestionnaireDone);
-        }
-
-        void OnDisable()
-        {
-            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyQuestionnaireDoneMessage>(OnQuestionnaireDone);
-        }
 
         void Start()
         {
@@ -104,6 +94,10 @@ namespace VRT.Pilots.Trolley
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
             Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}");
             _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
+
+            readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
+            transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
+            proceedTrigger.OnTrigger.AddListener(ExecuteSceneLoad);
 
             _recorder = FindFirstObjectByType<RecordUserVoice>(FindObjectsInactive.Include);
 
@@ -147,14 +141,7 @@ namespace VRT.Pilots.Trolley
             if (_isPaired)
                 yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
 
-            var doneMsg = new TrolleyQuestionnaireDoneMessage();
-            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
-                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(doneMsg);
-            else
-                VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(doneMsg);
-            yield return StartCoroutine(ShowTransition());
-
-            LoadNextScene();
+            yield return StartCoroutine(ShowTransitionAndSignal());
         }
 
         IEnumerator ShowReflection()
@@ -294,68 +281,52 @@ namespace VRT.Pilots.Trolley
             if (scaleMaxLabel != null) scaleMaxLabel.text = scaleMax;
         }
 
-        IEnumerator ShowTransition()
+        IEnumerator ShowTransitionAndSignal()
         {
-            if (transitionPanel == null)
-            {
-                if (_isPaired) yield return new WaitUntil(() => _remoteDone);
-                yield break;
-            }
+            if (transitionPanel != null) transitionPanel.SetActive(true);
 
-            transitionPanel.SetActive(true);
-
-            bool hasMore = TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios();
+            bool hasMore = TrolleyGameState.Instance?.HasMoreScenarios() ?? false;
 
             if (_isPaired)
             {
                 if (transitionText != null)
-                {
                     transitionText.text = hasMore
                         ? "The next scenario will begin automatically\nwhen your partner is also done."
                         : "You have completed all scenarios.\nPlease wait for your partner.";
-                }
                 if (startButton != null) startButton.gameObject.SetActive(false);
-                yield return new WaitUntil(() => _remoteDone);
+                readyTrigger.Trigger();
+                // Scene loads when barrier fires proceedTrigger → ExecuteSceneLoad on all clients
             }
             else
             {
                 if (transitionText != null)
-                {
                     transitionText.text = hasMore
                         ? "The next scenario is about to begin.\n\nPlease prepare yourself."
                         : "You have completed all scenarios.\nThank you for your participation.";
-                }
                 if (startButton != null)
                 {
                     startButton.gameObject.SetActive(true);
-                    bool started = false;
+                    bool clicked = false;
                     startButton.onClick.RemoveAllListeners();
-                    startButton.onClick.AddListener(() => started = true);
-                    yield return new WaitUntil(() => started);
+                    startButton.onClick.AddListener(() => { clicked = true; readyTrigger.Trigger(); });
+                    yield return new WaitUntil(() => clicked);
+                    startButton.gameObject.SetActive(false);
+                }
+                else
+                {
+                    readyTrigger.Trigger();
                 }
             }
-
-            transitionPanel.SetActive(false);
         }
 
-        void LoadNextScene()
+        void ExecuteSceneLoad()
         {
-            string next;
-            if (TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios())
-                next = TrolleyGameState.Instance.NextScenarioScene();
-            else
-                next = TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
+            string next = TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios()
+                ? TrolleyGameState.Instance.NextScenarioScene()
+                : TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
             if (SceneFader.Instance == null)
                 new GameObject("SceneFader").AddComponent<SceneFader>();
             SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
-        }
-
-        void OnQuestionnaireDone(TrolleyQuestionnaireDoneMessage msg)
-        {
-            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
-                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
-            if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
-            _remoteDone = true;
         }
 
     }

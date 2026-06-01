@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using TMPro;
+using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
@@ -44,7 +45,8 @@ namespace VRT.Pilots.Trolley.Editor
 
             foreach (string name in new[] {
                 "QuestionnaireController", "Environment",
-                "BoothA_Canvas", "BoothB_Canvas" })
+                "BoothA_Canvas", "BoothB_Canvas",
+                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(name);
                 if (existing != null) Object.DestroyImmediate(existing);
@@ -85,6 +87,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             WireBooth(so, "A", a);
             WireBooth(so, "B", b);
+            TrolleySetupBarrierUtils.AddTransitionBarrier(so, menuItem);
             so.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(scene);
