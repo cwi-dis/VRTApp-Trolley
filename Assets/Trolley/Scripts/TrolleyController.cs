@@ -252,9 +252,7 @@ namespace VRT.Pilots.Trolley
         void ExecuteSceneLoad()
         {
             string next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
-            if (SceneFader.Instance == null)
-                new GameObject("SceneFader").AddComponent<SceneFader>();
-            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
+            PilotController.Instance.LoadNewScene(next);
         }
 
         // ── Network messages ──────────────────────────────────────────────

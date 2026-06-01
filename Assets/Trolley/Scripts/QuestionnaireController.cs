@@ -324,9 +324,7 @@ namespace VRT.Pilots.Trolley
             string next = TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios()
                 ? TrolleyGameState.Instance.NextScenarioScene()
                 : TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
-            if (SceneFader.Instance == null)
-                new GameObject("SceneFader").AddComponent<SceneFader>();
-            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
+            PilotController.Instance.LoadNewScene(next);
         }
 
     }

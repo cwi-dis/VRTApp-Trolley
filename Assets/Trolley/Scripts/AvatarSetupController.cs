@@ -112,9 +112,7 @@ namespace VRT.Pilots.Trolley
                 Debug.LogError("AvatarSetupController: no next scene in TrolleyGameState.");
                 return;
             }
-            if (SceneFader.Instance == null)
-                new GameObject("SceneFader").AddComponent<SceneFader>();
-            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
+            PilotController.Instance.LoadNewScene(next);
         }
 
         void OnAvatarReady(TrolleyAvatarReadyMessage msg)

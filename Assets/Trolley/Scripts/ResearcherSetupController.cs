@@ -193,9 +193,7 @@ namespace VRT.Pilots.Trolley
         {
             TrolleyGameState.Instance?.ResetSession();
             string next = TrolleyGameState.Instance?.avatarSetupScene ?? "TrolleyAvatarSetup";
-            if (SceneFader.Instance == null)
-                new GameObject("SceneFader").AddComponent<SceneFader>();
-            SceneFader.Instance.FadeToBlack(() => SceneManager.LoadScene(next));
+            PilotController.Instance.LoadNewScene(next);
         }
 
         static void HighlightOne(Button[] buttons, int selectedIndex)
