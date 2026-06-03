@@ -19,29 +19,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build-windows.ps1
 
 ### One-time setup per repository
 
-Three repository secrets must be set (`Settings → Secrets and variables → Actions`):
-
-| Secret | Value |
-|---|---|
-| `UNITY_EMAIL` | Unity account email |
-| `UNITY_PASSWORD` | Unity account password |
-| `UNITY_LICENSE` | XML content of a Unity license file (see below) |
-
-**Obtaining `UNITY_LICENSE`:**
-
-1. On a machine with Unity installed, run:
-
-   ```
-   Unity -batchmode -createManualActivationFile -quit
-   ```
-
-   This produces `Unity_v6000.x.ulf` (or similar) in the current directory.
-
-2. Upload that file at <https://license.unity3d.com/manual> and download the resulting `.ulf` licence file.
-
-3. Copy the entire XML content of the `.ulf` file as the value of the `UNITY_LICENSE` secret.
-
-Full instructions: <https://game.ci/docs/github/activation>
+Follow <https://game.ci/docs/github/activation> to set up the required repository secrets. That page covers both Unity Personal (free) and Pro/Plus licenses and is kept up to date by the game-ci team.
 
 ### Triggering a release
 

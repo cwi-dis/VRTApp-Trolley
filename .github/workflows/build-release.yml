@@ -1,6 +1,5 @@
 # Triggered by tags matching v* or exp-*
-# Required secrets: UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD
-# See https://game.ci/docs/github/activation for how to obtain UNITY_LICENSE
+# Required secrets: see https://game.ci/docs/github/activation
 
 name: Build and Release
 
@@ -21,7 +20,6 @@ jobs:
 
       - uses: game-ci/unity-builder@v5
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -52,7 +50,6 @@ jobs:
 
       - uses: game-ci/unity-builder@v5
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
