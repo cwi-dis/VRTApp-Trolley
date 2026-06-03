@@ -30,10 +30,17 @@ git push origin v1.0
 
 Use `exp-` tags for experimental/pre-release builds and `v` tags for proper releases.
 
-## Installing the macOS build
+## Installing the builds
 
-The app is not code-signed, so macOS Gatekeeper will block it on first launch. After attempting to open it and seeing "app can't be opened":
+The app is not code-signed, so both macOS and Windows will warn on first launch.
+
+**macOS Gatekeeper:** after attempting to open it and seeing "app can't be opened":
 
 1. Go to **System Settings → Privacy & Security → Security**.
 2. Find the note about the blocked app and click **Open Anyway**.
 3. In the security dialog that appears, click **Open Anyway** again.
+
+**Windows SmartScreen:** when running the `.exe` and seeing "Windows protected your PC":
+
+1. Click **More info**.
+2. Click **Run anyway**.
