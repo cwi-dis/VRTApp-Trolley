@@ -30,10 +30,10 @@ jobs:
           buildsPath: Build
           unityVersion: auto
 
-      # game-ci produces: Build/StandaloneOSX/VRTApp-Trolley/VRTApp-Trolley.app
+      # game-ci produces: Build/StandaloneOSX/VRTApp-Trolley.app
       - name: Zip
         run: |
-          cd "$GITHUB_WORKSPACE/Build/StandaloneOSX/VRTApp-Trolley"
+          cd "$GITHUB_WORKSPACE/Build/StandaloneOSX"
           zip -r "$GITHUB_WORKSPACE/VRTApp-Trolley-mac.zip" VRTApp-Trolley.app
 
       - uses: actions/upload-artifact@v4
