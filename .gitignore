@@ -73,3 +73,6 @@ crashlytics-build.properties
 
 # VR2Gather
 config-user.json
+
+# JetBrains Rider/IDEA
+.idea/
