@@ -78,9 +78,9 @@ jobs:
           buildsPath: Build
           unityVersion: auto
 
-      # game-ci produces: Build/StandaloneWindows64/VRTApp-Trolley/VRTApp-Trolley.exe
+      # game-ci produces: Build/StandaloneWindows64/VRTApp-Trolley.exe (+ supporting files)
       - name: Zip
-        run: Compress-Archive -Path "$env:GITHUB_WORKSPACE\Build\StandaloneWindows64\VRTApp-Trolley" -DestinationPath "$env:GITHUB_WORKSPACE\VRTApp-Trolley-win.zip"
+        run: Compress-Archive -Path "$env:GITHUB_WORKSPACE\Build\StandaloneWindows64\*" -DestinationPath "$env:GITHUB_WORKSPACE\VRTApp-Trolley-win.zip"
 
       - uses: actions/upload-artifact@v4
         with:
