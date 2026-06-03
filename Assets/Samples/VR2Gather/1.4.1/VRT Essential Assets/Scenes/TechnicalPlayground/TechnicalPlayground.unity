@@ -1690,6 +1690,22 @@ PrefabInstance:
       propertyPath: NetworkId
       value: 46a1ee29-5692-4dc3-8193-763d568e58f8
       objectReference: {fileID: 0}
+    - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -5.42
+      objectReference: {fileID: 0}
+    - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 1355918295602887737, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.27
+      objectReference: {fileID: 0}
+    - target: {fileID: 1355918295602887737, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.16
+      objectReference: {fileID: 0}
     - target: {fileID: 1425178425847460037, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: df2c5a74-22a0-47ee-8214-357b8e48b49c
@@ -1697,6 +1713,14 @@ PrefabInstance:
     - target: {fileID: 1891173313238012826, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: 48636574-0254-4b94-ab87-9ef6a2bd49a7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2662397535985167954, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2662397535985167954, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.01
       objectReference: {fileID: 0}
     - target: {fileID: 5146355042489206250, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_Enabled
@@ -1745,6 +1769,14 @@ PrefabInstance:
     - target: {fileID: 5209981462475131423, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.36
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.1
       objectReference: {fileID: 0}
     - target: {fileID: 7935367321392098293, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
