@@ -41,38 +41,9 @@ jobs:
           name: mac-zip
           path: VRTApp-Trolley-mac.zip
 
-  build-windows:
-    name: Build Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - uses: game-ci/unity-builder@v5
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          targetPlatform: StandaloneWindows64
-          projectPath: .
-          buildName: VRTApp-Trolley
-          buildsPath: Build
-          unityVersion: auto
-
-      # game-ci produces: Build/StandaloneWindows64/VRTApp-Trolley/VRTApp-Trolley.exe
-      - name: Zip
-        run: Compress-Archive -Path "$env:GITHUB_WORKSPACE\Build\StandaloneWindows64\VRTApp-Trolley" -DestinationPath "$env:GITHUB_WORKSPACE\VRTApp-Trolley-win.zip"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-zip
-          path: VRTApp-Trolley-win.zip
-
   release:
     name: Create Release
-    needs: [build-mac, build-windows]
+    needs: [build-mac]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -86,5 +57,4 @@ jobs:
         with:
           files: |
             artifacts/VRTApp-Trolley-mac.zip
-            artifacts/VRTApp-Trolley-win.zip
           generate_release_notes: true
