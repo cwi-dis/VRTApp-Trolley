@@ -323,5 +323,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1513767612925908036, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 947606270839286345}
   m_SourcePrefab: {fileID: 100100000, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+--- !u!4 &2191316462743952732 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6931174748990271404, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+  m_PrefabInstance: {fileID: 9104418074712961776}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7735107868564252340 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1513767612925908036, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+  m_PrefabInstance: {fileID: 9104418074712961776}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &947606270839286345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7735107868564252340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed1df922655464ccea0343d71d894e68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.GazeDetector
+  m_GazeOrigin: {fileID: 2191316462743952732}
+  m_GazeTargetLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  m_MaxDistance: 20
+  m_SphereRadius: 0.05
