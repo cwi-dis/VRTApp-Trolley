@@ -19,7 +19,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build-windows.ps1
 
 ### One-time setup per repository
 
-Follow <https://game.ci/docs/github/activation> to set up the required repository secrets. That page covers both Unity Personal (free) and Pro/Plus licenses and is kept up to date by the game-ci team.
+Follow <https://game.ci/docs/github/activation> to set up the required repository secrets. The workflow is configured for a **Unity Personal (free) license**. If you have a Pro or Plus license the workflow needs to be adjusted; the game-ci activation page has the details.
 
 ### Triggering a release
 
