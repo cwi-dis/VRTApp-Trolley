@@ -1,0 +1,91 @@
+# Triggered by tags matching v* or exp-*
+# Required secrets: UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD
+# See https://game.ci/docs/github/activation for how to obtain UNITY_LICENSE
+
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'exp-*'
+
+jobs:
+  build-mac:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v5
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneOSX
+          projectPath: .
+          buildName: VRTApp-Trolley
+          buildsPath: Build
+          unityVersion: auto
+
+      # game-ci produces: Build/StandaloneOSX/VRTApp-Trolley/VRTApp-Trolley.app
+      - name: Zip
+        run: |
+          cd "$GITHUB_WORKSPACE/Build/StandaloneOSX/VRTApp-Trolley"
+          zip -r "$GITHUB_WORKSPACE/VRTApp-Trolley-mac.zip" VRTApp-Trolley.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-zip
+          path: VRTApp-Trolley-mac.zip
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v5
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneWindows64
+          projectPath: .
+          buildName: VRTApp-Trolley
+          buildsPath: Build
+          unityVersion: auto
+
+      # game-ci produces: Build/StandaloneWindows64/VRTApp-Trolley/VRTApp-Trolley.exe
+      - name: Zip
+        run: Compress-Archive -Path "$env:GITHUB_WORKSPACE\Build\StandaloneWindows64\VRTApp-Trolley" -DestinationPath "$env:GITHUB_WORKSPACE\VRTApp-Trolley-win.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: VRTApp-Trolley-win.zip
+
+  release:
+    name: Create Release
+    needs: [build-mac, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            artifacts/VRTApp-Trolley-mac.zip
+            artifacts/VRTApp-Trolley-win.zip
+          generate_release_notes: true
