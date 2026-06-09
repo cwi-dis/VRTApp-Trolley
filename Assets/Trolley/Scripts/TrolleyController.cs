@@ -27,10 +27,15 @@ namespace VRT.Pilots.Trolley
         [SerializeField] DecisionTimer decisionTimer;
         [SerializeField] TrainController trainController;
         [SerializeField] TrolleyToggleDecision toggleDecision;
+        [SerializeField] CCTVBlackout cctvBlackout;
 
         [Header("Scenario")]
         [Tooltip("Identifier written to the data log: bystander | driver | selfharm")]
         public string scenarioID = "unknown";
+
+        [Header("CCTV")]
+        [Tooltip("Seconds after decision window closes before CCTV blackout triggers.")]
+        [SerializeField] float blackoutDelay = 2f;
 
         [Header("Scene Transition")]
         [SerializeField] NetworkTrigger readyTrigger;
@@ -138,15 +143,15 @@ namespace VRT.Pilots.Trolley
         {
             if (_state != State.Decision) return;
             Debug.Log($"[TrolleyController] OnWindowClose — toggleDecision={toggleDecision}, isAction={toggleDecision?.IsAction}");
+            if (cctvBlackout != null)
+                Invoke(nameof(TriggerBlackout), blackoutDelay);
             if (toggleDecision != null && toggleDecision.IsAction)
-            {
                 ApplyAction();
-            }
             else
-            {
                 ApplyInaction();
-            }
         }
+
+        void TriggerBlackout() => cctvBlackout.Blackout();
 
         // ── Outcome application ────────────────────────────────────────────
 

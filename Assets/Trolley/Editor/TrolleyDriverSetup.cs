@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+using UnityEngine.Splines;
 using TMPro;
 using VRT.Pilots.Common;
 
@@ -34,7 +35,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
-                "TrackEndpoints", "SceneDirectionalLight",
+                "Rail", "TrackEndpoints", "SceneDirectionalLight",
                 // legacy names from old setup runs
                 "TrackPaths", "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
@@ -115,12 +116,6 @@ namespace VRT.Pilots.Trolley.Editor
             if (trackEnvGO.GetComponent<ManagedBySetupScript>() == null)
                 trackEnvGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
-            // Ambient AudioSource for train sound — separate from narration
-            var ambientAudioSrc = trackEnvGO.GetComponent<AudioSource>();
-            if (ambientAudioSrc == null) ambientAudioSrc = trackEnvGO.AddComponent<AudioSource>();
-            ambientAudioSrc.playOnAwake = false;
-            ambientAudioSrc.loop = true;
-
             var trainController = trackEnvGO.GetComponent<TrainController>();
             if (trainController == null) trainController = trackEnvGO.AddComponent<TrainController>();
 
@@ -142,24 +137,19 @@ namespace VRT.Pilots.Trolley.Editor
                 parent: trackEnvGO.transform,
                 localCenter: new Vector3(3f, 0f, 10f), count: 1, spacing: 1.2f);
 
-            // ── Start / End points (root-level, world-space) ──────────────────
-            // TrackEnvironment starts at StartPoint, moves toward EndPoint.
-            // EndPoint is far enough that the scene transitions before arrival.
-            var endpointsGO = new GameObject("TrackEndpoints");
-            endpointsGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-
-            var startPointGO = new GameObject("StartPoint");
-            startPointGO.transform.SetParent(endpointsGO.transform, false);
-            startPointGO.transform.position = new Vector3(0f, 0f, 60f);
-
-            var endPointGO = new GameObject("EndPoint");
-            endPointGO.transform.SetParent(endpointsGO.transform, false);
-            endPointGO.transform.position = new Vector3(0f, 0f, -60f);
-
-            // Action end point: side track direction (x matches ActionTrackWorkers x=12.5)
-            var actionEndPointGO = new GameObject("ActionEndPoint");
-            actionEndPointGO.transform.SetParent(endpointsGO.transform, false);
-            actionEndPointGO.transform.position = new Vector3(12.5f, 0f, -60f);
+            // ── Rail SplineContainer ──────────────────────────────────────────
+            // Index 0 = straight track (inaction), index 1 = branch track (action).
+            // Draw both splines manually in the Spline editor after running this script.
+            var railGO = new GameObject("Rail");
+            railGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            var railContainer = railGO.AddComponent<SplineContainer>();
+            var railSO = new SerializedObject(railContainer);
+            var splinesProp = railSO.FindProperty("m_Splines");
+            if (splinesProp != null && splinesProp.arraySize < 2)
+            {
+                splinesProp.arraySize = 2;
+                railSO.ApplyModifiedProperties();
+            }
 
             // ── Lighting (created early so it survives any later exception) ────
             var lightGO = new GameObject("SceneDirectionalLight");
@@ -175,11 +165,8 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── TrainController wiring ────────────────────────────────────────
             var tcSO = new SerializedObject(trainController);
-            SetSerializedProp(tcSO, "train",               trackEnvGO.transform);
-            SetSerializedProp(tcSO, "startPoint",          startPointGO.transform);
-            SetSerializedProp(tcSO, "endPoint",            endPointGO.transform);
-            SetSerializedProp(tcSO, "actionEndPoint",      actionEndPointGO.transform);
-            SetSerializedProp(tcSO, "ambientAudioSource",  ambientAudioSrc);
+            SetSerializedProp(tcSO, "train", trackEnvGO.transform);
+            SetSerializedProp(tcSO, "rail",  railContainer);
             tcSO.ApplyModifiedProperties();
 
             // ── Wire TrolleyController ─────────────────────────────────────────

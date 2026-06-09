@@ -3,6 +3,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+using UnityEngine.Splines;
 using TMPro;
 using VRT.Pilots.Common;
 
@@ -28,9 +29,8 @@ namespace VRT.Pilots.Trolley.Editor
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
-                "TrainPaths", "InactionTrackWorkers",
+                "Rail", "TrainPaths", "InactionTrackWorkers",
                 "Cliff", "CliffCollisionEffect",
-                "StartPoint", "EndPoint", "ActionEndPoint",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
                 var existing = GameObject.Find(name);
@@ -121,18 +121,18 @@ namespace VRT.Pilots.Trolley.Editor
             SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
                 center: new Vector3(0f, 0f, 22f), count: 5, spacing: 1.2f, menuItem: menuItem);
 
-            // ── Train path points ──────────────────────────────────────────────
-            var startPt = new GameObject("StartPoint");
-            startPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            startPt.transform.position = new Vector3(0f, 0f, -302f);
-
-            var endPt = new GameObject("EndPoint");
-            endPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            endPt.transform.position = new Vector3(0f, 0f, 80f);   // inaction: past workers
-
-            var actionEndPt = new GameObject("ActionEndPoint");
-            actionEndPt.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            actionEndPt.transform.position = new Vector3(4f, 0f, 30f); // action: cliff face
+            // ── Rail SplineContainer ──────────────────────────────────────────
+            // Index 0 = straight (inaction, toward workers), index 1 = branch (action, toward cliff).
+            var railGO = new GameObject("Rail");
+            railGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            var railContainer = railGO.AddComponent<SplineContainer>();
+            var railSO = new SerializedObject(railContainer);
+            var splinesProp = railSO.FindProperty("m_Splines");
+            if (splinesProp != null && splinesProp.arraySize < 2)
+            {
+                splinesProp.arraySize = 2;
+                railSO.ApplyModifiedProperties();
+            }
 
             // ── Cliff / rocky mountain (placeholder geometry) ─────────────────
             var cliffGO = new GameObject("Cliff");
@@ -173,15 +173,9 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Wire TrainController ──────────────────────────────────────────
             var tcSO = new SerializedObject(trainController);
-            tcSO.FindProperty("train").objectReferenceValue          = trainGO.transform;
-            tcSO.FindProperty("startPoint").objectReferenceValue     = startPt.transform;
-            tcSO.FindProperty("endPoint").objectReferenceValue       = endPt.transform;
-            tcSO.FindProperty("actionEndPoint").objectReferenceValue = actionEndPt.transform;
-            tcSO.FindProperty("decisionWindowSeconds").floatValue    = 8f;
+            tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
+            tcSO.FindProperty("rail").objectReferenceValue  = railContainer;
             tcSO.ApplyModifiedProperties();
-            // TODO: CliffCollisionEffect and collisionAudio are in the scene but no longer
-            // wired through TrainController (those fields were removed). Wire them to
-            // TrolleyController or a separate collision trigger on the cliff geometry.
 
             // ── Wire TrolleyController ────────────────────────────────────────
             var cSO = new SerializedObject(controller);
