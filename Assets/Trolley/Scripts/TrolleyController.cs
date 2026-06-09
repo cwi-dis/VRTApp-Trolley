@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using VRT.Orchestrator;
 using VRT.OrchestratorComm;
 using VRT.Pilots.Common;
@@ -141,8 +140,7 @@ namespace VRT.Pilots.Trolley
             Debug.Log($"[TrolleyController] OnWindowClose — toggleDecision={toggleDecision}, isAction={toggleDecision?.IsAction}");
             if (toggleDecision != null && toggleDecision.IsAction)
             {
-                string playerId = VRTOrchestratorSingleton.Comm?.SelfUser?.userId ?? "solo";
-                ApplyAction(playerId);
+                ApplyAction();
             }
             else
             {
@@ -152,7 +150,7 @@ namespace VRT.Pilots.Trolley
 
         // ── Outcome application ────────────────────────────────────────────
 
-        void ApplyAction(string triggeredByPlayerId)
+        void ApplyAction()
         {
             if (_state == State.Outcome || _state == State.Transition) return;
             _state = State.Outcome;
@@ -166,7 +164,7 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
 
             DataLogger.Instance?.LogDecision(
-                scenarioID, "action", triggeredByPlayerId, rt,
+                scenarioID, "action", rt,
                 _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
 
             Invoke(nameof(TransitionOut), 5f);
@@ -186,7 +184,7 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
 
             DataLogger.Instance?.LogDecision(
-                scenarioID, "inaction", "", rt,
+                scenarioID, "inaction", rt,
                 _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
 
             Invoke(nameof(TransitionOut), 5f);

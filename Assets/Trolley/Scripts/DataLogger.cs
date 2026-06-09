@@ -42,7 +42,7 @@ namespace VRT.Pilots.Trolley
 
             WriteHeader(_decisionPath,
                 "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
-                "scenarioOrder,avatarConfig,scenario,decision,triggeredByPlayerID,responseTimeMs," +
+                "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
                 "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
 
             WriteHeader(_questionnairePath,
@@ -53,7 +53,7 @@ namespace VRT.Pilots.Trolley
         }
 
         public void LogDecision(
-            string scenario, string decision, string triggeredBy, float responseTimeSec,
+            string scenario, string decision, float responseTimeSec,
             DateTime narrationEndTime, DateTime windowStartTime, DateTime windowEndTime,
             List<(string choice, long unixMs)> attempts = null)
         {
@@ -63,7 +63,7 @@ namespace VRT.Pilots.Trolley
 
             string line =
                 $"{Now()},{_sessionID},{Meta()},{scenario}," +
-                $"{decision},{triggeredBy},{Mathf.RoundToInt(responseTimeSec * 1000)}," +
+                $"{decision},{Mathf.RoundToInt(responseTimeSec * 1000)}," +
                 $"{Stamp(narrationEndTime)},{Stamp(windowStartTime)},{Stamp(windowEndTime)}," +
                 $"{CSV(pressesStr)}";
 
