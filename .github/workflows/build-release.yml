@@ -34,16 +34,25 @@ jobs:
         with:
           targetPlatform: StandaloneOSX
           projectPath: .
-          buildName: VRTApp-Trolley
+          buildName: VR2Gather
           buildsPath: Build
           unityVersion: auto
           cacheUnityInstallationOnMac: true
 
-      # game-ci produces: Build/StandaloneOSX/VRTApp-Trolley.app
+      # game-ci produces: Build/StandaloneOSX/VR2Gather.app
+      # CopyConfigOnBuild.cs in VR2Gather handles this, but repeat here as belt-and-suspenders
+      # (game-ci omits the .app extension from outputPath, which used to confuse CopyConfigOnBuild — issue #44).
+      - name: Copy extra files into app bundle
+        run: |
+          cp config.json "$GITHUB_WORKSPACE/Build/StandaloneOSX/VR2Gather.app/Contents/"
+          script=$(ls "$GITHUB_WORKSPACE"/Library/PackageCache/nl.cwi.dis.vr2gather@*/Editor/VRTCore/Resources/VRTrunservermac.sh | head -1)
+          cp "$script" "$GITHUB_WORKSPACE/Build/StandaloneOSX/VR2Gather.app/Contents/MacOS/VRTrunservermac.sh"
+          chmod +x "$GITHUB_WORKSPACE/Build/StandaloneOSX/VR2Gather.app/Contents/MacOS/VRTrunservermac.sh"
+
       - name: Zip
         run: |
           cd "$GITHUB_WORKSPACE/Build/StandaloneOSX"
-          zip -r "$GITHUB_WORKSPACE/VRTApp-Trolley-mac.zip" VRTApp-Trolley.app
+          zip -r "$GITHUB_WORKSPACE/VRTApp-Trolley-mac.zip" VR2Gather.app
 
       - uses: actions/upload-artifact@v4
         with:
@@ -74,11 +83,12 @@ jobs:
         with:
           targetPlatform: StandaloneWindows64
           projectPath: .
-          buildName: VRTApp-Trolley
+          buildName: VR2Gather
           buildsPath: Build
           unityVersion: auto
 
-      # game-ci produces: Build/StandaloneWindows64/VRTApp-Trolley.exe (+ supporting files)
+      # game-ci produces: Build/StandaloneWindows64/VR2Gather.exe (+ supporting files)
+      # CopyConfigOnBuild.cs copies config.json and VRTrunserver.ps1 correctly for Windows.
       - name: Zip
         run: Compress-Archive -Path "$env:GITHUB_WORKSPACE\Build\StandaloneWindows64\*" -DestinationPath "$env:GITHUB_WORKSPACE\VRTApp-Trolley-win.zip"
 
