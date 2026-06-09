@@ -34,7 +34,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             foreach (string name in new[] {
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
-                "TrackEndpoints", "Button", "SceneDirectionalLight",
+                "TrackEndpoints", "SceneDirectionalLight",
                 // legacy names from old setup runs
                 "TrackPaths", "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
@@ -182,27 +182,11 @@ namespace VRT.Pilots.Trolley.Editor
             SetSerializedProp(tcSO, "ambientAudioSource",  ambientAudioSrc);
             tcSO.ApplyModifiedProperties();
 
-            // ── Button ────────────────────────────────────────────────────────
-            var buttonGO = new GameObject("Button");
-            buttonGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            buttonGO.transform.position = new Vector3(0f, 1.0f, 0.6f);
-
-            var buttonMeshGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            buttonMeshGO.name = "ButtonMesh";
-            buttonMeshGO.transform.SetParent(buttonGO.transform, false);
-            buttonMeshGO.transform.localScale = new Vector3(0.12f, 0.04f, 0.12f);
-            buttonMeshGO.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-
-            buttonGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
-            var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
-            SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
-
             // ── Wire TrolleyController ─────────────────────────────────────────
             var cSO = new SerializedObject(controller);
             cSO.FindProperty("narrationPlayer").objectReferenceValue  = narrationPlayer;
             cSO.FindProperty("decisionTimer").objectReferenceValue    = decisionTimer;
             cSO.FindProperty("trainController").objectReferenceValue  = trainController;
-            cSO.FindProperty("interactable").objectReferenceValue     = trolleyButton;
             TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
             cSO.ApplyModifiedProperties();
 
@@ -267,12 +251,11 @@ namespace VRT.Pilots.Trolley.Editor
             tSO.FindProperty("buttonB").objectReferenceValue = buttonB;
             tSO.ApplyModifiedProperties();
 
-            // Wire to TrolleyController — clear single-trigger interactable
+            // Wire to TrolleyController
             var controller = Object.FindObjectOfType<TrolleyController>();
             if (controller == null) { Debug.LogWarning("Driver – Wire Toggle Buttons: TrolleyController not found."); return; }
             var cSO = new SerializedObject(controller);
             cSO.FindProperty("toggleDecision").objectReferenceValue = toggle;
-            cSO.FindProperty("interactable").objectReferenceValue   = null;
             cSO.ApplyModifiedProperties();
 
             EditorSceneManager.MarkSceneDirty(activeScene);

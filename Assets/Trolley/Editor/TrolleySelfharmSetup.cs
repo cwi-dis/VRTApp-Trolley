@@ -29,7 +29,7 @@ namespace VRT.Pilots.Trolley.Editor
                 "TrolleyController", "NarrationPlayer", "TimerCanvas",
                 "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
                 "TrainPaths", "InactionTrackWorkers",
-                "Button", "Cliff", "CliffCollisionEffect",
+                "Cliff", "CliffCollisionEffect",
                 "StartPoint", "EndPoint", "ActionEndPoint",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {
@@ -183,27 +183,11 @@ namespace VRT.Pilots.Trolley.Editor
             // wired through TrainController (those fields were removed). Wire them to
             // TrolleyController or a separate collision trigger on the cliff geometry.
 
-            // ── Button ────────────────────────────────────────────────────────
-            var buttonGO = new GameObject("Button");
-            buttonGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            buttonGO.transform.position = new Vector3(0f, 1.0f, 0.6f);
-
-            var buttonMeshGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            buttonMeshGO.name = "ButtonMesh";
-            buttonMeshGO.transform.SetParent(buttonGO.transform, false);
-            buttonMeshGO.transform.localScale = new Vector3(0.12f, 0.04f, 0.12f);
-            buttonMeshGO.transform.localPosition = new Vector3(0f, 0.04f, 0f);
-
-            buttonGO.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
-            var trolleyButton = buttonGO.AddComponent<TrolleyButton>();
-            SetField(trolleyButton, "buttonMesh", buttonMeshGO.transform);
-
             // ── Wire TrolleyController ────────────────────────────────────────
             var cSO = new SerializedObject(controller);
             cSO.FindProperty("narrationPlayer").objectReferenceValue = narrationPlayer;
             cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
             cSO.FindProperty("trainController").objectReferenceValue = trainController;
-            cSO.FindProperty("interactable").objectReferenceValue = trolleyButton;
             TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
             cSO.ApplyModifiedProperties();
 

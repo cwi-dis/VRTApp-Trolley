@@ -31,8 +31,7 @@ namespace VRT.Pilots.Trolley
         [SerializeField] NarrationPlayer narrationPlayer;
         [SerializeField] DecisionTimer decisionTimer;
         [SerializeField] TrainController trainController;
-        [SerializeField] TrolleyInteractable button;              // single-trigger decision button
-        [SerializeField] TrolleyToggleDecision toggleDecision;    // toggle A/B (Bystander)
+        [SerializeField] TrolleyToggleDecision toggleDecision;
         [SerializeField] CCTVBlackout cctvBlackout;
 
         [Header("Scenario")]
@@ -94,12 +93,6 @@ namespace VRT.Pilots.Trolley
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnWindowClose;
 
-            if (button != null)
-            {
-                button.OnTriggered += OnLocalActionTriggered;
-                button.SetActive(false);
-            }
-
             toggleDecision?.SetInteractionEnabled(false);
 
             _state = State.Narration;
@@ -131,7 +124,6 @@ namespace VRT.Pilots.Trolley
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
             trainController?.StartApproach();
-            button?.SetActive(true);
             toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;
             bool hasSession = comm != null && comm.SelfUser != null;
@@ -142,24 +134,6 @@ namespace VRT.Pilots.Trolley
                 decisionTimer.StartCountdown();
             }
             // non-master starts timer on receipt of TrolleyTimerStartMessage
-        }
-
-        // ── Local physical interaction ─────────────────────────────────────
-
-        void OnLocalActionTriggered()
-        {
-            if (_state != State.Decision) return;
-            var  comm  = VRTOrchestratorSingleton.Comm;
-            string myId  = comm?.SelfUser?.userId ?? "solo";
-            long   nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            _interactionAttempts.Add(new InteractionAttempt { participantId = myId, unixMs = nowMs });
-            var actionMsg = new TrolleyActionMessage { triggeredByPlayerId = myId, unixMs = nowMs };
-            if (comm == null || comm.UserIsMaster)
-                comm?.SendTypeEventToAll(actionMsg);
-            else
-                comm.SendTypeEventToMaster(actionMsg);
-            ApplyAction(myId);
         }
 
         // ── Timer expired — read final toggle state or default to inaction ──
@@ -198,7 +172,6 @@ namespace VRT.Pilots.Trolley
             }
 
             decisionTimer.Stop();
-            button?.SetActive(false);
             toggleDecision?.SetInteractionEnabled(false);
             cctvBlackout?.Blackout();
             trainController.ExecuteAction();
@@ -221,7 +194,6 @@ namespace VRT.Pilots.Trolley
             float rt = decisionTimer.GetElapsedTime();
 
             decisionTimer.Stop();
-            button?.SetActive(false);
             toggleDecision?.SetInteractionEnabled(false);
             cctvBlackout?.Blackout();
             trainController.ExecuteInaction();
