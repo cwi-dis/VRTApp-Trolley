@@ -19,6 +19,13 @@ namespace VRT.Pilots.Trolley
         [SerializeField, Tooltip("Fired when the local player stops gazing at this object.")]
         UnityEvent m_OnGazeExit;
 
+        void Start()
+        {
+#if VRT_WITH_STATS
+            Statistics.Output("GazeTarget", $"gazing=0, target={gameObject.name}");
+#endif
+        }
+
         public void NotifyGazeEnter()
         {
 #if VRT_WITH_STATS
