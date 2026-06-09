@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace VRT.Pilots.Trolley
 {
-    public struct InteractionAttempt
-    {
-        public string participantId;
-        public long unixMs;
-
-        public string Serialise() => $"{participantId}:{unixMs}";
-    }
-
     /// <summary>
     /// Singleton that writes decision and questionnaire data to CSV.
     /// Call StartSession() from ResearcherSetupController when Begin Study is pressed.
@@ -51,8 +43,7 @@ namespace VRT.Pilots.Trolley
             WriteHeader(_decisionPath,
                 "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
                 "scenarioOrder,avatarConfig,scenario,decision,triggeredByPlayerID,responseTimeMs," +
-                "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp," +
-                "interactionAttempts,competitionFlag");
+                "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
 
             WriteHeader(_questionnairePath,
                 "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
@@ -64,17 +55,17 @@ namespace VRT.Pilots.Trolley
         public void LogDecision(
             string scenario, string decision, string triggeredBy, float responseTimeSec,
             DateTime narrationEndTime, DateTime windowStartTime, DateTime windowEndTime,
-            List<InteractionAttempt> attempts, bool competitionFlag)
+            List<(string choice, long unixMs)> attempts = null)
         {
-            string attemptsStr = (attempts != null && attempts.Count > 0)
-                ? string.Join("|", attempts.ConvertAll(a => a.Serialise()))
+            string pressesStr = (attempts != null && attempts.Count > 0)
+                ? string.Join("|", attempts.ConvertAll(a => $"{a.choice}@{a.unixMs}"))
                 : "none";
 
             string line =
                 $"{Now()},{_sessionID},{Meta()},{scenario}," +
                 $"{decision},{triggeredBy},{Mathf.RoundToInt(responseTimeSec * 1000)}," +
                 $"{Stamp(narrationEndTime)},{Stamp(windowStartTime)},{Stamp(windowEndTime)}," +
-                $"{CSV(attemptsStr)},{(competitionFlag ? "1" : "0")}";
+                $"{CSV(pressesStr)}";
 
             Debug.Log($"[Decision] {line}");
             if (_exportEnabled && _sessionStarted)
