@@ -157,7 +157,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3753942942048378261, guid: e180453fbe3d81244b17c1aa830a09b7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -15
+      value: -215
       objectReference: {fileID: 0}
     - target: {fileID: 3753942942048378261, guid: e180453fbe3d81244b17c1aa830a09b7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -357,7 +357,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.DecisionTimer
   timerText: {fileID: 552852946}
-  statusText: {fileID: 1761103475}
   duration: 8
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   urgentColor: {r: 1, g: 0, b: 0, a: 1}
@@ -2044,6 +2043,38 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -2.75863
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
     - target: {fileID: 7935367321392098293, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: 5f5aaf25-ea3b-4723-ba84-2cd524648beb
@@ -2712,6 +2743,7 @@ MonoBehaviour:
   toggleDecision: {fileID: 736628482}
   cctvBlackout: {fileID: 1176628044}
   scenarioID: bystander
+  blackoutDelay: 2
   readyTrigger: {fileID: 1460084443}
   transitionBarrier: {fileID: 498567787}
   proceedTrigger: {fileID: 1007928761}
