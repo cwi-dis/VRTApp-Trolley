@@ -31,7 +31,7 @@ namespace VRT.Pilots.Trolley
         [SerializeField] NarrationPlayer narrationPlayer;
         [SerializeField] DecisionTimer decisionTimer;
         [SerializeField] TrainController trainController;
-        [SerializeField] TrolleyInteractable interactable;        // single-trigger (Driver / Selfharm)
+        [SerializeField] TrolleyInteractable button;              // single-trigger decision button
         [SerializeField] TrolleyToggleDecision toggleDecision;    // toggle A/B (Bystander)
         [SerializeField] CCTVBlackout cctvBlackout;
 
@@ -94,10 +94,10 @@ namespace VRT.Pilots.Trolley
             narrationPlayer.OnNarrationComplete += OnNarrationComplete;
             decisionTimer.OnTimerExpired += OnWindowClose;
 
-            if (interactable != null)
+            if (button != null)
             {
-                interactable.OnTriggered += OnLocalActionTriggered;
-                interactable.SetActive(false);
+                button.OnTriggered += OnLocalActionTriggered;
+                button.SetActive(false);
             }
 
             toggleDecision?.SetInteractionEnabled(false);
@@ -131,7 +131,7 @@ namespace VRT.Pilots.Trolley
             _windowStartTime  = DateTime.Now;
             _state = State.Decision;
             trainController?.StartApproach();
-            interactable?.SetActive(true);
+            button?.SetActive(true);
             toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;
             bool hasSession = comm != null && comm.SelfUser != null;
@@ -198,7 +198,7 @@ namespace VRT.Pilots.Trolley
             }
 
             decisionTimer.Stop();
-            interactable?.SetActive(false);
+            button?.SetActive(false);
             toggleDecision?.SetInteractionEnabled(false);
             cctvBlackout?.Blackout();
             trainController.ExecuteAction();
@@ -221,7 +221,7 @@ namespace VRT.Pilots.Trolley
             float rt = decisionTimer.GetElapsedTime();
 
             decisionTimer.Stop();
-            interactable?.SetActive(false);
+            button?.SetActive(false);
             toggleDecision?.SetInteractionEnabled(false);
             cctvBlackout?.Blackout();
             trainController.ExecuteInaction();

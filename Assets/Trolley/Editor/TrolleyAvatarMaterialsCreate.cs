@@ -36,10 +36,10 @@ namespace VRT.Pilots.Trolley.Editor
         public static void CreateMaterials()
         {
             // Clone an existing working material so we inherit the correct shader
-            var baseMat = AssetDatabase.LoadAssetAtPath<Material>($"{OutputFolder}/M_Lever.mat");
+            var baseMat = AssetDatabase.LoadAssetAtPath<Material>($"{OutputFolder}/M_Button_Default.mat");
             if (baseMat == null)
             {
-                Debug.LogError("TrolleyAvatarMaterialsCreate: could not find M_Lever.mat as base. " +
+                Debug.LogError("TrolleyAvatarMaterialsCreate: could not find M_Button_Default.mat as base. " +
                                "Place any working .mat in Assets/Trolley/Materials/ and update the path.");
                 return;
             }

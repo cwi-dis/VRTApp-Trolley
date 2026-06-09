@@ -90,7 +90,7 @@ namespace VRT.Pilots.Trolley.Editor
                 "ResearcherCanvas", "AvatarCanvas", "AvatarPreviews",
                 "ResearcherSetupController", "AvatarSetupController",
                 "AvatarSelector_A", "AvatarSelector_B",
-                "PracticeLever", "PracticeButton",
+                "PracticeButton",
                 "AvatarSetupLight", "AvatarSetupFillLight",
                 "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
             {

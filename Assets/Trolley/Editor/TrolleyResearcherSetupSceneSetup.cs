@@ -38,7 +38,7 @@ namespace VRT.Pilots.Trolley.Editor
             foreach (string name in new[] {
                 "ResearcherSetupController", "AvatarSelector",
                 "ResearcherCanvas", "AvatarCanvas",
-                "PracticeLever", "PracticeButton",
+                "PracticeButton",
                 "TrolleyGameState", "DataLogger",
                 "BeginStudyNetworkTrigger",
                 "TutorialController" })  // legacy name from before scene was renamed

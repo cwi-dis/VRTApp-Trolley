@@ -4,7 +4,7 @@ using UnityEngine;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Base class for the lever and button. Enforces single-trigger guard
+    /// Base class for decision buttons. Enforces single-trigger guard
     /// and active/inactive gating. Subclasses call TriggerDecision() when
     /// the physical interaction threshold is met.
     /// </summary>
