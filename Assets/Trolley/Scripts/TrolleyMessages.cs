@@ -7,18 +7,12 @@ namespace VRT.Pilots.Trolley
     internal static class TrolleyMsgID
     {
         public const int TimerStart  = 200;
-        public const int Action      = 201;
+        // 201 was Action — removed when toggle A/B replaced physical button
         // 202 was QuestDone — replaced by BarrierController + NetworkTrigger
         public const int AvatarReady = 203;
     }
 
     public class TrolleyTimerStartMessage : BaseMessage { }
-
-    public class TrolleyActionMessage : BaseMessage
-    {
-        public string triggeredByPlayerId;
-        public long   unixMs;
-    }
 
     public class TrolleyAvatarReadyMessage : BaseMessage
     {
