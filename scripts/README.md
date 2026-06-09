@@ -34,7 +34,15 @@ Use `exp-` tags for experimental/pre-release builds and `v` tags for proper rele
 
 The app is not code-signed, so both macOS and Windows will warn on first launch.
 
-**macOS Gatekeeper:** after attempting to open it and seeing "app can't be opened":
+**macOS Gatekeeper:** the app is not notarized, so macOS will block it on first launch. There are two variants:
+
+*"VR2Gather is damaged and can't be opened"* — this appears when the app was downloaded as a zip and unzipped. The quarantine attribute must be removed in Terminal:
+
+```
+xattr -cr /path/to/VR2Gather.app
+```
+
+*"VR2Gather can't be opened because it is from an unidentified developer"* — use System Settings instead:
 
 1. Go to **System Settings → Privacy & Security → Security**.
 2. Find the note about the blocked app and click **Open Anyway**.
