@@ -76,3 +76,7 @@ config-user.json
 
 # JetBrains Rider/IDEA
 .idea/
+
+# Claude
+settings.local.json
+
