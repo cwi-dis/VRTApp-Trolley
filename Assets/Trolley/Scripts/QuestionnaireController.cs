@@ -85,7 +85,6 @@ namespace VRT.Pilots.Trolley
         string _completedScenario;
         string _lastDecision;
         bool _isPaired;
-        RecordUserVoice _recorder;
 
 
         void Start()
@@ -98,8 +97,6 @@ namespace VRT.Pilots.Trolley
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
             proceedTrigger.OnTrigger.AddListener(ExecuteSceneLoad);
-
-            _recorder = FindFirstObjectByType<RecordUserVoice>(FindObjectsInactive.Include);
 
             bool useBoothA = !_isPaired || VRTOrchestratorSingleton.Comm.UserIsMaster;
             reflectionDoneButton = useBoothA ? reflectionDoneButtonA : reflectionDoneButtonB;
@@ -159,7 +156,7 @@ namespace VRT.Pilots.Trolley
                 reflectionDoneButton.onClick.RemoveAllListeners();
                 reflectionDoneButton.onClick.AddListener(() =>
                 {
-                    _recorder?.AddMarker($"reflection_done_{_completedScenario}");
+                    FindFirstObjectByType<RecordUserVoice>()?.AddMarker($"reflection_done_{_completedScenario}");
                     DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
                     done = true;
                 });
