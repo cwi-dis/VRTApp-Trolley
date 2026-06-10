@@ -278,7 +278,7 @@ namespace VRT.Pilots.Trolley.Editor
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = text; tmp.fontSize = fontSize;
-            tmp.color = Color.white; tmp.enableWordWrapping = true;
+            tmp.color = Color.white; tmp.textWrappingMode = TextWrappingModes.Normal;
             return tmp;
         }
 

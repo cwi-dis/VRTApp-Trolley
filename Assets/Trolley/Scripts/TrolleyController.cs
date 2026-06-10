@@ -25,7 +25,7 @@ namespace VRT.Pilots.Trolley
         [Header("Scene References")]
         [SerializeField] NarrationPlayer narrationPlayer;
         [SerializeField] DecisionTimer decisionTimer;
-        [SerializeField] TrainController trainController;
+        [SerializeField] TrainControllerBase trainController;
         [SerializeField] TrolleyToggleDecision toggleDecision;
         [SerializeField] CCTVBlackout cctvBlackout;
 

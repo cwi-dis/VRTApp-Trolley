@@ -49,7 +49,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             // Defensive sweep: destroy any stray ResearcherSetupController components
             // left on GameObjects that don't appear in the teardown list above.
-            foreach (var stray in Object.FindObjectsOfType<ResearcherSetupController>())
+            foreach (var stray in Object.FindObjectsByType<ResearcherSetupController>(FindObjectsSortMode.None))
                 Object.DestroyImmediate(stray.gameObject);
 
             // ── Persistent singletons ─────────────────────────────────────────

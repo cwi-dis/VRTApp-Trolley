@@ -4,7 +4,13 @@ using UnityEngine.Splines;
 
 namespace VRT.Pilots.Trolley
 {
-    public class TrainController : MonoBehaviour
+    /// <summary>
+    /// Bystander scene: a physical tram model that travels along a spline and rotates to
+    /// follow the track tangent. Spline index 0 = straight (inaction), index 1 = branch
+    /// (action). For the Driver scene (environment moves, player is stationary) use
+    /// DriverTrainController instead.
+    /// </summary>
+    public class TrainController : TrainControllerBase
     {
         [Header("Train")]
         [SerializeField] Transform train;
@@ -21,7 +27,7 @@ namespace VRT.Pilots.Trolley
         float _t;
         bool _moving;
 
-        public void StartApproach()
+        public override void StartApproach()
         {
             if (rail == null || rail.Splines.Count == 0) return;
             _current = rail.Splines[0];
@@ -32,7 +38,7 @@ namespace VRT.Pilots.Trolley
             _moving = true;
         }
 
-        public void ExecuteAction()
+        public override void ExecuteAction()
         {
             if (rail == null || rail.Splines.Count < 2) return;
             float3 localPos = rail.transform.InverseTransformPoint(train.position);
@@ -40,7 +46,13 @@ namespace VRT.Pilots.Trolley
             _current = rail.Splines[1];
         }
 
-        public void ExecuteInaction() { }
+        public override void ExecuteInaction()
+        {
+            if (rail == null || rail.Splines.Count == 0) return;
+            float3 localPos = rail.transform.InverseTransformPoint(train.position);
+            SplineUtility.GetNearestPoint(rail.Splines[0], localPos, out _, out _t);
+            _current = rail.Splines[0];
+        }
 
         void Update()
         {

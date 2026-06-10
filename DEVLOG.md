@@ -278,6 +278,51 @@ Full protocol: `protocol.md`
 
 ---
 
+### Day 10 (2026-06-09) — Bystander spline-based train + CCTVBlackout restore + UI polish
+
+**Done:**
+
+**TrainController.cs — full rewrite (spline-based):**
+- Replaced waypoint/endpoint logic with Unity Splines package (`com.unity.splines 2.2`)
+- Single `SplineContainer rail` field with 2 splines: index 0 = straight (inaction), index 1 = branch (action)
+- `StartApproach()`: uses `GetNearestPoint` to start from train's placed position in scene (no jump to t=0)
+- `ExecuteAction()`: uses `GetNearestPoint` to find equivalent position on spline 1 — train continues smoothly without restarting
+- Removed `ambientAudioSource`, `startPoint`, `endPoint`, `actionEndPoint` fields
+- `trainSpeed` = world units/sec; `modelForwardYaw = 180` for train mesh facing −Z
+
+**TrolleyDriverSetup.cs / TrolleySelfharmSetup.cs:**
+- Replaced `StartPoint`/`EndPoint`/`ActionEndPoint` waypoint creation with `Rail` SplineContainer (2 splines)
+- Added `using UnityEngine.Splines`; old endpoint wiring removed
+
+**CCTVBlackout.cs — restored:**
+- Was deleted in previous session; restored from git history
+- `TrolleyController` now has `[SerializeField] CCTVBlackout cctvBlackout` (optional)
+- Blackout fires after configurable `blackoutDelay` (default 2s) via `Invoke`
+
+**DecisionTimer.cs:**
+- Removed `statusText` field entirely — user doesn't need "Narration playing…" text
+- `StatusText` GameObject disabled in Bystander scene
+
+**TimerCanvas — Bystander:**
+- Scale reduced 50% (0.005 → 0.0025); moved 1 unit further back (z=1 → z=2)
+
+**TrolleyBystanderSetup.cs — created then deleted:**
+- Created to wire CCTVBlackout; deleted after one use (no longer needed)
+
+**Committed:** `1e83257` — "Bystander: spline-based train movement with action divert — basic functions working"
+
+**Bystander scene status: basic functions all working**
+- Narration → train starts → decision window → A/B toggle → divert or straight → CCTV blackout → transition
+
+**Next session starts here:**
+- **Driver scene** — replicate Bystander working functions. Do NOT run setup scripts (destroys scene). Wire manually or surgically.
+  - TrainController: assign `Rail` SplineContainer, draw 2 splines, set `trainSpeed`
+  - ToggleDecision: run `Trolley > Driver – Wire Toggle Buttons` (safe, non-destructive)
+  - StatusText: disable in scene manually
+  - Test full flow
+
+---
+
 ### Day 9 (2026-05-25) — Bystander toggle buttons + narration scripts + end-to-end test
 
 **Done:**
