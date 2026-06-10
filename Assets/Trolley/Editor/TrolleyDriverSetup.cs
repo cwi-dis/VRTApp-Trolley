@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -12,200 +13,113 @@ using VRT.Pilots.Common;
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Run once via menu: Trolley > Wire Driver Scene
-    /// Environment-movement approach: TrackEnvironment moves toward the stationary player,
-    /// simulating the view from inside a moving train cab.
-    /// Workers are children of TrackEnvironment so they ride with it.
-    /// StartPoint/EndPoint are root-level world-space objects — TrainController moves
-    /// TrackEnvironment from start to end at auto-calculated speed.
+    /// Targeted, non-destructive menu items for the Driver scene.
+    /// Full WireDriverScene was removed to prevent accidental scene destruction.
     /// </summary>
     public static class TrolleyDriverSetup
     {
         const string ScenePath = "Assets/Trolley/Scenes/TrolleyDriver.unity";
-        const string WorkerFbxPath = "Assets/Trolley/Animations/Ch17_nonPBR.fbx";
-        const string WorkerControllerPath = "Assets/Trolley/Animations/WorkerController.controller";
 
-        [MenuItem("Trolley/Wire Driver Scene")]
-        public static void WireDriverScene()
+        // WireDriverScene removed — use targeted menu items only:
+        //   Trolley > Driver – Wire Rail
+        //   Trolley > Driver – Wire Toggle Buttons
+
+
+        /// <summary>
+        /// Non-destructive: creates Rail SplineContainer with 2 default splines and wires it
+        /// to TrainController. Also sets modelForwardYaw=180 so TrackEnvironment never rotates.
+        /// After running, open the Rail in the Spline editor and adjust knots to match your
+        /// track geometry. Spline 0 = straight (inaction), Spline 1 = action branch.
+        /// </summary>
+        [MenuItem("Trolley/Driver – Wire Rail")]
+        public static void WireRail()
         {
             var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            var scene = (activeScene.IsValid() && activeScene.path == ScenePath)
-                ? activeScene
-                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-
-            foreach (string name in new[] {
-                "TrolleyController", "NarrationPlayer", "TimerCanvas",
-                "Rail", "TrackEndpoints", "SceneDirectionalLight",
-                // legacy names from old setup runs
-                "TrackPaths", "TrainPaths", "InactionTrackWorkers", "ActionTrackWorkers",
-                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
+            if (!activeScene.IsValid() || activeScene.path != ScenePath)
             {
-                var existing = GameObject.Find(name);
-                if (existing != null) Object.DestroyImmediate(existing);
+                Debug.LogWarning("Driver – Wire Rail: open TrolleyDriver scene first.");
+                return;
             }
 
-            const string menuItem = "Trolley/Wire Driver Scene";
+            // Find or create Rail SplineContainer at scene root
+            var railGO = GameObject.Find("Rail");
+            SplineContainer railContainer;
+            if (railGO == null)
+            {
+                railGO = new GameObject("Rail");
+                railGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Driver – Wire Rail";
+                railContainer = railGO.AddComponent<SplineContainer>();
+                Debug.Log("Driver – Wire Rail: created new Rail SplineContainer.");
+            }
+            else
+            {
+                railContainer = railGO.GetComponent<SplineContainer>();
+                if (railContainer == null) railContainer = railGO.AddComponent<SplineContainer>();
+            }
 
-            // ── TrolleyController ─────────────────────────────────────────────
-            var controllerGO = new GameObject("TrolleyController");
-            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var controller = controllerGO.AddComponent<TrolleyController>();
-            controller.scenarioID = "driver";
+            // Populate 2 splines with default knots for the environment-movement approach.
+            // TrackEnvironment starts at world z=60 and moves toward/past the player at z=0.
+            // Spline 0 (inaction): straight ahead — 5 workers on center track approach player.
+            // Spline 1 (action): diverges right by x=3 — 1 worker on side track is in the path.
+            // ADJUST knots in the Spline editor to match actual track geometry.
+            while (railContainer.Splines.Count < 2)
+                railContainer.AddSpline();
 
-            // ── NarrationPlayer ───────────────────────────────────────────────
-            var narrationGO = new GameObject("NarrationPlayer");
-            narrationGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var narrationAudioSrc = narrationGO.AddComponent<AudioSource>();
-            narrationAudioSrc.playOnAwake = false;
-            narrationAudioSrc.loop = false;
-            var narrationPlayer = narrationGO.AddComponent<NarrationPlayer>();
-            SetField(narrationPlayer, "audioSource", narrationAudioSrc);
+            // Only seed default knots if the spline has none — never overwrite hand-drawn knots.
+            var spline0 = railContainer.Splines[0];
+            if (spline0.Count == 0)
+            {
+                spline0.Add(new BezierKnot(new float3(0f, 0f, 60f)));
+                spline0.Add(new BezierKnot(new float3(0f, 0f,  0f)));
+                spline0.Add(new BezierKnot(new float3(0f, 0f, -20f)));
+                Debug.Log("Driver – Wire Rail: seeded default knots on spline 0 (straight). Adjust in Spline editor.");
+            }
 
-            // ── Timer Canvas (World Space) ─────────────────────────────────────
-            var canvasGO = new GameObject("TimerCanvas");
-            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvasGO.AddComponent<CanvasScaler>();
-            canvasGO.AddComponent<GraphicRaycaster>();
-            canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
-            var canvasRect = canvasGO.GetComponent<RectTransform>();
-            canvasRect.sizeDelta = new Vector2(400f, 150f);
-            canvasGO.transform.position = new Vector3(0f, 2.8f, 1.5f);
-            canvasGO.transform.localScale = Vector3.one * 0.005f;
+            var spline1 = railContainer.Splines[1];
+            if (spline1.Count == 0)
+            {
+                spline1.Add(new BezierKnot(new float3(0f,  0f, 60f)));
+                spline1.Add(new BezierKnot(new float3(1.5f, 0f, 20f)));
+                spline1.Add(new BezierKnot(new float3(3f,  0f, -20f)));
+                Debug.Log("Driver – Wire Rail: seeded default knots on spline 1 (action branch). Adjust in Spline editor.");
+            }
 
-            var statusTextGO = new GameObject("StatusText");
-            statusTextGO.transform.SetParent(canvasGO.transform, false);
-            var statusTMP = statusTextGO.AddComponent<TextMeshProUGUI>();
-            statusTMP.text = "Narration playing…";
-            statusTMP.fontSize = 40;
-            statusTMP.alignment = TextAlignmentOptions.Center;
-            statusTMP.color = Color.white;
-            var statusRect = statusTextGO.GetComponent<RectTransform>();
-            statusRect.anchorMin = new Vector2(0f, 0.5f);
-            statusRect.anchorMax = Vector2.one;
-            statusRect.offsetMin = statusRect.offsetMax = Vector2.zero;
+            EditorUtility.SetDirty(railContainer);
 
-            var timerTextGO = new GameObject("TimerText");
-            timerTextGO.transform.SetParent(canvasGO.transform, false);
-            var timerTMP = timerTextGO.AddComponent<TextMeshProUGUI>();
-            timerTMP.text = "8.0";
-            timerTMP.fontSize = 120;
-            timerTMP.alignment = TextAlignmentOptions.Center;
-            timerTMP.color = Color.white;
-            var timerRect = timerTextGO.GetComponent<RectTransform>();
-            timerRect.anchorMin = Vector2.zero;
-            timerRect.anchorMax = new Vector2(1f, 0.5f);
-            timerRect.offsetMin = timerRect.offsetMax = Vector2.zero;
-
-            var decisionTimer = canvasGO.AddComponent<DecisionTimer>();
-            var dtSO = new SerializedObject(decisionTimer);
-            dtSO.FindProperty("timerText").objectReferenceValue  = timerTMP;
-            dtSO.FindProperty("statusText").objectReferenceValue = statusTMP;
-            dtSO.ApplyModifiedProperties();
-
-            // ── TrackEnvironment ──────────────────────────────────────────────
-            // Reuse existing TrackEnvironment (manually placed track geometry preserved).
+            // Wire Rail and train to TrainController; set modelForwardYaw=180 so
+            // TrackEnvironment (the "train") never rotates as it moves along the spline.
             var trackEnvGO = GameObject.Find("TrackEnvironment");
             if (trackEnvGO == null)
             {
-                trackEnvGO = new GameObject("TrackEnvironment");
-                trackEnvGO.transform.position = new Vector3(0f, 0f, 60f);
-                Debug.LogWarning("WireDriverScene: no TrackEnvironment found — created empty one at (0,0,60). Add track geometry manually.");
+                Debug.LogError("Driver – Wire Rail: TrackEnvironment not found in scene.");
+                return;
             }
-            if (trackEnvGO.GetComponent<ManagedBySetupScript>() == null)
-                trackEnvGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
 
             var trainController = trackEnvGO.GetComponent<TrainController>();
-            if (trainController == null) trainController = trackEnvGO.AddComponent<TrainController>();
-
-            // Workers as local children of TrackEnvironment — ride with the environment
-            foreach (string wg in new[] { "InactionTrackWorkers", "ActionTrackWorkers" })
+            if (trainController == null)
             {
-                var t = trackEnvGO.transform.Find(wg);
-                if (t != null) Object.DestroyImmediate(t.gameObject);
+                Debug.LogError("Driver – Wire Rail: TrainController not found on TrackEnvironment.");
+                return;
             }
 
-            var workerPrefab     = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
-            var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
-
-            SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                parent: trackEnvGO.transform,
-                localCenter: new Vector3(0f, 0f, 15f), count: 5, spacing: 1.2f);
-
-            SpawnWorkers("ActionTrackWorkers", workerPrefab, workerController,
-                parent: trackEnvGO.transform,
-                localCenter: new Vector3(3f, 0f, 10f), count: 1, spacing: 1.2f);
-
-            // ── Rail SplineContainer ──────────────────────────────────────────
-            // Index 0 = straight track (inaction), index 1 = branch track (action).
-            // Draw both splines manually in the Spline editor after running this script.
-            var railGO = new GameObject("Rail");
-            railGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var railContainer = railGO.AddComponent<SplineContainer>();
-            var railSO = new SerializedObject(railContainer);
-            var splinesProp = railSO.FindProperty("m_Splines");
-            if (splinesProp != null && splinesProp.arraySize < 2)
-            {
-                splinesProp.arraySize = 2;
-                railSO.ApplyModifiedProperties();
-            }
-
-            // ── Lighting (created early so it survives any later exception) ────
-            var lightGO = new GameObject("SceneDirectionalLight");
-            lightGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var light = lightGO.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 1.2f;
-            light.color = new Color(1f, 0.95f, 0.85f);
-            lightGO.transform.rotation = Quaternion.Euler(45f, -30f, 0f);
-
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.3f, 0.3f, 0.35f);
-
-            // ── TrainController wiring ────────────────────────────────────────
             var tcSO = new SerializedObject(trainController);
-            SetSerializedProp(tcSO, "train", trackEnvGO.transform);
-            SetSerializedProp(tcSO, "rail",  railContainer);
+            var railProp = tcSO.FindProperty("rail");
+            if (railProp != null) railProp.objectReferenceValue = railContainer;
+            var trainProp = tcSO.FindProperty("train");
+            if (trainProp != null && trainProp.objectReferenceValue == null)
+                trainProp.objectReferenceValue = trackEnvGO.transform;
+            var yawProp = tcSO.FindProperty("modelForwardYaw");
+            if (yawProp != null) yawProp.floatValue = 180f;
+            var speedProp = tcSO.FindProperty("trainSpeed");
+            if (speedProp != null && speedProp.floatValue < 0.1f) speedProp.floatValue = 5f;
             tcSO.ApplyModifiedProperties();
 
-            // ── Wire TrolleyController ─────────────────────────────────────────
-            var cSO = new SerializedObject(controller);
-            cSO.FindProperty("narrationPlayer").objectReferenceValue  = narrationPlayer;
-            cSO.FindProperty("decisionTimer").objectReferenceValue    = decisionTimer;
-            cSO.FindProperty("trainController").objectReferenceValue  = trainController;
-            TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
-            cSO.ApplyModifiedProperties();
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Debug.Log("TrolleyDriverSetup: TrolleyDriver scene wired and saved.");
-        }
-
-        static void SpawnWorkers(string groupName, GameObject prefab,
-            RuntimeAnimatorController animController, Transform parent,
-            Vector3 localCenter, int count, float spacing)
-        {
-            var group = new GameObject(groupName);
-            group.transform.SetParent(parent, false);
-            for (int i = 0; i < count; i++)
-            {
-                GameObject w;
-                if (prefab != null)
-                    w = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                else
-                {
-                    w = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    Debug.LogWarning($"WireDriverScene: worker prefab not found — placeholder for {groupName}.");
-                }
-                w.name = $"Worker_{i + 1}";
-                w.transform.SetParent(group.transform, false);
-                float offset = (i - (count - 1) * 0.5f) * spacing;
-                w.transform.localPosition = localCenter + new Vector3(offset, 0f, 0f);
-                var anim = w.GetComponentInChildren<Animator>(true);
-                if (anim == null) anim = w.AddComponent<Animator>();
-                if (animController != null) anim.runtimeAnimatorController = animController;
-            }
+            EditorSceneManager.MarkSceneDirty(activeScene);
+            EditorSceneManager.SaveScene(activeScene);
+            Debug.Log("Driver – Wire Rail: done.\n" +
+                      "Rail wired to TrainController. modelForwardYaw=180 (no rotation on straight splines).\n" +
+                      "NEXT: select Rail in Hierarchy → open Spline editor → adjust knot positions to match track.\n" +
+                      "Spline 0 = straight/inaction, Spline 1 = action branch.");
         }
 
         [MenuItem("Trolley/Driver – Wire Toggle Buttons")]
@@ -218,11 +132,11 @@ namespace VRT.Pilots.Trolley.Editor
                 return;
             }
 
-            var buttonA = GameObject.Find("Button_TrackA Variant");
-            var buttonB = GameObject.Find("Button_TrackB Variant");
+            var buttonA = GameObject.Find("Button_TrackA");
+            var buttonB = GameObject.Find("Button_TrackB");
             if (buttonA == null || buttonB == null)
             {
-                Debug.LogError("Button_TrackA Variant or Button_TrackB Variant not found in scene.");
+                Debug.LogError("Button_TrackA or Button_TrackB not found in scene.");
                 return;
             }
 
@@ -250,18 +164,6 @@ namespace VRT.Pilots.Trolley.Editor
             Debug.Log("Driver – Wire Toggle Buttons: done. A=inaction (green default), B=action (grey).\nNow wire Button_TrackA OnTrigger → PressA() and Button_TrackB OnTrigger → PressB() on the ToggleDecision object.");
         }
 
-        static void SetField(Object target, string fieldName, Object value)
-        {
-            var so = new SerializedObject(target);
-            so.FindProperty(fieldName).objectReferenceValue = value;
-            so.ApplyModifiedProperties();
-        }
 
-        static void SetSerializedProp(SerializedObject so, string fieldName, Object value)
-        {
-            var prop = so.FindProperty(fieldName);
-            if (prop == null) { Debug.LogWarning($"WireDriverScene: field '{fieldName}' not found on {so.targetObject.GetType().Name}"); return; }
-            prop.objectReferenceValue = value;
-        }
     }
 }
