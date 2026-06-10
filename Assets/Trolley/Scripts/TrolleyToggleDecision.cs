@@ -56,7 +56,7 @@ namespace VRT.Pilots.Trolley
         {
             // First try child named "Button"
             foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-                if (child.name == "Button") { var r = child.GetComponent<Renderer>(); if (r != null) return r; }
+                if (child.name.Contains("Button")) { var r = child.GetComponent<Renderer>(); if (r != null) return r; }
             // Fallback: first MeshRenderer anywhere in children
             return root.GetComponentInChildren<MeshRenderer>(true);
         }
