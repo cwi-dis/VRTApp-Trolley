@@ -1,1 +1,14 @@
-{}
+{
+    "configFilename": "pilotconfig.json",
+    "wasLoaded": true,
+    "researcherConfig": {
+        "condition": "Solo",
+        "relationshipType": "",
+        "scenarioOrder": [
+            "TrolleyBystander",
+            "TrolleyDriver",
+            "TrolleySelfharm"
+        ],
+        "scenarioOrderLabel": "B→D→S"
+    }
+}
