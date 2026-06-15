@@ -55,7 +55,7 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
-            _isPaired = TrolleyGameState.Instance?.condition == TrolleyGameState.Condition.Paired;
+            _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.IsPaired;
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);

@@ -53,6 +53,8 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
+            if (!VRTPilotConfig.InstanceExists())
+                Debug.LogError("ResearcherSetupController: VRTPilotConfig not found.");
             if (TrolleyGameState.Instance == null)
                 Debug.LogError("ResearcherSetupController: TrolleyGameState not found.");
 
@@ -90,35 +92,77 @@ namespace VRT.Pilots.Trolley
 
             if (relationshipPanel != null) relationshipPanel.SetActive(false);
             researcherPanel.SetActive(true);
+
+            PreFillFromConfig();
+        }
+
+        void PreFillFromConfig()
+        {
+            if (!VRTPilotConfig.InstanceExists()) return;
+            var cfg = VRTPilotConfig.Instance;
+            if (!cfg.HasResearcherConfig) return;
+
+            // Participant number — display already updated by UpdateParticipantDisplay() above
+            // since it now reads from VRTPilotConfig.
+
+            // Condition
+            bool isPaired = cfg.IsPaired;
+            _conditionSelected = true;
+            HighlightOne(new[] { soloButton, pairedButton }, isPaired ? 1 : 0);
+            if (relationshipPanel != null) relationshipPanel.SetActive(isPaired);
+
+            // Relationship (if paired)
+            if (isPaired && !string.IsNullOrEmpty(cfg.relationshipType))
+            {
+                int relIdx = cfg.relationshipType == "Stranger" ? 0
+                           : cfg.relationshipType == "Close"    ? 1
+                           : -1;
+                if (relIdx >= 0) HighlightOne(relationshipButtons, relIdx);
+            }
+
+            // Scenario order — match by label
+            for (int i = 0; i < scenarioOrders.Length; i++)
+            {
+                if (scenarioOrders[i].label == cfg.scenarioOrderLabel)
+                {
+                    _orderSelected = true;
+                    HighlightOne(orderButtons, i);
+                    break;
+                }
+            }
+
+            UpdateBeginButton();
         }
 
         void IncrementParticipant()
         {
-            int n = Mathf.Min((TrolleyGameState.Instance?.participantNumber ?? 0) + 1, 30);
-            if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.participantNumber = n;
+            var cfg = VRTPilotConfig.Instance;
+            int n = Mathf.Min((cfg?.participantNumber ?? 0) + 1, 30);
+            if (cfg != null) cfg.participantNumber = n;
             UpdateParticipantDisplay();
             UpdateBeginButton();
         }
 
         void DecrementParticipant()
         {
-            int n = Mathf.Max((TrolleyGameState.Instance?.participantNumber ?? 0) - 1, 0);
-            if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.participantNumber = n;
+            var cfg = VRTPilotConfig.Instance;
+            int n = Mathf.Max((cfg?.participantNumber ?? 0) - 1, 0);
+            if (cfg != null) cfg.participantNumber = n;
             UpdateParticipantDisplay();
             UpdateBeginButton();
         }
 
         void UpdateParticipantDisplay()
         {
-            int n = TrolleyGameState.Instance?.participantNumber ?? 0;
+            int n = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.participantNumber : 0;
             if (participantDisplay != null)
                 participantDisplay.text = n > 0 ? n.ToString() : "—";
         }
 
         void SetCondition(TrolleyGameState.Condition condition)
         {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.condition = condition;
+            var cfg = VRTPilotConfig.Instance;
+            if (cfg != null) cfg.condition = condition.ToString();
             _conditionSelected = true;
 
             HighlightOne(new[] { soloButton, pairedButton },
@@ -126,27 +170,29 @@ namespace VRT.Pilots.Trolley
 
             bool isPaired = condition == TrolleyGameState.Condition.Paired;
             if (relationshipPanel != null) relationshipPanel.SetActive(isPaired);
-            if (!isPaired && TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.relationshipType =
-                    TrolleyGameState.RelationshipType.NotApplicable;
+            if (!isPaired && cfg != null)
+                cfg.relationshipType = "";
 
             UpdateBeginButton();
         }
 
         void SetRelationship(TrolleyGameState.RelationshipType rel, int index)
         {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.relationshipType = rel;
+            var cfg = VRTPilotConfig.Instance;
+            if (cfg != null)
+                cfg.relationshipType = rel == TrolleyGameState.RelationshipType.NotApplicable
+                    ? "" : rel.ToString();
             HighlightOne(relationshipButtons, index);
             UpdateBeginButton();
         }
 
         void SetScenarioOrder(int index)
         {
-            if (TrolleyGameState.Instance != null && index < scenarioOrders.Length)
+            var cfg = VRTPilotConfig.Instance;
+            if (cfg != null && index < scenarioOrders.Length)
             {
-                TrolleyGameState.Instance.scenarioOrder      = scenarioOrders[index].scenes;
-                TrolleyGameState.Instance.scenarioOrderLabel = scenarioOrders[index].label;
+                cfg.scenarioOrder      = scenarioOrders[index].scenes;
+                cfg.scenarioOrderLabel = scenarioOrders[index].label;
             }
             _orderSelected = true;
             HighlightOne(orderButtons, index);
@@ -172,12 +218,13 @@ namespace VRT.Pilots.Trolley
         void UpdateBeginButton()
         {
             if (TrolleyGameState.Instance == null) return;
-            bool participantOk  = TrolleyGameState.Instance.participantNumber > 0;
+            var cfg = VRTPilotConfig.Instance;
+            if (cfg == null) return;
+            bool participantOk  = cfg.participantNumber > 0;
             bool conditionOk    = _conditionSelected;
             bool orderOk        = _orderSelected;
-            bool isPaired       = TrolleyGameState.Instance.condition == TrolleyGameState.Condition.Paired;
-            bool relationshipOk = !isPaired ||
-                TrolleyGameState.Instance.relationshipType != TrolleyGameState.RelationshipType.NotApplicable;
+            bool isPaired       = cfg.IsPaired;
+            bool relationshipOk = !isPaired || !string.IsNullOrEmpty(cfg.relationshipType);
             beginStudyButton.interactable = participantOk && conditionOk && orderOk && relationshipOk;
         }
 

@@ -14,13 +14,7 @@ namespace VRT.Pilots.Trolley
         public enum RelationshipType { NotApplicable, Stranger, Close }
         public enum AvatarBodyType { Masculine, Feminine }
 
-        [Header("Session Config (set by researcher before starting)")]
-        public Condition condition = Condition.Solo;
-        public int participantNumber = 0;
-        public RelationshipType relationshipType = RelationshipType.NotApplicable;
-
-        [Header("Scenario Sequence (set by researcher; order is counterbalanced)")]
-        public string[] scenarioOrder = { "TrolleyBystander", "TrolleyDriver", "TrolleySelfharm" };
+        [Header("Scenario Sequence")]
         public int currentScenarioIndex = 0;
 
         [Header("Scene Names")]
@@ -41,7 +35,6 @@ namespace VRT.Pilots.Trolley
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
         public string lastDecision = "";    // "action" or "inaction"
-        public string scenarioOrderLabel = "";
 
         void Awake()
         {
@@ -50,12 +43,20 @@ namespace VRT.Pilots.Trolley
             DontDestroyOnLoad(gameObject);
         }
 
-        public string NextScenarioScene() =>
-            currentScenarioIndex < scenarioOrder.Length ? scenarioOrder[currentScenarioIndex] : null;
+        public string NextScenarioScene()
+        {
+            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.scenarioOrder : null;
+            if (order == null || currentScenarioIndex >= order.Length) return null;
+            return order[currentScenarioIndex];
+        }
 
         public void AdvanceScenario() => currentScenarioIndex++;
 
-        public bool HasMoreScenarios() => currentScenarioIndex < scenarioOrder.Length;
+        public bool HasMoreScenarios()
+        {
+            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.scenarioOrder : null;
+            return order != null && currentScenarioIndex < order.Length;
+        }
 
         public void ResetSession()
         {

@@ -71,6 +71,11 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             // Allow testing individual scenes without going through Tutorial first
+            if (!VRTPilotConfig.InstanceExists())
+            {
+                new GameObject("VRTPilotConfig").AddComponent<VRTPilotConfig>();
+                Debug.LogWarning("[TrolleyController] VRTPilotConfig not found — created with defaults for standalone test.");
+            }
             if (TrolleyGameState.Instance == null)
             {
                 new GameObject("TrolleyGameState").AddComponent<TrolleyGameState>();

@@ -104,10 +104,17 @@ namespace VRT.Pilots.Trolley
 
         string Meta()
         {
-            var gs = TrolleyGameState.Instance;
-            if (gs == null) return ",,,,,,";
-            return $"{gs.participantNumber},{gs.avatarBodyType},{gs.condition}," +
-                   $"{gs.relationshipType},{CSV(gs.scenarioOrderLabel)},{CSV(gs.AvatarConfigString())}";
+            var gs  = TrolleyGameState.Instance;
+            var cfg = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance : null;
+            if (gs == null && cfg == null) return ",,,,,,";
+            string participantNumber  = cfg != null ? cfg.participantNumber.ToString() : "";
+            string avatarBodyType     = gs  != null ? gs.avatarBodyType.ToString()     : "";
+            string condition          = cfg != null ? cfg.condition                    : "";
+            string relationshipType   = cfg != null ? cfg.relationshipType             : "";
+            string scenarioOrderLabel = cfg != null ? cfg.scenarioOrderLabel           : "";
+            string avatarConfig       = gs  != null ? gs.AvatarConfigString()          : "";
+            return $"{participantNumber},{avatarBodyType},{condition}," +
+                   $"{relationshipType},{CSV(scenarioOrderLabel)},{CSV(avatarConfig)}";
         }
 
         void WriteHeader(string path, string header) =>

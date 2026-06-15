@@ -9,8 +9,28 @@ public class VRTPilotConfig : MonoBehaviour
     public string configFilename = "pilotconfig.json";
     [Tooltip("introspection: configuration was loaded from the config file")]
     public bool wasLoaded = false;
-    // Add public fields here, they will be loaded from pilotconfig.json.
-    
+
+    [Header("Researcher Configuration")]
+    [Tooltip("'Solo' or 'Paired'")]
+    public string condition = "";
+    [Tooltip("Participant number (1-30). 0 = not set.")]
+    public int participantNumber = 0;
+    [Tooltip("'Stranger', 'Close', or '' (not applicable/not set)")]
+    public string relationshipType = "";
+    [Tooltip("Ordered scene names for the three scenarios")]
+    public string[] scenarioOrder = null;
+    [Tooltip("Label for logging, e.g. 'B→D→S'")]
+    public string scenarioOrderLabel = "";
+
+    /// <summary>True when all required researcher fields were loaded from the config file.</summary>
+    public bool HasResearcherConfig =>
+        wasLoaded &&
+        participantNumber > 0 &&
+        (condition == "Solo" || condition == "Paired") &&
+        scenarioOrder != null && scenarioOrder.Length > 0;
+
+    public bool IsPaired => condition == "Paired";
+
     static VRTPilotConfig _Instance;
     public static VRTPilotConfig Instance
     {
@@ -42,13 +62,14 @@ public class VRTPilotConfig : MonoBehaviour
 
     void Initialize()
     {
+        _Instance = this;
         var filename = VRTConfig.ConfigFilename(configFilename);
         if (System.IO.File.Exists(filename))
         {
             JsonUtility.FromJsonOverwrite(System.IO.File.ReadAllText(filename), this);
             wasLoaded = true;
-        } 
-        else 
+        }
+        else
         {
             Debug.LogWarning($"VRTPilotConfig: file not found: {filename}");
         }
