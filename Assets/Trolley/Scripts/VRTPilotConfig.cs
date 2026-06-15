@@ -19,6 +19,16 @@ public class TrolleyResearcherConfig
         scenarioOrder != null && scenarioOrder.Length > 0;
 
     public bool IsPaired => condition == "Paired";
+
+    public void Validate(string context)
+    {
+        if (!string.IsNullOrEmpty(condition) && condition != "Solo" && condition != "Paired")
+            Debug.LogWarning($"{context}: invalid condition '{condition}' — expected 'Solo' or 'Paired'");
+        if (!string.IsNullOrEmpty(relationshipType) && relationshipType != "Stranger" && relationshipType != "Close")
+            Debug.LogWarning($"{context}: invalid relationshipType '{relationshipType}' — expected 'Stranger', 'Close', or ''");
+        if (!HasConfig)
+            Debug.LogWarning($"{context}: researcher config incomplete — condition='{condition}' scenarioOrder={scenarioOrder?.Length ?? 0} entries");
+    }
 }
 
 [Serializable]
@@ -82,6 +92,7 @@ public class VRTPilotConfig : MonoBehaviour
         {
             JsonUtility.FromJsonOverwrite(System.IO.File.ReadAllText(filename), this);
             wasLoaded = true;
+            researcherConfig.Validate($"VRTPilotConfig ({filename})");
         }
         else
         {

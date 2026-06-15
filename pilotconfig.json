@@ -2,8 +2,8 @@
     "configFilename": "pilotconfig.json",
     "wasLoaded": true,
     "researcherConfig": {
-        "condition": "Solo",
-        "relationshipType": "",
+        "condition": "Paired",
+        "relationshipType": "Stranger",
         "scenarioOrder": [
             "TrolleyBystander",
             "TrolleyDriver",
