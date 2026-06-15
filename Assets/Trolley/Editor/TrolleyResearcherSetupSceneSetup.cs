@@ -10,7 +10,7 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Run once via menu: Trolley > Wire Researcher Setup Scene
-    /// Single combined researcher canvas: participant #, condition,
+    /// Single combined researcher canvas: condition,
     /// relationship (paired only), scenario order, Begin Study.
     /// </summary>
     public static class TrolleyResearcherSetupSceneSetup
@@ -73,31 +73,20 @@ namespace VRT.Pilots.Trolley.Editor
             CreateLabel("Title", panel, "STUDY SETUP",
                 new Vector2(0f, 0.93f), new Vector2(1f, 1f), 46);
 
-            // ── Row: Participant number (+/-) ──────────────────────────────────
-            CreateLabel("ParticipantLabel", panel, "Participant #",
-                new Vector2(0.02f, 0.845f), new Vector2(0.25f, 0.91f), 26);
-            var minusBtn = CreateButton("ParticipantMinus", panel, "−",
-                new Vector2(0.26f, 0.848f), new Vector2(0.38f, 0.908f), 40);
-            var participantDisplay = CreateTMPLabel("ParticipantDisplay", panel, "—",
-                new Vector2(0.39f, 0.848f), new Vector2(0.57f, 0.908f), 34);
-            participantDisplay.alignment = TMPro.TextAlignmentOptions.Center;
-            var plusBtn = CreateButton("ParticipantPlus", panel, "+",
-                new Vector2(0.58f, 0.848f), new Vector2(0.70f, 0.908f), 40);
-
             // ── Row: Condition ────────────────────────────────────────────────
             CreateLabel("ConditionLabel", panel, "Condition",
-                new Vector2(0.02f, 0.775f), new Vector2(0.25f, 0.84f), 26);
+                new Vector2(0.02f, 0.840f), new Vector2(0.25f, 0.905f), 26);
             var soloBtn   = CreateButton("SoloButton",   panel, "Solo",
-                new Vector2(0.26f, 0.775f), new Vector2(0.52f, 0.84f));
+                new Vector2(0.26f, 0.840f), new Vector2(0.52f, 0.905f));
             var pairedBtn = CreateButton("PairedButton", panel, "Paired",
-                new Vector2(0.54f, 0.775f), new Vector2(0.80f, 0.84f));
+                new Vector2(0.54f, 0.840f), new Vector2(0.80f, 0.905f));
 
             // ── Row: Relationship (hidden until Paired) ───────────────────────
             var relPanel = new GameObject("RelationshipPanel");
             relPanel.transform.SetParent(panel.transform, false);
             var relRect = relPanel.AddComponent<RectTransform>();
-            relRect.anchorMin = new Vector2(0.02f, 0.705f);
-            relRect.anchorMax = new Vector2(0.98f, 0.77f);
+            relRect.anchorMin = new Vector2(0.02f, 0.770f);
+            relRect.anchorMax = new Vector2(0.98f, 0.835f);
             relRect.offsetMin = relRect.offsetMax = Vector2.zero;
 
             CreateLabel("RelLabel", relPanel, "Relationship",
@@ -112,13 +101,13 @@ namespace VRT.Pilots.Trolley.Editor
 
             // ── Row: Scenario order (2 rows of 3) ─────────────────────────────
             CreateLabel("OrderLabel", panel, "Scenario Order",
-                new Vector2(0.02f, 0.645f), new Vector2(0.98f, 0.70f), 26);
+                new Vector2(0.02f, 0.710f), new Vector2(0.98f, 0.765f), 26);
             var orderButtons = new Button[6];
             for (int i = 0; i < 6; i++)
             {
                 int col = i % 3, row = i / 3;
                 float x0 = 0.02f + col * 0.328f;
-                float y1 = 0.645f - row * 0.075f;
+                float y1 = 0.710f - row * 0.075f;
                 orderButtons[i] = CreateButton($"Order_{i}", panel, OrderLabels[i],
                     new Vector2(x0, y1 - 0.065f), new Vector2(x0 + 0.318f, y1), 24);
             }
@@ -137,15 +126,12 @@ namespace VRT.Pilots.Trolley.Editor
             controllerGO.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Wire Researcher Setup Scene";
             var controller   = controllerGO.AddComponent<ResearcherSetupController>();
 
-            controller.researcherPanel        = panel;
-            controller.soloButton             = soloBtn;
-            controller.pairedButton           = pairedBtn;
-            controller.beginStudyButton       = beginBtn;
-            controller.relationshipPanel      = relPanel;
-            controller.participantMinusButton = minusBtn;
-            controller.participantPlusButton  = plusBtn;
-            controller.participantDisplay     = participantDisplay;
-            controller.exportToggleButton     = exportBtn;
+            controller.researcherPanel   = panel;
+            controller.soloButton        = soloBtn;
+            controller.pairedButton      = pairedBtn;
+            controller.beginStudyButton  = beginBtn;
+            controller.relationshipPanel = relPanel;
+            controller.exportToggleButton = exportBtn;
             controller.exportToggleLabel      = exportLabel;
             controller.relationshipButtons    = relButtons;
             controller.orderButtons           = orderButtons;

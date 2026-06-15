@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using VRT.Orchestrator;
 
 namespace VRT.Pilots.Trolley
 {
@@ -41,12 +42,12 @@ namespace VRT.Pilots.Trolley
             _questionnairePath = Path.Combine(dir, $"questionnaire_{_sessionID}.csv");
 
             WriteHeader(_decisionPath,
-                "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
+                "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
                 "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
                 "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
 
             WriteHeader(_questionnairePath,
-                "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
+                "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
                 "scenarioOrder,avatarConfig,scenario,questionIndex,questionText,answer");
 
             Debug.Log($"DataLogger: export ON — writing to {dir}");
@@ -94,7 +95,7 @@ namespace VRT.Pilots.Trolley
                 string path = Path.Combine(Application.persistentDataPath, $"reflections_{_sessionID}.csv");
                 if (!File.Exists(path))
                     WriteHeader(path,
-                        "timestamp,sessionID,participantNumber,bodyType,condition,relationshipType," +
+                        "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
                         "scenarioOrder,avatarConfig,scenario,decision,audioFile");
                 AppendLine(path, line);
             }
@@ -107,13 +108,17 @@ namespace VRT.Pilots.Trolley
             var gs  = TrolleyGameState.Instance;
             var cfg = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance : null;
             if (gs == null && cfg == null) return ",,,,,,";
-            string participantNumber  = cfg != null ? cfg.participantNumber.ToString() : "";
+            // xxxclaude playerIndex derived from master/non-master; may need revisiting
+            // if the orchestrator exposes a stable per-session player slot number.
+            var comm = VRTOrchestratorSingleton.Comm;
+            bool hasSession = comm != null && comm.SelfUser != null;
+            string playerIndex        = (!hasSession || comm.UserIsMaster) ? "1" : "2";
             string avatarBodyType     = gs  != null ? gs.avatarBodyType.ToString()     : "";
             string condition          = cfg != null ? cfg.condition                    : "";
             string relationshipType   = cfg != null ? cfg.relationshipType             : "";
             string scenarioOrderLabel = cfg != null ? cfg.scenarioOrderLabel           : "";
             string avatarConfig       = gs  != null ? gs.AvatarConfigString()          : "";
-            return $"{participantNumber},{avatarBodyType},{condition}," +
+            return $"{playerIndex},{avatarBodyType},{condition}," +
                    $"{relationshipType},{CSV(scenarioOrderLabel)},{CSV(avatarConfig)}";
         }
 

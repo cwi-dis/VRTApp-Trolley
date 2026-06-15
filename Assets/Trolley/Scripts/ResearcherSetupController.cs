@@ -11,11 +11,6 @@ namespace VRT.Pilots.Trolley
         [Header("Researcher Panel (root)")]
         public GameObject researcherPanel;
 
-        [Header("Participant Number")]
-        public Button participantMinusButton;
-        public Button participantPlusButton;
-        public TextMeshProUGUI participantDisplay;
-
         [Header("Condition")]
         public Button soloButton;
         public Button pairedButton;
@@ -58,10 +53,6 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance == null)
                 Debug.LogError("ResearcherSetupController: TrolleyGameState not found.");
 
-            participantMinusButton.onClick.AddListener(DecrementParticipant);
-            participantPlusButton.onClick.AddListener(IncrementParticipant);
-            UpdateParticipantDisplay();
-
             soloButton.onClick.AddListener(()   => SetCondition(TrolleyGameState.Condition.Solo));
             pairedButton.onClick.AddListener(() => SetCondition(TrolleyGameState.Condition.Paired));
 
@@ -102,9 +93,6 @@ namespace VRT.Pilots.Trolley
             var cfg = VRTPilotConfig.Instance;
             if (!cfg.HasResearcherConfig) return;
 
-            // Participant number — display already updated by UpdateParticipantDisplay() above
-            // since it now reads from VRTPilotConfig.
-
             // Condition
             bool isPaired = cfg.IsPaired;
             _conditionSelected = true;
@@ -132,31 +120,6 @@ namespace VRT.Pilots.Trolley
             }
 
             UpdateBeginButton();
-        }
-
-        void IncrementParticipant()
-        {
-            var cfg = VRTPilotConfig.Instance;
-            int n = Mathf.Min((cfg?.participantNumber ?? 0) + 1, 30);
-            if (cfg != null) cfg.participantNumber = n;
-            UpdateParticipantDisplay();
-            UpdateBeginButton();
-        }
-
-        void DecrementParticipant()
-        {
-            var cfg = VRTPilotConfig.Instance;
-            int n = Mathf.Max((cfg?.participantNumber ?? 0) - 1, 0);
-            if (cfg != null) cfg.participantNumber = n;
-            UpdateParticipantDisplay();
-            UpdateBeginButton();
-        }
-
-        void UpdateParticipantDisplay()
-        {
-            int n = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.participantNumber : 0;
-            if (participantDisplay != null)
-                participantDisplay.text = n > 0 ? n.ToString() : "—";
         }
 
         void SetCondition(TrolleyGameState.Condition condition)
@@ -220,12 +183,11 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance == null) return;
             var cfg = VRTPilotConfig.Instance;
             if (cfg == null) return;
-            bool participantOk  = cfg.participantNumber > 0;
             bool conditionOk    = _conditionSelected;
             bool orderOk        = _orderSelected;
             bool isPaired       = cfg.IsPaired;
             bool relationshipOk = !isPaired || !string.IsNullOrEmpty(cfg.relationshipType);
-            beginStudyButton.interactable = participantOk && conditionOk && orderOk && relationshipOk;
+            beginStudyButton.interactable = conditionOk && orderOk && relationshipOk;
         }
 
         void BeginStudy()

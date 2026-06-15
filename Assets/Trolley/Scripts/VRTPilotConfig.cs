@@ -13,8 +13,6 @@ public class VRTPilotConfig : MonoBehaviour
     [Header("Researcher Configuration")]
     [Tooltip("'Solo' or 'Paired'")]
     public string condition = "";
-    [Tooltip("Participant number (1-30). 0 = not set.")]
-    public int participantNumber = 0;
     [Tooltip("'Stranger', 'Close', or '' (not applicable/not set)")]
     public string relationshipType = "";
     [Tooltip("Ordered scene names for the three scenarios")]
@@ -25,7 +23,6 @@ public class VRTPilotConfig : MonoBehaviour
     /// <summary>True when all required researcher fields were loaded from the config file.</summary>
     public bool HasResearcherConfig =>
         wasLoaded &&
-        participantNumber > 0 &&
         (condition == "Solo" || condition == "Paired") &&
         scenarioOrder != null && scenarioOrder.Length > 0;
 
