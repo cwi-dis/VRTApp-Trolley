@@ -53,6 +53,16 @@ public class VRTPilotConfig : MonoBehaviour
         return _Instance != null;
     }
 
+#if UNITY_EDITOR
+    [ContextMenu("Save as pilotconfig.json")]
+    private void SaveAsPilotConfigJson()
+    {
+        string file = VRTConfig.ConfigFilename("pilotconfig.json", force: true);
+        System.IO.File.WriteAllText(file, JsonUtility.ToJson(this, true));
+        Debug.Log($"VRTPilotConfig: Saved to {file}");
+    }
+#endif
+
     private void Awake()
     {
         if (_Instance != null)
