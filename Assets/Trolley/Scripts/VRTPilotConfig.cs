@@ -3,14 +3,8 @@ using UnityEngine;
 using VRT.Core;
 
 [Serializable]
-public class VRTPilotConfig : MonoBehaviour
+public class TrolleyResearcherConfig
 {
-    [Tooltip("Where to load the configuration from")]
-    public string configFilename = "pilotconfig.json";
-    [Tooltip("introspection: configuration was loaded from the config file")]
-    public bool wasLoaded = false;
-
-    [Header("Researcher Configuration")]
     [Tooltip("'Solo' or 'Paired'")]
     public string condition = "";
     [Tooltip("'Stranger', 'Close', or '' (not applicable/not set)")]
@@ -20,13 +14,26 @@ public class VRTPilotConfig : MonoBehaviour
     [Tooltip("Label for logging, e.g. 'B→D→S'")]
     public string scenarioOrderLabel = "";
 
-    /// <summary>True when all required researcher fields were loaded from the config file.</summary>
-    public bool HasResearcherConfig =>
-        wasLoaded &&
+    public bool HasConfig =>
         (condition == "Solo" || condition == "Paired") &&
         scenarioOrder != null && scenarioOrder.Length > 0;
 
     public bool IsPaired => condition == "Paired";
+}
+
+[Serializable]
+public class VRTPilotConfig : MonoBehaviour
+{
+    [Tooltip("Where to load the configuration from")]
+    public string configFilename = "pilotconfig.json";
+    [Tooltip("introspection: configuration was loaded from the config file")]
+    public bool wasLoaded = false;
+
+    [Header("Researcher Configuration")]
+    public TrolleyResearcherConfig researcherConfig = new TrolleyResearcherConfig();
+
+    /// <summary>True when all required researcher fields were loaded from the config file.</summary>
+    public bool HasResearcherConfig => wasLoaded && researcherConfig.HasConfig;
 
     static VRTPilotConfig _Instance;
     public static VRTPilotConfig Instance

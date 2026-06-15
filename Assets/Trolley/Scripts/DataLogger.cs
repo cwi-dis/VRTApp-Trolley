@@ -112,11 +112,12 @@ namespace VRT.Pilots.Trolley
             // if the orchestrator exposes a stable per-session player slot number.
             var comm = VRTOrchestratorSingleton.Comm;
             bool hasSession = comm != null && comm.SelfUser != null;
+            var rc = cfg?.researcherConfig;
             string playerIndex        = (!hasSession || comm.UserIsMaster) ? "1" : "2";
-            string avatarBodyType     = gs  != null ? gs.avatarBodyType.ToString()     : "";
-            string condition          = cfg != null ? cfg.condition                    : "";
-            string relationshipType   = cfg != null ? cfg.relationshipType             : "";
-            string scenarioOrderLabel = cfg != null ? cfg.scenarioOrderLabel           : "";
+            string avatarBodyType     = gs  != null ? gs.avatarBodyType.ToString() : "";
+            string condition          = rc  != null ? rc.condition                 : "";
+            string relationshipType   = rc  != null ? rc.relationshipType          : "";
+            string scenarioOrderLabel = rc  != null ? rc.scenarioOrderLabel        : "";
             string avatarConfig       = gs  != null ? gs.AvatarConfigString()          : "";
             return $"{playerIndex},{avatarBodyType},{condition}," +
                    $"{relationshipType},{CSV(scenarioOrderLabel)},{CSV(avatarConfig)}";

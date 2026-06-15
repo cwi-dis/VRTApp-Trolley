@@ -92,7 +92,7 @@ namespace VRT.Pilots.Trolley
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
             Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}");
-            _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.IsPaired;
+            _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);

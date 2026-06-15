@@ -90,20 +90,20 @@ namespace VRT.Pilots.Trolley
         void PreFillFromConfig()
         {
             if (!VRTPilotConfig.InstanceExists()) return;
-            var cfg = VRTPilotConfig.Instance;
-            if (!cfg.HasResearcherConfig) return;
+            if (!VRTPilotConfig.Instance.HasResearcherConfig) return;
+            var rc = VRTPilotConfig.Instance.researcherConfig;
 
             // Condition
-            bool isPaired = cfg.IsPaired;
+            bool isPaired = rc.IsPaired;
             _conditionSelected = true;
             HighlightOne(new[] { soloButton, pairedButton }, isPaired ? 1 : 0);
             if (relationshipPanel != null) relationshipPanel.SetActive(isPaired);
 
             // Relationship (if paired)
-            if (isPaired && !string.IsNullOrEmpty(cfg.relationshipType))
+            if (isPaired && !string.IsNullOrEmpty(rc.relationshipType))
             {
-                int relIdx = cfg.relationshipType == "Stranger" ? 0
-                           : cfg.relationshipType == "Close"    ? 1
+                int relIdx = rc.relationshipType == "Stranger" ? 0
+                           : rc.relationshipType == "Close"    ? 1
                            : -1;
                 if (relIdx >= 0) HighlightOne(relationshipButtons, relIdx);
             }
@@ -111,7 +111,7 @@ namespace VRT.Pilots.Trolley
             // Scenario order — match by label
             for (int i = 0; i < scenarioOrders.Length; i++)
             {
-                if (scenarioOrders[i].label == cfg.scenarioOrderLabel)
+                if (scenarioOrders[i].label == rc.scenarioOrderLabel)
                 {
                     _orderSelected = true;
                     HighlightOne(orderButtons, i);
@@ -124,8 +124,8 @@ namespace VRT.Pilots.Trolley
 
         void SetCondition(TrolleyGameState.Condition condition)
         {
-            var cfg = VRTPilotConfig.Instance;
-            if (cfg != null) cfg.condition = condition.ToString();
+            var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
+            if (rc != null) rc.condition = condition.ToString();
             _conditionSelected = true;
 
             HighlightOne(new[] { soloButton, pairedButton },
@@ -133,17 +133,17 @@ namespace VRT.Pilots.Trolley
 
             bool isPaired = condition == TrolleyGameState.Condition.Paired;
             if (relationshipPanel != null) relationshipPanel.SetActive(isPaired);
-            if (!isPaired && cfg != null)
-                cfg.relationshipType = "";
+            if (!isPaired && rc != null)
+                rc.relationshipType = "";
 
             UpdateBeginButton();
         }
 
         void SetRelationship(TrolleyGameState.RelationshipType rel, int index)
         {
-            var cfg = VRTPilotConfig.Instance;
-            if (cfg != null)
-                cfg.relationshipType = rel == TrolleyGameState.RelationshipType.NotApplicable
+            var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
+            if (rc != null)
+                rc.relationshipType = rel == TrolleyGameState.RelationshipType.NotApplicable
                     ? "" : rel.ToString();
             HighlightOne(relationshipButtons, index);
             UpdateBeginButton();
@@ -151,11 +151,11 @@ namespace VRT.Pilots.Trolley
 
         void SetScenarioOrder(int index)
         {
-            var cfg = VRTPilotConfig.Instance;
-            if (cfg != null && index < scenarioOrders.Length)
+            var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
+            if (rc != null && index < scenarioOrders.Length)
             {
-                cfg.scenarioOrder      = scenarioOrders[index].scenes;
-                cfg.scenarioOrderLabel = scenarioOrders[index].label;
+                rc.scenarioOrder      = scenarioOrders[index].scenes;
+                rc.scenarioOrderLabel = scenarioOrders[index].label;
             }
             _orderSelected = true;
             HighlightOne(orderButtons, index);
@@ -181,12 +181,12 @@ namespace VRT.Pilots.Trolley
         void UpdateBeginButton()
         {
             if (TrolleyGameState.Instance == null) return;
-            var cfg = VRTPilotConfig.Instance;
-            if (cfg == null) return;
+            if (!VRTPilotConfig.InstanceExists()) return;
+            var rc = VRTPilotConfig.Instance.researcherConfig;
             bool conditionOk    = _conditionSelected;
             bool orderOk        = _orderSelected;
-            bool isPaired       = cfg.IsPaired;
-            bool relationshipOk = !isPaired || !string.IsNullOrEmpty(cfg.relationshipType);
+            bool isPaired       = rc.IsPaired;
+            bool relationshipOk = !isPaired || !string.IsNullOrEmpty(rc.relationshipType);
             beginStudyButton.interactable = conditionOk && orderOk && relationshipOk;
         }
 

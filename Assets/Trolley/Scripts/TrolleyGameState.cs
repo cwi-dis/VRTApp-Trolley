@@ -45,7 +45,7 @@ namespace VRT.Pilots.Trolley
 
         public string NextScenarioScene()
         {
-            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.scenarioOrder : null;
+            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig.scenarioOrder : null;
             if (order == null || currentScenarioIndex >= order.Length) return null;
             return order[currentScenarioIndex];
         }
@@ -54,7 +54,7 @@ namespace VRT.Pilots.Trolley
 
         public bool HasMoreScenarios()
         {
-            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.scenarioOrder : null;
+            var order = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig.scenarioOrder : null;
             return order != null && currentScenarioIndex < order.Length;
         }
 
