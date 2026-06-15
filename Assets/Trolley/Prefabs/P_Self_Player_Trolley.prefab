@@ -288,6 +288,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6577445455911248170, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: m_RaycastMask.m_Bits
+      value: 115
+      objectReference: {fileID: 0}
     - target: {fileID: 6695701840291593632, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_Enabled
       value: 1
