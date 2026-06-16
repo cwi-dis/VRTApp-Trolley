@@ -98,9 +98,25 @@ namespace VRT.Pilots.Trolley
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
             proceedTrigger.OnTrigger.AddListener(ExecuteSceneLoad);
 
-            bool useBoothA = !_isPaired || VRTOrchestratorSingleton.Comm.UserIsMaster;
+            // Booth A = solo / master, Booth B = non-master. Guard against a paired session
+            // with no orchestrator (would NRE) by defaulting to booth A.
+            var comm = VRTOrchestratorSingleton.Comm;
+            bool isMaster = comm == null || comm.UserIsMaster;
+            bool useBoothA = !_isPaired || isMaster;
             reflectionDoneButton = useBoothA ? reflectionDoneButtonA : reflectionDoneButtonB;
             SelectBooth(useBoothA);
+
+            // Diagnostic for the "Player 2 sees a blank booth" issue: confirms which booth this
+            // client drives and whether the camera is actually near that booth's canvas. If the
+            // distance is large, the player was spawned at the wrong booth (a spawn-placement bug,
+            // not a UI bug). Visible in the Quest logcat / Editor console.
+            var cam = Camera.main;
+            Vector3 camPos = cam != null ? cam.transform.position : Vector3.zero;
+            Vector3 panelPos = questionPanel != null ? questionPanel.transform.position : Vector3.zero;
+            float dist = cam != null ? Vector3.Distance(camPos, panelPos) : -1f;
+            Debug.Log($"[Questionnaire] paired={_isPaired}, isMaster={isMaster}, booth={(useBoothA ? "A" : "B")}, " +
+                      $"cameraPos={camPos}, boothPanelPos={panelPos}, distance={dist:F1} " +
+                      $"(a large distance means this player spawned at the wrong booth).");
 
             questionPanel.SetActive(false);
             reflectionPanel.SetActive(false);
