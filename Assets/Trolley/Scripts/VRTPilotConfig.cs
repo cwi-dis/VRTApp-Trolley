@@ -108,6 +108,14 @@ public class VRTPilotConfig : MonoBehaviour
     void Initialize()
     {
         _Instance = this;
+        // Stopgap for issue #55: VRTConfig.ConfigFilename() only learns the run folder
+        // (from the -vrt-config command-line arg) as a side effect of being asked for
+        // "config.json". If VRTPilotConfig.Awake() races ahead of VRTConfig.Awake(), that
+        // side effect hasn't happened yet and pilotconfig.json resolves against the wrong
+        // folder. Calling ConfigFilename() with its default ("config.json") here forces that
+        // side effect regardless of Awake() order; it's a no-op if VRTConfig already did it.
+        // The real fix belongs in the nl.cwi.dis.vr2gather package (VRTConfig.cs).
+        VRTConfig.ConfigFilename();
         var filename = VRTConfig.ConfigFilename(configFilename);
         if (System.IO.File.Exists(filename))
         {
