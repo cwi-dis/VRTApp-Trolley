@@ -33,6 +33,10 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Identifier written to the data log: bystander | driver | selfharm")]
         public string scenarioID = "unknown";
 
+        [Tooltip("Tutorial/practice scene: no data is logged, and the outcome leads straight " +
+                 "to the first real scenario instead of the questionnaire.")]
+        public bool isTutorial = false;
+
         [Header("CCTV")]
         [Tooltip("Seconds after decision window closes before CCTV blackout triggers.")]
         [SerializeField] float blackoutDelay = 2f;
@@ -173,9 +177,10 @@ namespace VRT.Pilots.Trolley
             trainController.ExecuteAction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "action";
 
-            DataLogger.Instance?.LogDecision(
-                scenarioID, "action", rt,
-                _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
+            if (!isTutorial)
+                DataLogger.Instance?.LogDecision(
+                    scenarioID, "action", rt,
+                    _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
 
             Invoke(nameof(TransitionOut), 5f);
         }
@@ -193,9 +198,10 @@ namespace VRT.Pilots.Trolley
             trainController.ExecuteInaction();
             if (TrolleyGameState.Instance != null) TrolleyGameState.Instance.lastDecision = "inaction";
 
-            DataLogger.Instance?.LogDecision(
-                scenarioID, "inaction", rt,
-                _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
+            if (!isTutorial)
+                DataLogger.Instance?.LogDecision(
+                    scenarioID, "inaction", rt,
+                    _narrationEndTime, _windowStartTime, windowEndTime, _attempts);
 
             Invoke(nameof(TransitionOut), 5f);
         }
@@ -206,7 +212,9 @@ namespace VRT.Pilots.Trolley
         {
             if (_state == State.Transition) return;
             _state = State.Transition;
-            if (TrolleyGameState.Instance != null)
+            // Tutorial is a practice run: it does not count as a completed scenario,
+            // so the scenario index is left untouched (the first real scenario follows).
+            if (!isTutorial && TrolleyGameState.Instance != null)
             {
                 TrolleyGameState.Instance.lastCompletedScenarioID = scenarioID;
                 TrolleyGameState.Instance.AdvanceScenario();
@@ -216,7 +224,22 @@ namespace VRT.Pilots.Trolley
 
         void ExecuteSceneLoad()
         {
-            string next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
+            string next;
+            if (isTutorial)
+            {
+                // After practice, go to the first real scenario (index was not advanced).
+                next = TrolleyGameState.Instance?.NextScenarioScene();
+                if (string.IsNullOrEmpty(next))
+                {
+                    Debug.LogWarning("[TrolleyController] Tutorial finished but no next scenario in the order — " +
+                                     "staying put (standalone test?).");
+                    return;
+                }
+            }
+            else
+            {
+                next = TrolleyGameState.Instance?.questionnaireScene ?? "TrolleyQuestionnaire";
+            }
             PilotController.Instance.LoadNewScene(next);
         }
 

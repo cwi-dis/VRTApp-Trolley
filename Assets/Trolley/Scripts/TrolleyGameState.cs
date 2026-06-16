@@ -16,6 +16,8 @@ namespace VRT.Pilots.Trolley
 
         [Header("Scene Names")]
         public string avatarSetupScene   = "TrolleyAvatarSetup";
+        [Tooltip("Participant practice scene, loaded once after avatar setup and before the first real scenario. Leave empty to skip.")]
+        public string tutorialScene      = "TrolleyTutorial";
         public string questionnaireScene = "TrolleyQuestionnaire";
         public string endScene = "VRTLoginManager";
 

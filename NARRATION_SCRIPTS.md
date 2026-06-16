@@ -30,6 +30,15 @@ All scenarios use a button as the shared action point — referenced consistentl
 
 ---
 
+### Tutorial — Practice (no one at risk)
+
+> Let's practice using the controls. In a moment, a trolley will approach on the track. This is only a test — no one is in danger. If you do nothing, the trolley continues left, along the red path. If you press the button, it diverts right, along the blue path. When you are ready, try diverting the trolley.
+
+**Word count:** ~55 | **Est. duration:** ~24 s
+**Framing:** red = left = do nothing (inaction); blue = right = press (action). File: `narration_tutorial.mp3`
+
+---
+
 ## Recording Notes
 
 - Tone: calm, neutral, factual. Not urgent — urgency is provided by the approaching train/vehicle.
