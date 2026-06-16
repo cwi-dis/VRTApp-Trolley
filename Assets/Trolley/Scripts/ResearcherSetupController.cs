@@ -53,13 +53,13 @@ namespace VRT.Pilots.Trolley
             if (TrolleyGameState.Instance == null)
                 Debug.LogError("ResearcherSetupController: TrolleyGameState not found.");
 
-            soloButton.onClick.AddListener(()   => SetCondition(TrolleyGameState.Condition.Solo));
-            pairedButton.onClick.AddListener(() => SetCondition(TrolleyGameState.Condition.Paired));
+            soloButton.onClick.AddListener(()   => SetCondition(TrolleyResearcherConfig.Condition.Solo));
+            pairedButton.onClick.AddListener(() => SetCondition(TrolleyResearcherConfig.Condition.Paired));
 
             var rels = new[]
             {
-                TrolleyGameState.RelationshipType.Stranger,
-                TrolleyGameState.RelationshipType.Close,
+                TrolleyResearcherConfig.RelationshipType.Stranger,
+                TrolleyResearcherConfig.RelationshipType.Close,
             };
             for (int i = 0; i < relationshipButtons.Length && i < rels.Length; i++)
             {
@@ -122,16 +122,16 @@ namespace VRT.Pilots.Trolley
             UpdateBeginButton();
         }
 
-        void SetCondition(TrolleyGameState.Condition condition)
+        void SetCondition(TrolleyResearcherConfig.Condition condition)
         {
             var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
             if (rc != null) rc.condition = condition.ToString();
             _conditionSelected = true;
 
             HighlightOne(new[] { soloButton, pairedButton },
-                condition == TrolleyGameState.Condition.Solo ? 0 : 1);
+                condition == TrolleyResearcherConfig.Condition.Solo ? 0 : 1);
 
-            bool isPaired = condition == TrolleyGameState.Condition.Paired;
+            bool isPaired = condition == TrolleyResearcherConfig.Condition.Paired;
             if (relationshipPanel != null) relationshipPanel.SetActive(isPaired);
             if (!isPaired && rc != null)
                 rc.relationshipType = "";
@@ -139,11 +139,11 @@ namespace VRT.Pilots.Trolley
             UpdateBeginButton();
         }
 
-        void SetRelationship(TrolleyGameState.RelationshipType rel, int index)
+        void SetRelationship(TrolleyResearcherConfig.RelationshipType rel, int index)
         {
             var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
             if (rc != null)
-                rc.relationshipType = rel == TrolleyGameState.RelationshipType.NotApplicable
+                rc.relationshipType = rel == TrolleyResearcherConfig.RelationshipType.NotApplicable
                     ? "" : rel.ToString();
             HighlightOne(relationshipButtons, index);
             UpdateBeginButton();

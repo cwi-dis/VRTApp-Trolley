@@ -25,14 +25,13 @@ namespace VRT.Pilots.Trolley
 
         public void Apply()
         {
-            var state = TrolleyGameState.Instance;
-            if (state == null) return;
+            if (!VRTPilotConfig.InstanceExists()) return;
+            var configs = VRTPilotConfig.Instance.avatarConfigs;
+            int idx = isRemotePlayer ? TrolleyGameState.OtherAvatarConfigIndex : TrolleyGameState.LocalAvatarConfigIndex;
+            var cfg = (configs != null && idx < configs.Length) ? configs[idx] : null;
 
-            int skinIdx = isRemotePlayer ? state.remoteSkinToneIndex  : state.skinToneIndex;
-            int hairIdx = isRemotePlayer ? state.remoteHairColorIndex : state.hairColorIndex;
-
-            TintChild("Body", skinToneColors, skinIdx);
-            TintChild("Hair", hairColors,     hairIdx);
+            TintChild("Body", skinToneColors, cfg?.skinToneIndex ?? 0);
+            TintChild("Hair", hairColors,     cfg?.hairColorIndex ?? 0);
         }
 
         void TintChild(string childName, Color[] colors, int index)

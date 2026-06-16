@@ -64,9 +64,9 @@ namespace VRT.Pilots.Trolley
             _hairColorBaseColors = CaptureColors(hairColorButtons);
 
             if (masculineButton != null)
-                masculineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine));
+                masculineButton.onClick.AddListener(() => SelectBodyType(TrolleyAvatarConfig.AvatarBodyType.Masculine));
             if (feminineButton != null)
-                feminineButton.onClick.AddListener(() => SelectBodyType(TrolleyGameState.AvatarBodyType.Feminine));
+                feminineButton.onClick.AddListener(() => SelectBodyType(TrolleyAvatarConfig.AvatarBodyType.Feminine));
 
             if (skinToneButtons != null)
                 for (int i = 0; i < skinToneButtons.Length; i++)
@@ -89,28 +89,29 @@ namespace VRT.Pilots.Trolley
 
         void InitializeFromConfig()
         {
-            TrolleyAvatarConfig cfg = null;
-            if (VRTPilotConfig.InstanceExists())
-            {
-                var configs = VRTPilotConfig.Instance.avatarConfigs;
-                if (configs != null && playerIndex >= 0 && playerIndex < configs.Length)
-                    cfg = configs[playerIndex];
-            }
-
+            var cfg = GetConfig();
             var bodyType = cfg != null && cfg.bodyType == "Feminine"
-                ? TrolleyGameState.AvatarBodyType.Feminine
-                : TrolleyGameState.AvatarBodyType.Masculine;
+                ? TrolleyAvatarConfig.AvatarBodyType.Feminine
+                : TrolleyAvatarConfig.AvatarBodyType.Masculine;
             SelectBodyType(bodyType);
             SelectSkinTone(cfg?.skinToneIndex ?? 0);
             SelectHairColor(cfg?.hairColorIndex ?? 0);
         }
 
-        public void SelectBodyType(TrolleyGameState.AvatarBodyType bodyType)
+        TrolleyAvatarConfig GetConfig()
         {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.avatarBodyType = bodyType;
+            if (!VRTPilotConfig.InstanceExists()) return null;
+            var configs = VRTPilotConfig.Instance.avatarConfigs;
+            return (configs != null && playerIndex >= 0 && playerIndex < configs.Length)
+                ? configs[playerIndex] : null;
+        }
 
-            bool isMasc = bodyType == TrolleyGameState.AvatarBodyType.Masculine;
+        public void SelectBodyType(TrolleyAvatarConfig.AvatarBodyType bodyType)
+        {
+            var cfg = GetConfig();
+            if (cfg != null) cfg.bodyType = bodyType.ToString();
+
+            bool isMasc = bodyType == TrolleyAvatarConfig.AvatarBodyType.Masculine;
             if (masculinePreview != null) masculinePreview.SetActive(isMasc);
             if (femininePreview  != null) femininePreview.SetActive(!isMasc);
 
@@ -123,8 +124,8 @@ namespace VRT.Pilots.Trolley
 
         public void SelectSkinTone(int index)
         {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.skinToneIndex = index;
+            var cfg = GetConfig();
+            if (cfg != null) cfg.skinToneIndex = index;
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
             if (index < skinToneColors.Length)
                 TintPreviewChild("Body", skinToneColors[index]);
@@ -132,8 +133,8 @@ namespace VRT.Pilots.Trolley
 
         public void SelectHairColor(int index)
         {
-            if (TrolleyGameState.Instance != null)
-                TrolleyGameState.Instance.hairColorIndex = index;
+            var cfg = GetConfig();
+            if (cfg != null) cfg.hairColorIndex = index;
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
             if (index < hairColors.Length)
                 TintPreviewChild("Hair", hairColors[index]);

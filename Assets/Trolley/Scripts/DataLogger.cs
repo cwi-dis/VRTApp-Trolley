@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
-using VRT.Orchestrator;
 
 namespace VRT.Pilots.Trolley
 {
@@ -105,20 +104,21 @@ namespace VRT.Pilots.Trolley
 
         string Meta()
         {
-            var gs  = TrolleyGameState.Instance;
             var cfg = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance : null;
-            if (gs == null && cfg == null) return ",,,,,,";
-            // xxxclaude playerIndex derived from master/non-master; may need revisiting
-            // if the orchestrator exposes a stable per-session player slot number.
-            var comm = VRTOrchestratorSingleton.Comm;
-            bool hasSession = comm != null && comm.SelfUser != null;
-            var rc = cfg?.researcherConfig;
-            string playerIndex        = (!hasSession || comm.UserIsMaster) ? "1" : "2";
-            string avatarBodyType     = gs  != null ? gs.avatarBodyType.ToString() : "";
-            string condition          = rc  != null ? rc.condition                 : "";
-            string relationshipType   = rc  != null ? rc.relationshipType          : "";
-            string scenarioOrderLabel = rc  != null ? rc.scenarioOrderLabel        : "";
-            string avatarConfig       = gs  != null ? gs.AvatarConfigString()          : "";
+            if (cfg == null) return ",,,,,,";
+
+            int avatarIndex = TrolleyGameState.LocalAvatarConfigIndex;
+            string playerIndex = avatarIndex == 0 ? "1" : "2";
+
+            var rc = cfg.researcherConfig;
+            var configs = cfg.avatarConfigs;
+            var ac = (configs != null && avatarIndex < configs.Length) ? configs[avatarIndex] : null;
+
+            string avatarBodyType     = ac  != null ? ac.bodyType            : "";
+            string condition          = rc  != null ? rc.condition           : "";
+            string relationshipType   = rc  != null ? rc.relationshipType    : "";
+            string scenarioOrderLabel = rc  != null ? rc.scenarioOrderLabel  : "";
+            string avatarConfig       = ac  != null ? ac.ToLogString()       : "";
             return $"{playerIndex},{avatarBodyType},{condition}," +
                    $"{relationshipType},{CSV(scenarioOrderLabel)},{CSV(avatarConfig)}";
         }

@@ -5,6 +5,9 @@ using VRT.Core;
 [Serializable]
 public class TrolleyResearcherConfig
 {
+    public enum Condition { Solo, Paired }
+    public enum RelationshipType { NotApplicable, Stranger, Close }
+
     [Tooltip("'Solo' or 'Paired'")]
     public string condition = "";
     [Tooltip("'Stranger', 'Close', or '' (not applicable/not set)")]
@@ -34,12 +37,16 @@ public class TrolleyResearcherConfig
 [Serializable]
 public class TrolleyAvatarConfig
 {
+    public enum AvatarBodyType { Masculine, Feminine }
+
     [Tooltip("'Masculine' or 'Feminine'")]
     public string bodyType = "";
     [Tooltip("Skin tone swatch index, 0-5")]
     public int skinToneIndex = 0;
     [Tooltip("Hair colour swatch index, 0-5")]
     public int hairColorIndex = 0;
+
+    public string ToLogString() => $"body:{bodyType},skin:{skinToneIndex},hair:{hairColorIndex}";
 }
 
 [Serializable]

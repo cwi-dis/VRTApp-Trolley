@@ -1,4 +1,5 @@
 using UnityEngine;
+using VRT.Orchestrator;
 
 namespace VRT.Pilots.Trolley
 {
@@ -10,10 +11,6 @@ namespace VRT.Pilots.Trolley
     {
         public static TrolleyGameState Instance { get; private set; }
 
-        public enum Condition { Solo, Paired }
-        public enum RelationshipType { NotApplicable, Stranger, Close }
-        public enum AvatarBodyType { Masculine, Feminine }
-
         [Header("Scenario Sequence")]
         public int currentScenarioIndex = 0;
 
@@ -21,16 +18,6 @@ namespace VRT.Pilots.Trolley
         public string avatarSetupScene   = "TrolleyAvatarSetup";
         public string questionnaireScene = "TrolleyQuestionnaire";
         public string endScene = "VRTLoginManager";
-
-        [Header("Local Avatar Configuration (set during avatar selection)")]
-        public AvatarBodyType avatarBodyType = AvatarBodyType.Masculine;
-        public int skinToneIndex = 0;    // 0–5
-        public int hairColorIndex = 0;   // 0–5
-
-        [Header("Remote Avatar Configuration (received from partner on confirm)")]
-        public AvatarBodyType remoteAvatarBodyType = AvatarBodyType.Masculine;
-        public int remoteSkinToneIndex = 0;
-        public int remoteHairColorIndex = 0;
 
         [Header("Introspection")]
         public string lastCompletedScenarioID = "";
@@ -42,6 +29,20 @@ namespace VRT.Pilots.Trolley
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
+
+        // xxxclaude derived from master/non-master; may need revisiting if the
+        // orchestrator exposes a stable per-session player slot number.
+        public static int LocalAvatarConfigIndex
+        {
+            get
+            {
+                var comm = VRTOrchestratorSingleton.Comm;
+                bool hasSession = comm != null && comm.SelfUser != null;
+                return (hasSession && !comm.UserIsMaster) ? 1 : 0;
+            }
+        }
+
+        public static int OtherAvatarConfigIndex => 1 - LocalAvatarConfigIndex;
 
         public string NextScenarioScene()
         {
@@ -63,8 +64,5 @@ namespace VRT.Pilots.Trolley
             currentScenarioIndex = 0;
             lastCompletedScenarioID = "";
         }
-
-        public string AvatarConfigString() =>
-            $"body:{avatarBodyType},skin:{skinToneIndex},hair:{hairColorIndex}";
     }
 }

@@ -16,7 +16,7 @@ namespace VRT.Pilots.Trolley
 
     public class TrolleyAvatarReadyMessage : BaseMessage
     {
-        public int bodyType;       // TrolleyGameState.AvatarBodyType cast to int
+        public int bodyType;       // TrolleyAvatarConfig.AvatarBodyType cast to int
         public int skinToneIndex;
         public int hairColorIndex;
     }

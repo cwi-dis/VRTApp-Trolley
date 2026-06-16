@@ -87,12 +87,12 @@ namespace VRT.Pilots.Trolley
                 SetStatus(statusTextA, "Waiting for partner…");
                 SetStatus(statusTextB, "Waiting for partner…");
 
-                var state = TrolleyGameState.Instance;
+                var myConfig = GetMyAvatarConfig();
                 var msg = new TrolleyAvatarReadyMessage
                 {
-                    bodyType       = (int)(state?.avatarBodyType ?? TrolleyGameState.AvatarBodyType.Masculine),
-                    skinToneIndex  = state?.skinToneIndex ?? 0,
-                    hairColorIndex = state?.hairColorIndex ?? 0,
+                    bodyType       = (int)ParseBodyType(myConfig?.bodyType),
+                    skinToneIndex  = myConfig?.skinToneIndex ?? 0,
+                    hairColorIndex = myConfig?.hairColorIndex ?? 0,
                 };
 
                 if (VRTOrchestratorSingleton.Comm.UserIsMaster)
@@ -103,6 +103,17 @@ namespace VRT.Pilots.Trolley
 
             readyTrigger.Trigger();
         }
+
+        TrolleyAvatarConfig GetMyAvatarConfig()
+        {
+            if (!VRTPilotConfig.InstanceExists()) return null;
+            var configs = VRTPilotConfig.Instance.avatarConfigs;
+            int idx = TrolleyGameState.LocalAvatarConfigIndex;
+            return (configs != null && idx < configs.Length) ? configs[idx] : null;
+        }
+
+        static TrolleyAvatarConfig.AvatarBodyType ParseBodyType(string s) =>
+            s == "Feminine" ? TrolleyAvatarConfig.AvatarBodyType.Feminine : TrolleyAvatarConfig.AvatarBodyType.Masculine;
 
         void ExecuteLoad()
         {
@@ -122,13 +133,15 @@ namespace VRT.Pilots.Trolley
                 VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg, true);
             if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
 
-            var state = TrolleyGameState.Instance;
-            if (state != null)
-            {
-                state.remoteAvatarBodyType  = (TrolleyGameState.AvatarBodyType)msg.bodyType;
-                state.remoteSkinToneIndex   = msg.skinToneIndex;
-                state.remoteHairColorIndex  = msg.hairColorIndex;
-            }
+            if (!VRTPilotConfig.InstanceExists()) return;
+            var configs = VRTPilotConfig.Instance.avatarConfigs;
+            int idx = TrolleyGameState.OtherAvatarConfigIndex;
+            if (configs == null || idx >= configs.Length) return;
+
+            var cfg = configs[idx];
+            cfg.bodyType       = ((TrolleyAvatarConfig.AvatarBodyType)msg.bodyType).ToString();
+            cfg.skinToneIndex  = msg.skinToneIndex;
+            cfg.hairColorIndex = msg.hairColorIndex;
         }
 
         static void SetStatus(TextMeshProUGUI label, string text)
