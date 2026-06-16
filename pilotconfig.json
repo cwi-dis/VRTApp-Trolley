@@ -10,5 +10,9 @@
             "TrolleySelfharm"
         ],
         "scenarioOrderLabel": "B→D→S"
-    }
+    },
+    "avatarConfigs": [
+        { "bodyType": "Masculine", "skinToneIndex": 0, "hairColorIndex": 0 },
+        { "bodyType": "Feminine", "skinToneIndex": 0, "hairColorIndex": 0 }
+    ]
 }

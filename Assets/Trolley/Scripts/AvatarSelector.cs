@@ -13,6 +13,10 @@ namespace VRT.Pilots.Trolley
     /// </summary>
     public class AvatarSelector : MonoBehaviour
     {
+        [Header("Player Slot")]
+        [Tooltip("Index into VRTPilotConfig.avatarConfigs — 0 = Station A / P1, 1 = Station B / P2")]
+        [SerializeField] int playerIndex = 0;
+
         [Header("Body Type Buttons")]
         [SerializeField] Button masculineButton;
         [SerializeField] Button feminineButton;
@@ -80,7 +84,25 @@ namespace VRT.Pilots.Trolley
                     hairColorButtons[i].onClick.AddListener(() => SelectHairColor(captured));
                 }
 
-            SelectBodyType(TrolleyGameState.AvatarBodyType.Masculine);
+            InitializeFromConfig();
+        }
+
+        void InitializeFromConfig()
+        {
+            TrolleyAvatarConfig cfg = null;
+            if (VRTPilotConfig.InstanceExists())
+            {
+                var configs = VRTPilotConfig.Instance.avatarConfigs;
+                if (configs != null && playerIndex >= 0 && playerIndex < configs.Length)
+                    cfg = configs[playerIndex];
+            }
+
+            var bodyType = cfg != null && cfg.bodyType == "Feminine"
+                ? TrolleyGameState.AvatarBodyType.Feminine
+                : TrolleyGameState.AvatarBodyType.Masculine;
+            SelectBodyType(bodyType);
+            SelectSkinTone(cfg?.skinToneIndex ?? 0);
+            SelectHairColor(cfg?.hairColorIndex ?? 0);
         }
 
         public void SelectBodyType(TrolleyGameState.AvatarBodyType bodyType)

@@ -32,6 +32,17 @@ public class TrolleyResearcherConfig
 }
 
 [Serializable]
+public class TrolleyAvatarConfig
+{
+    [Tooltip("'Masculine' or 'Feminine'")]
+    public string bodyType = "";
+    [Tooltip("Skin tone swatch index, 0-5")]
+    public int skinToneIndex = 0;
+    [Tooltip("Hair colour swatch index, 0-5")]
+    public int hairColorIndex = 0;
+}
+
+[Serializable]
 public class VRTPilotConfig : MonoBehaviour
 {
     [Tooltip("Where to load the configuration from")]
@@ -41,6 +52,9 @@ public class VRTPilotConfig : MonoBehaviour
 
     [Header("Researcher Configuration")]
     public TrolleyResearcherConfig researcherConfig = new TrolleyResearcherConfig();
+
+    [Header("Avatar Configuration (index 0 = player 1 / master / Station A, index 1 = player 2 / non-master / Station B)")]
+    public TrolleyAvatarConfig[] avatarConfigs = new TrolleyAvatarConfig[2] { new TrolleyAvatarConfig(), new TrolleyAvatarConfig() };
 
     /// <summary>True when all required researcher fields were loaded from the config file.</summary>
     public bool HasResearcherConfig => wasLoaded && researcherConfig.HasConfig;

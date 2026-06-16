@@ -172,13 +172,13 @@ namespace VRT.Pilots.Trolley.Editor
             var selAGO = new GameObject("AvatarSelector_A");
             selAGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
             var selA = selAGO.AddComponent<AvatarSelector>();
-            WireSelector(selA, mascBtnA, femBtnA, skinBtnsA, hairBtnsA);
+            WireSelector(selA, mascBtnA, femBtnA, skinBtnsA, hairBtnsA, 0);
 
             // ── AvatarSelector B ──────────────────────────────────────────────
             var selBGO = new GameObject("AvatarSelector_B");
             selBGO.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
             var selB = selBGO.AddComponent<AvatarSelector>();
-            WireSelector(selB, mascBtnB, femBtnB, skinBtnsB, hairBtnsB);
+            WireSelector(selB, mascBtnB, femBtnB, skinBtnsB, hairBtnsB, 1);
 
             // ── AvatarSetupController ─────────────────────────────────────────
             var controllerGO = new GameObject("AvatarSetupController");
@@ -272,9 +272,10 @@ namespace VRT.Pilots.Trolley.Editor
         // ── Selector wiring ───────────────────────────────────────────────────
 
         static void WireSelector(AvatarSelector selector,
-            Button mascBtn, Button femBtn, Button[] skinBtns, Button[] hairBtns)
+            Button mascBtn, Button femBtn, Button[] skinBtns, Button[] hairBtns, int playerIndex)
         {
             var so = new SerializedObject(selector);
+            so.FindProperty("playerIndex").intValue = playerIndex;
             so.FindProperty("masculineButton").objectReferenceValue = mascBtn;
             so.FindProperty("feminineButton").objectReferenceValue  = femBtn;
 

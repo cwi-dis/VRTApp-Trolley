@@ -754,6 +754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b49d2c02ed9d940589ad71e456336e68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.AvatarSelector
+  playerIndex: 1
   masculineButton: {fileID: 1167936230}
   feminineButton: {fileID: 1968054137}
   masculineSelfPrefab: {fileID: 0}
@@ -6050,6 +6051,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b49d2c02ed9d940589ad71e456336e68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.AvatarSelector
+  playerIndex: 0
   masculineButton: {fileID: 2121002449}
   feminineButton: {fileID: 1269229029}
   masculineSelfPrefab: {fileID: 0}
@@ -6781,6 +6783,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b49d2c02ed9d940589ad71e456336e68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.AvatarSelector
+  playerIndex: 0
   masculineButton: {fileID: 0}
   feminineButton: {fileID: 0}
   masculineSelfPrefab: {fileID: 0}
