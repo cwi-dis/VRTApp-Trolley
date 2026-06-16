@@ -1,258 +1,198 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.XR.Interaction.Toolkit.UI;
-using UnityEngine.Splines;
-using TMPro;
-using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Run once via menu: Trolley > Wire Selfharm Scene
-    /// Same mechanics as Driver. The inaction path leads to 5 workers;
-    /// the action path leads to a cliff/rocky mountain (participant harms themselves).
+    /// Builds the Self-harm scene by duplicating the (working) Driver scene.
+    ///
+    ///   Trolley > Build Selfharm From Driver
+    ///
+    /// Self-harm replicates the Driver cab + environment-movement divert exactly. The only
+    /// change is the OUTCOME geometry, per the study protocol (STUDY_PROTOCOL_v2 §Scenario C,
+    /// "A concrete barrier is to the side. Steering into the barrier will injure the participant
+    /// but spare the workers. Inaction kills the five."):
+    ///
+    ///   • INACTION (straight) → the five workers ahead (kept from Driver).
+    ///   • ACTION   (divert)   → a ROCKY MOUNTAIN / barrier on the side track. Steering into it
+    ///                            represents self-harm; a dust impact burst fires on contact.
+    ///
+    /// So the single side-track worker from Driver is replaced by the rocky-mountain obstacle.
+    ///
+    /// NOTE — this matches the protocol and the existing questionnaire consequence text +
+    /// narration_selfharm.mp3 (action = self-harm). If you instead want INACTION = self-harm,
+    /// that flips the H2b self-sacrifice mapping; tell Claude and it's a small change here +
+    /// in QuestionnaireController.BuildConsequenceText + a re-recorded narration.
+    ///
+    /// Non-destructive to the Driver scene (SaveScene saveAsCopy). Overwrites TrolleySelfharm.unity
+    /// each run, so make manual tweaks only after the final run.
     /// </summary>
     public static class TrolleySelfharmSetup
     {
-        const string ScenePath = "Assets/Trolley/Scenes/TrolleySelfharm.unity";
-        const string WorkerFbxPath = "Assets/Trolley/Animations/Ch17_nonPBR.fbx";
-        const string WorkerControllerPath = "Assets/Trolley/Animations/WorkerController.controller";
-        const string TrainPrefabPath = "Assets/Polyeler/Simple Train Pack/Prefabs/Train/Train_Type B.prefab";
+        const string SourceScene   = "Assets/Trolley/Scenes/TrolleyDriver.unity";
+        const string SelfharmScene = "Assets/Trolley/Scenes/TrolleySelfharm.unity";
+        const string NarrationPath = "Assets/Trolley/Audio/narration_selfharm.mp3";
 
-        [MenuItem("Trolley/Wire Selfharm Scene")]
-        public static void WireSelfharmScene()
+        static readonly Color RockColor = new Color(0.42f, 0.36f, 0.30f); // grey-brown rock
+
+        [MenuItem("Trolley/Build Selfharm From Driver")]
+        public static void BuildSelfharmFromDriver()
         {
-            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-
-            foreach (string name in new[] {
-                "TrolleyController", "NarrationPlayer", "TimerCanvas",
-                "Train_TypeB", "Train_TypeB [PLACEHOLDER — assign real prefab]",
-                "Rail", "TrainPaths", "InactionTrackWorkers",
-                "Cliff", "CliffCollisionEffect",
-                "TransitionReadyTrigger", "TransitionBarrier", "TransitionProceedTrigger" })
+            var src = EditorSceneManager.OpenScene(SourceScene, OpenSceneMode.Single);
+            if (!src.IsValid())
             {
-                var existing = GameObject.Find(name);
-                if (existing != null) Object.DestroyImmediate(existing);
+                Debug.LogError($"Build Selfharm: could not open {SourceScene}.");
+                return;
             }
 
-            const string menuItem = "Trolley/Wire Selfharm Scene";
-
-            // ── TrolleyController ─────────────────────────────────────────────
-            var controllerGO = new GameObject("TrolleyController");
-            controllerGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var controller = controllerGO.AddComponent<TrolleyController>();
-            controller.scenarioID = "selfharm";
-
-            // ── NarrationPlayer ───────────────────────────────────────────────
-            var narrationGO = new GameObject("NarrationPlayer");
-            narrationGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var audioSrc = narrationGO.AddComponent<AudioSource>();
-            audioSrc.playOnAwake = false;
-            var narrationPlayer = narrationGO.AddComponent<NarrationPlayer>();
-            SetField(narrationPlayer, "audioSource", audioSrc);
-
-            // ── Timer Canvas (World Space) ─────────────────────────────────────
-            var canvasGO = new GameObject("TimerCanvas");
-            canvasGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvasGO.AddComponent<CanvasScaler>();
-            canvasGO.AddComponent<GraphicRaycaster>();
-            canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
-            canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(400f, 150f);
-            canvasGO.transform.position = new Vector3(0f, 2.8f, 1.5f);
-            canvasGO.transform.localScale = Vector3.one * 0.005f;
-
-            var statusTextGO = new GameObject("StatusText");
-            statusTextGO.transform.SetParent(canvasGO.transform, false);
-            var statusTMP = statusTextGO.AddComponent<TextMeshProUGUI>();
-            statusTMP.text = "Narration playing…";
-            statusTMP.fontSize = 40;
-            statusTMP.alignment = TextAlignmentOptions.Center;
-            statusTMP.color = Color.white;
-            var statusRect = statusTextGO.GetComponent<RectTransform>();
-            statusRect.anchorMin = new Vector2(0f, 0.5f);
-            statusRect.anchorMax = Vector2.one;
-            statusRect.offsetMin = statusRect.offsetMax = Vector2.zero;
-
-            var timerTextGO = new GameObject("TimerText");
-            timerTextGO.transform.SetParent(canvasGO.transform, false);
-            var timerTMP = timerTextGO.AddComponent<TextMeshProUGUI>();
-            timerTMP.text = "5.0";
-            timerTMP.fontSize = 120;
-            timerTMP.alignment = TextAlignmentOptions.Center;
-            timerTMP.color = Color.white;
-            var timerRect = timerTextGO.GetComponent<RectTransform>();
-            timerRect.anchorMin = Vector2.zero;
-            timerRect.anchorMax = new Vector2(1f, 0.5f);
-            timerRect.offsetMin = timerRect.offsetMax = Vector2.zero;
-
-            var decisionTimer = canvasGO.AddComponent<DecisionTimer>();
-            var dtSO = new SerializedObject(decisionTimer);
-            dtSO.FindProperty("timerText").objectReferenceValue  = timerTMP;
-            dtSO.FindProperty("statusText").objectReferenceValue = statusTMP;
-            dtSO.ApplyModifiedProperties();
-
-            // ── Train ─────────────────────────────────────────────────────────
-            var trainPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TrainPrefabPath);
-            GameObject trainGO;
-            if (trainPrefab != null)
+            if (!EditorSceneManager.SaveScene(src, SelfharmScene, saveAsCopy: true))
             {
-                trainGO = (GameObject)PrefabUtility.InstantiatePrefab(trainPrefab);
-                trainGO.name = "Train_TypeB";
+                Debug.LogError($"Build Selfharm: failed to save copy to {SelfharmScene}.");
+                return;
             }
-            else
+            AssetDatabase.Refresh();
+
+            var scene = EditorSceneManager.OpenScene(SelfharmScene, OpenSceneMode.Single);
+
+            // ── TrolleyController → selfharm ───────────────────────────────────
+            var controller = Object.FindFirstObjectByType<TrolleyController>();
+            if (controller != null)
             {
-                trainGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                trainGO.name = "Train_TypeB [PLACEHOLDER — assign real prefab]";
-                trainGO.transform.localScale = new Vector3(2f, 1.5f, 5f);
-                Debug.LogWarning("WireSelfharmScene: Train_Type B prefab not found — created placeholder cube.");
+                controller.scenarioID = "selfharm";
+                controller.isTutorial = false;
+                EditorUtility.SetDirty(controller);
             }
-            trainGO.transform.position = new Vector3(0f, 0f, -15f);
-            trainGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var trainController = trainGO.AddComponent<TrainController>();
+            else Debug.LogWarning("Build Selfharm: TrolleyController not found in duplicated scene.");
 
-            // ── Workers (inaction track only — action track leads to cliff) ───
-            var workerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(WorkerFbxPath);
-            var workerController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(WorkerControllerPath);
-
-            SpawnWorkers("InactionTrackWorkers", workerPrefab, workerController,
-                center: new Vector3(0f, 0f, 22f), count: 5, spacing: 1.2f, menuItem: menuItem);
-
-            // ── Rail SplineContainer ──────────────────────────────────────────
-            // Index 0 = straight (inaction, toward workers), index 1 = branch (action, toward cliff).
-            var railGO = new GameObject("Rail");
-            railGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var railContainer = railGO.AddComponent<SplineContainer>();
-            var railSO = new SerializedObject(railContainer);
-            var splinesProp = railSO.FindProperty("m_Splines");
-            if (splinesProp != null && splinesProp.arraySize < 2)
+            // ── Replace the side-track worker(s) with a rocky-mountain barrier ─
+            // ActionTrackWorkers ride with TrackEnvironment, so the mountain inherits the same
+            // parent + local position to move identically toward the player.
+            Transform parent = null;
+            Vector3 localPos = new Vector3(6f, 0f, -15f); // sensible fallback if not found
+            var actionWorkers = GameObject.Find("ActionTrackWorkers");
+            if (actionWorkers != null)
             {
-                splinesProp.arraySize = 2;
-                railSO.ApplyModifiedProperties();
+                parent   = actionWorkers.transform.parent;
+                localPos = actionWorkers.transform.localPosition;
+                Object.DestroyImmediate(actionWorkers);
+            }
+            else Debug.LogWarning("Build Selfharm: ActionTrackWorkers not found — placing mountain at a fallback position; reposition manually.");
+
+            var mountain = BuildRockyMountain(parent, localPos);
+            var impact   = BuildImpactEffect(parent, localPos);
+
+            // ── Wire DriverTrainController ─────────────────────────────────────
+            var driver = Object.FindFirstObjectByType<DriverTrainController>();
+            if (driver != null)
+            {
+                var dSO = new SerializedObject(driver);
+                // No worker group to hide on the action track now — it's the mountain you crash into.
+                dSO.FindProperty("actionHitWorkers").objectReferenceValue = null;
+                // INACTION still mows down the five straight-ahead workers (kept from Driver).
+                var inaction = GameObject.Find("InactionTrackWorkers");
+                if (inaction != null)
+                    dSO.FindProperty("inactionHitWorkers").objectReferenceValue = inaction;
+                // Self-harm dust burst fires on the ACTION (divert into barrier) outcome.
+                dSO.FindProperty("actionImpactEffect").objectReferenceValue = impact;
+                dSO.FindProperty("impactOnAction").boolValue = true;
+                dSO.ApplyModifiedProperties();
+            }
+            else Debug.LogWarning("Build Selfharm: DriverTrainController not found — wire the impact effect manually.");
+
+            // ── Narration ──────────────────────────────────────────────────────
+            var narration = Object.FindFirstObjectByType<NarrationPlayer>();
+            if (narration != null)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(NarrationPath);
+                var nSO = new SerializedObject(narration);
+                var clipsProp = nSO.FindProperty("clips");
+                if (clip != null)
+                {
+                    clipsProp.arraySize = 1;
+                    clipsProp.GetArrayElementAtIndex(0).objectReferenceValue = clip;
+                }
+                else
+                {
+                    clipsProp.arraySize = 0;
+                    Debug.LogWarning("Build Selfharm: narration_selfharm.mp3 not found — cleared clips.");
+                }
+                nSO.ApplyModifiedProperties();
             }
 
-            // ── Cliff / rocky mountain (placeholder geometry) ─────────────────
-            var cliffGO = new GameObject("Cliff");
-            cliffGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
+            AddToBuildSettings(SelfharmScene);
 
-            var cliffFace = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cliffFace.name = "CliffFace";
-            cliffFace.transform.SetParent(cliffGO.transform, false);
-            cliffFace.transform.position = new Vector3(4f, 2f, 31f);
-            cliffFace.transform.localScale = new Vector3(5f, 6f, 2f);
-            var cliffMat = cliffFace.GetComponent<Renderer>();
-            if (cliffMat != null) cliffMat.sharedMaterial.color = new Color(0.45f, 0.38f, 0.30f);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("Build Selfharm: TrolleySelfharm.unity created from Driver.\n" +
+                      "Done: scenarioID=selfharm, side worker replaced by RockyMountain_SelfHarm + impact burst, " +
+                      "DriverTrainController rewired, narration assigned, added to Build Settings.\n" +
+                      "MANUAL: position/scale RockyMountain_SelfHarm so the divert visibly crashes into it; " +
+                      "tune DriverTrainController.hitDelay to the impact moment. Camera shake on impact is a " +
+                      "separate TODO (touches the XR rig — VR2Gather territory).");
+        }
 
-            var cliffEdge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cliffEdge.name = "CliffEdge";
-            cliffEdge.transform.SetParent(cliffGO.transform, false);
-            cliffEdge.transform.position = new Vector3(4f, -1f, 29f);
-            cliffEdge.transform.localScale = new Vector3(5f, 0.3f, 3f);
+        static GameObject BuildRockyMountain(Transform parent, Vector3 localPos)
+        {
+            var root = new GameObject("RockyMountain_SelfHarm");
+            root.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Build Selfharm From Driver";
+            if (parent != null) root.transform.SetParent(parent, false);
+            root.transform.localPosition = localPos;
 
-            // ── Collision effect (activated on impact) ────────────────────────
-            var effectGO = new GameObject("CliffCollisionEffect");
-            effectGO.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            effectGO.transform.position = new Vector3(4f, 1f, 30.5f);
-            var ps = effectGO.AddComponent<ParticleSystem>();
+            // A few overlapping boulders read as a rocky mountain / barrier.
+            AddRock(root.transform, new Vector3(0f, 2f, 0f),     new Vector3(6f, 8f, 4f),  0f);
+            AddRock(root.transform, new Vector3(-2.5f, 1f, 1f),  new Vector3(3f, 4f, 3f),  20f);
+            AddRock(root.transform, new Vector3(2.5f, 1.2f, -1f),new Vector3(3.5f, 5f, 3f),-15f);
+            return root;
+        }
+
+        static void AddRock(Transform parent, Vector3 localPos, Vector3 scale, float yaw)
+        {
+            var rock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rock.name = "Rock";
+            rock.transform.SetParent(parent, false);
+            rock.transform.localPosition = localPos;
+            rock.transform.localScale = scale;
+            rock.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            var rend = rock.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = Object.Instantiate(rend.sharedMaterial);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", RockColor);
+                if (mat.HasProperty("_Color"))     mat.SetColor("_Color", RockColor);
+                rend.sharedMaterial = mat;
+            }
+        }
+
+        static GameObject BuildImpactEffect(Transform parent, Vector3 localPos)
+        {
+            var go = new GameObject("SelfHarmImpactEffect");
+            go.AddComponent<ManagedBySetupScript>().menuItem = "Trolley/Build Selfharm From Driver";
+            if (parent != null) go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos + new Vector3(0f, 1.5f, -2f); // in front of the rock face
+
+            var ps = go.AddComponent<ParticleSystem>();
             var main = ps.main;
             main.startLifetime = 1.0f;
             main.startSpeed = 4f;
-            main.startSize = 0.3f;
+            main.startSize = 0.4f;
             main.startColor = new Color(0.55f, 0.45f, 0.35f); // dusty brown
             main.loop = false;
             main.playOnAwake = false;
             var emission = ps.emission;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 60) });
-            effectGO.SetActive(false);
-
-            var collisionAudioSrc = trainGO.AddComponent<AudioSource>();
-            collisionAudioSrc.playOnAwake = false;
-
-            // ── Wire TrainController ──────────────────────────────────────────
-            var tcSO = new SerializedObject(trainController);
-            tcSO.FindProperty("train").objectReferenceValue = trainGO.transform;
-            tcSO.FindProperty("rail").objectReferenceValue  = railContainer;
-            tcSO.ApplyModifiedProperties();
-
-            // ── Wire TrolleyController ────────────────────────────────────────
-            var cSO = new SerializedObject(controller);
-            cSO.FindProperty("narrationPlayer").objectReferenceValue = narrationPlayer;
-            cSO.FindProperty("decisionTimer").objectReferenceValue = decisionTimer;
-            cSO.FindProperty("trainController").objectReferenceValue = trainController;
-            TrolleySetupBarrierUtils.AddTransitionBarrier(cSO, menuItem);
-            cSO.ApplyModifiedProperties();
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Debug.Log("TrolleySelfharmSetup: TrolleySelfharm scene wired and saved.");
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 80) });
+            go.SetActive(false); // DriverTrainController re-activates + plays it on impact
+            return go;
         }
 
-        static Transform[] CreateWaypoints(GameObject parent, params Vector3[] positions)
+        static void AddToBuildSettings(string scenePath)
         {
-            var wps = new Transform[positions.Length];
-            for (int i = 0; i < positions.Length; i++)
-            {
-                var wp = new GameObject($"Waypoint{i + 1}");
-                wp.transform.SetParent(parent.transform);
-                wp.transform.position = positions[i];
-                wps[i] = wp.transform;
-            }
-            return wps;
-        }
-
-        static Animator[] SpawnWorkers(string groupName, GameObject prefab,
-            RuntimeAnimatorController animController, Vector3 center, int count, float spacing,
-            string menuItem = null)
-        {
-            var group = new GameObject(groupName);
-            if (menuItem != null) group.AddComponent<ManagedBySetupScript>().menuItem = menuItem;
-            var animators = new Animator[count];
-            for (int i = 0; i < count; i++)
-            {
-                GameObject w;
-                if (prefab != null)
-                    w = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                else
-                {
-                    w = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    Debug.LogWarning($"WireSelfharmScene: worker prefab not found — created placeholder for {groupName}.");
-                }
-                w.name = $"Worker_{i + 1}";
-                w.transform.SetParent(group.transform);
-                float offset = (i - (count - 1) * 0.5f) * spacing;
-                w.transform.position = center + new Vector3(offset, 0f, 0f);
-                var anim = w.GetComponentInChildren<Animator>(true);
-                if (anim == null) anim = w.AddComponent<Animator>();
-                if (animController != null) anim.runtimeAnimatorController = animController;
-                animators[i] = anim;
-            }
-            return animators;
-        }
-
-        static void SetField(Object target, string fieldName, Object value)
-        {
-            var so = new SerializedObject(target);
-            so.FindProperty(fieldName).objectReferenceValue = value;
-            so.ApplyModifiedProperties();
-        }
-
-        static void SetTransformArray(SerializedObject so, string fieldName, Transform[] transforms)
-        {
-            var prop = so.FindProperty(fieldName);
-            prop.arraySize = transforms.Length;
-            for (int i = 0; i < transforms.Length; i++)
-                prop.GetArrayElementAtIndex(i).objectReferenceValue = transforms[i];
-        }
-
-        static void SetAnimatorArray(SerializedObject so, string fieldName, Animator[] animators)
-        {
-            var prop = so.FindProperty(fieldName);
-            prop.arraySize = animators.Length;
-            for (int i = 0; i < animators.Length; i++)
-                prop.GetArrayElementAtIndex(i).objectReferenceValue = animators[i];
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            if (scenes.Exists(s => s.path == scenePath)) return;
+            scenes.Add(new EditorBuildSettingsScene(scenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+            Debug.Log($"Build Selfharm: added {scenePath} to Build Settings.");
         }
     }
 }

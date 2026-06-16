@@ -46,6 +46,13 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Seconds after the decision before the hit workers are hidden. Tune to the impact moment.")]
         [SerializeField] float hitDelay = 2f;
 
+        [Header("Impact effect (optional — e.g. Self-harm rocky-mountain crash)")]
+        [Tooltip("Activated hitDelay seconds after the chosen outcome. Self-harm: the dust/impact burst " +
+                 "when the tram hits the obstacle. Leave null in the Driver scene.")]
+        [SerializeField] GameObject actionImpactEffect;
+        [Tooltip("Which outcome triggers the impact effect. Driver/Self-harm crash is on the ACTION (divert) outcome.")]
+        [SerializeField] bool impactOnAction = true;
+
         bool _approaching;
         bool _diverting;
         float _turnedSoFar;   // degrees accumulated during the divert
@@ -57,12 +64,27 @@ namespace VRT.Pilots.Trolley
             _diverting = true;
             _turnedSoFar = 0f;
             HideAfterDelay(actionHitWorkers);
+            if (impactOnAction) PlayImpactAfterDelay();
         }
 
         public override void ExecuteInaction()
         {
             // Keep rolling straight through the outcome.
             HideAfterDelay(inactionHitWorkers);
+            if (!impactOnAction) PlayImpactAfterDelay();
+        }
+
+        void PlayImpactAfterDelay()
+        {
+            if (actionImpactEffect != null) StartCoroutine(ImpactRoutine());
+        }
+
+        IEnumerator ImpactRoutine()
+        {
+            yield return new WaitForSeconds(hitDelay);
+            actionImpactEffect.SetActive(true);
+            var ps = actionImpactEffect.GetComponent<ParticleSystem>();
+            if (ps != null) ps.Play();
         }
 
         void HideAfterDelay(GameObject workers)
