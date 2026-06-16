@@ -20,11 +20,14 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | Menu item | Script |
 |---|---|
 | `Trolley > Wire Questionnaire Scene` | `TrolleyQuestionnaireSetup.cs` |
-| `Trolley > Wire Bystander Scene` | `TrolleyBystanderSetup.cs` |
-| `Trolley > Wire Driver Scene` | `TrolleyDriverSetup.cs` |
-| `Trolley > Wire Selfharm Scene` | `TrolleySelfharmSetup.cs` |
+| `Trolley > Driver – Wire Movement` / `Driver – Wire Toggle Buttons` (targeted; full wire removed) | `TrolleyDriverSetup.cs` |
+| `Trolley > Build Selfharm From Driver` (duplicates Driver → cliff/mountain on action track) | `TrolleySelfharmSetup.cs` |
+| `Trolley > Build Tutorial From Bystander` (duplicates Bystander → no workers, practice) | `TrolleyTutorialSetup.cs` |
+| `Trolley > Bystander – …` (targeted menus) | `TrolleyBystanderSetup.cs` |
 | `Trolley > Wire Researcher Setup Scene` | `TrolleyResearcherSetupSceneSetup.cs` |
 | `Trolley > Wire Avatar Setup Scene` | `TrolleyAvatarSetupSceneSetup.cs` |
+
+Self-harm and Tutorial are built by **duplicating** a known-good scene (Driver / Bystander) and applying targeted edits — they preserve all hand-tuned geometry. Re-running overwrites the target scene, so make manual tweaks only after the final run.
 
 **Gotcha:** setup scripts wire fields by string name via `SerializedObject.FindProperty("fieldName")`. If a C# field is renamed, the string in the setup script must be updated manually — there is no compiler error if they drift. `[FormerlySerializedAs]` on the C# field handles existing scene YAML but does NOT fix the setup script.
 

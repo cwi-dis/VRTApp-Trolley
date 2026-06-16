@@ -8,6 +8,49 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 11 (2026-06-16) — Selfharm-from-Driver, Tutorial-from-Bystander, questionnaire P2 fix (Claude, autonomous session)
+
+**Context:** Suzy asked for the three remaining items this week, then left for the day and approved running everything (no commit/push — she commits after reviewing output). Constraint: do NOT touch ResearcherSetup or AvatarSetup. Claude cannot run Unity menus or test 2 clients, so deliverables are code + scripts to run in Unity.
+
+**⚠️ Self-harm action/inaction conflict — flagged for Suzy:**
+- Verbal instruction during session: "inaction means self-harm (rocky mountain)".
+- BUT `STUDY_PROTOCOL_v2` §Scenario C says **action (steer into side barrier) = self-harm; inaction = the five die**, and the existing `QuestionnaireController.BuildConsequenceText` + `narration_selfharm.mp3` both already encode action=self-harm.
+- Built it **per the protocol** (action = divert into rocky-mountain barrier on the side track; inaction = five workers ahead) to avoid silently reversing the H2b self-sacrifice mapping. Flipping is a small change in `TrolleySelfharmSetup` + `BuildConsequenceText` + re-recorded narration if she really wants inaction=self-harm.
+- **RESOLVED (2026-06-16):** Suzy confirmed **action = self-harm** (tram diverts right into the rocky mountain), **inaction = the five die** — matches the protocol + existing code. No flip, no narration re-record needed.
+
+**Task 1 — `Trolley > Build Selfharm From Driver` (rewrote `TrolleySelfharmSetup.cs`):**
+- Old script (spline `TrainController`, build-from-scratch) was stale — Driver now uses `DriverTrainController` (environment-movement). New script **duplicates TrolleyDriver.unity → TrolleySelfharm.unity** (SaveScene saveAsCopy, preserves Driver's hand-tuned cab/tram/movement), sets `scenarioID=selfharm`, replaces the single side-track worker with `RockyMountain_SelfHarm` (boulder cluster) + `SelfHarmImpactEffect` dust burst, rewires `DriverTrainController` (actionHitWorkers=null, inactionHitWorkers=the five, actionImpactEffect wired), assigns `narration_selfharm.mp3`, adds to Build Settings.
+- `DriverTrainController.cs`: added optional `actionImpactEffect` + `impactOnAction` — fires the burst hitDelay after the chosen outcome (null/no-op in Driver).
+
+**Task 2 — `Trolley > Build Tutorial From Bystander` (new `TrolleyTutorialSetup.cs`) — redesigned mid-session as a colour DRILL:**
+- Suzy clarified the tutorial is a practice mini-game, not the single-decision flow: a sequence of trains one at a time, each RED or BLUE — **RED = do nothing (runs left/straight), BLUE = press the button (diverts right)** — with a top-right `Correct: X / 10` counter and a ding/buzz per round (5 red + 5 blue, shuffled). She asked for a *completely separate* controller so the real `TrolleyController` is untouched.
+- **`TutorialTrainDrill.cs` (new, standalone):** self-contained spline follow (reuses the Bystander rail: spline 0 straight/left, 1 branch/right), recolours the train each round, reads `TrolleyToggleDecision.IsAction` for input, scores, plays SFX, then loads the first real scenario (`NextScenarioScene()`). Paired = independent (each player runs their own drill). Does NOT touch TrolleyController.
+- **Setup script** duplicates Bystander → Tutorial, removes both worker groups, **removes the TrolleyController + TrainController components from this scene only**, hides the idle TimerCanvas, builds a `DrillScoreCanvas` (world-space, reposition to taste) + `DrillSFX`, and wires `TutorialTrainDrill`. Adds to Build Settings.
+- `TrolleyController.isTutorial` flag + `TrolleyGameState.tutorialScene` field still added (harmless; the drill supersedes the isTutorial path but the flag remains a general capability).
+- Tutorial narration script added to `NARRATION_SCRIPTS.md`.
+- **MANUAL (left for Suzy):** assign ding/buzz clips (correctClip/wrongClip) + `narration_tutorial.mp3`; reposition DrillScoreCanvas; tune trainSpeed/decisionWindow; to run in the flow, point `AvatarSetupController` at `TrolleyGameState.tutorialScene` (one line — AvatarSetup is off-limits to Claude).
+
+**Task 3 — questionnaire "Player 2 sees blank booth":**
+- `QuestionnaireController.cs`: added a null-session guard (paired + no orchestrator no longer NREs) and a diagnostic log (role / booth A|B / camera pos / distance to that booth's panel — a large distance = player spawned at the wrong booth, i.e. a spawn-placement bug not a UI bug).
+- `TrolleyQuestionnaire.unity`: corrected the Booth B player spawn to match Booth A's working offset, shifted −30 in z: x −5 → **−5.05**, z −33.4 → **−32.05** (Booth A player is −5.05/−2.05; Booth B canvas is 30 units further). This was Suzy's in-progress edit; values were inconsistent with Booth A.
+- The diagnostic will confirm in-headset whether the remaining cause (if any) is placement vs. VR2Gather assigning both players to the same spawn slot.
+
+**End-of-day state — committed (4 atomic commits on `master`, NOT pushed):**
+- `981316c` Selfharm · `0b863c8` Tutorial · `e13331e` Questionnaire · `f02a480` Docs.
+- Compile fix mid-session: `TutorialTrainDrill` `Random.Range` was ambiguous (Unity.Mathematics vs UnityEngine) → fully qualified to `UnityEngine.Random`.
+- ✅ **Selfharm:** built via the new menu + verified working in the Editor by Suzy.
+- ✅ **Tutorial drill:** scene re-built with `TutorialTrainDrill`, compiles. NOT yet polished or playtested.
+- ✅ **Questionnaire P2 fix:** committed. NOT yet 2-client tested.
+- 8 `voicerecording-*.wav` test recordings left untracked (not committed). A `.gitignore` rule `voicerecording-*.wav` would hide them.
+
+**Tomorrow — start here:**
+1. **Tutorial polish:** on `TutorialTrainDrill`, assign `correctClip`/`wrongClip` (ding/buzz — no such asset exists yet) and `narration_tutorial.mp3`; reposition `DrillScoreCanvas` to the top-right of the player's view; playtest and tune `trainSpeed` (6) / `decisionWindow` (3s).
+2. **Tutorial in flow (optional):** point `AvatarSetupController.ExecuteLoad` at `TrolleyGameState.tutorialScene` (one line; AvatarSetup is yours to edit, off-limits to Claude).
+3. **Selfharm:** position/scale `RockyMountain_SelfHarm` so the divert visibly crashes into it; tune `DriverTrainController.hitDelay`. Camera shake on impact is still a TODO (touches the XR rig — VR2Gather/Jack territory).
+4. **Questionnaire:** 2-client test; read the `[Questionnaire]` log line on P2 — want `booth=B` + small distance. If distance is large, the cause is VR2Gather assigning the spawn slot, not the transform (next thing to dig into).
+
+---
+
 ### Day 1 (2026-04-30) — ~1 hour
 **Done:**
 - All 13 C# scripts written and compiling (no errors)
