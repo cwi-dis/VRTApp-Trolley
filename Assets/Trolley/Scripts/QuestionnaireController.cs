@@ -15,6 +15,14 @@ namespace VRT.Pilots.Trolley
         [Header("Question Set")]
         [SerializeField] QuestionSet questionSet;
 
+        [Header("Practice mode (tutorial run-through — no data logged)")]
+        [Tooltip("When set, this is the fake questionnaire after the tutorial drill: uses practiceQuestionSet, " +
+                 "a generic reflection prompt, no DataLogger writes, and loads the first real scenario after.")]
+        [SerializeField] bool practiceMode = false;
+        [SerializeField] QuestionSet practiceQuestionSet;
+        [Tooltip("Scene to load after the practice questionnaire. Empty = the first scenario from the order.")]
+        [SerializeField] string practiceNextScene = "";
+
         [Header("Reflection — 'Done' button ends the think-aloud period")]
         [FormerlySerializedAs("stopButtonA")]
         [SerializeField] Button reflectionDoneButtonA;
@@ -91,7 +99,8 @@ namespace VRT.Pilots.Trolley
         {
             _completedScenario = TrolleyGameState.Instance?.lastCompletedScenarioID ?? "unknown";
             _lastDecision = TrolleyGameState.Instance?.lastDecision ?? "unknown";
-            Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}");
+            if (practiceMode) { _completedScenario = "practice"; _lastDecision = "practice"; }
+            Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}, practice={practiceMode}");
             _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
@@ -148,11 +157,13 @@ namespace VRT.Pilots.Trolley
         IEnumerator RunQuestionnaire()
         {
             yield return StartCoroutine(ShowReflection());
-            yield return StartCoroutine(ShowQuestions(questionSet.postScenarioCommon, 0));
 
-            int offset = questionSet.postScenarioCommon.Length;
-            if (_isPaired)
-                yield return StartCoroutine(ShowQuestions(questionSet.postScenarioPairedOnly, offset));
+            QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
+            yield return StartCoroutine(ShowQuestions(set.postScenarioCommon, 0));
+
+            // Practice is a short rehearsal — skip the paired-only block.
+            if (!practiceMode && _isPaired)
+                yield return StartCoroutine(ShowQuestions(set.postScenarioPairedOnly, set.postScenarioCommon.Length));
 
             yield return StartCoroutine(ShowTransitionAndSignal());
         }
@@ -172,8 +183,11 @@ namespace VRT.Pilots.Trolley
                 reflectionDoneButton.onClick.RemoveAllListeners();
                 reflectionDoneButton.onClick.AddListener(() =>
                 {
-                    FindFirstObjectByType<RecordUserVoice>()?.AddMarker($"reflection_done_{_completedScenario}");
-                    DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
+                    if (!practiceMode)
+                    {
+                        FindFirstObjectByType<RecordUserVoice>()?.AddMarker($"reflection_done_{_completedScenario}");
+                        DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
+                    }
                     done = true;
                 });
                 yield return new WaitUntil(() => done);
@@ -199,6 +213,10 @@ namespace VRT.Pilots.Trolley
         {
             const string prompt = "Please think out loud: what was going through your mind? What did you decide, and why?";
 
+            if (practiceMode)
+                return "This is a practice run of the questionnaire you will fill in after each round.\n\n" +
+                       "Try thinking out loud — say whatever comes to mind — then press Done.";
+
             if (scenarioID == "selfharm")
             {
                 return decision == "action"
@@ -219,8 +237,9 @@ namespace VRT.Pilots.Trolley
             {
                 string answer = null;
                 yield return StartCoroutine(ShowSingleQuestion(questions[i], i + indexOffset, a => answer = a));
-                DataLogger.Instance?.LogQuestionnaireAnswer(
-                    scenario, i + indexOffset, questions[i].text, answer);
+                if (!practiceMode)
+                    DataLogger.Instance?.LogQuestionnaireAnswer(
+                        scenario, i + indexOffset, questions[i].text, answer);
             }
         }
 
@@ -303,9 +322,11 @@ namespace VRT.Pilots.Trolley
             if (_isPaired)
             {
                 if (transitionText != null)
-                    transitionText.text = hasMore
-                        ? "The next scenario will begin automatically\nwhen your partner is also done."
-                        : "You have completed all scenarios.\nPlease wait for your partner.";
+                    transitionText.text = practiceMode
+                        ? "The study will begin automatically\nwhen your partner is also ready."
+                        : hasMore
+                            ? "The next scenario will begin automatically\nwhen your partner is also done."
+                            : "You have completed all scenarios.\nPlease wait for your partner.";
                 if (startButton != null) startButton.gameObject.SetActive(false);
                 readyTrigger.Trigger();
                 // Scene loads when barrier fires proceedTrigger → ExecuteSceneLoad on all clients
@@ -313,9 +334,11 @@ namespace VRT.Pilots.Trolley
             else
             {
                 if (transitionText != null)
-                    transitionText.text = hasMore
-                        ? "The next scenario is about to begin.\n\nPlease prepare yourself."
-                        : "You have completed all scenarios.\nThank you for your participation.";
+                    transitionText.text = practiceMode
+                        ? "The study is about to begin.\n\nPlease prepare yourself."
+                        : hasMore
+                            ? "The next scenario is about to begin.\n\nPlease prepare yourself."
+                            : "You have completed all scenarios.\nThank you for your participation.";
                 if (startButton != null)
                 {
                     startButton.gameObject.SetActive(true);
@@ -334,9 +357,21 @@ namespace VRT.Pilots.Trolley
 
         void ExecuteSceneLoad()
         {
-            string next = TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios()
-                ? TrolleyGameState.Instance.NextScenarioScene()
-                : TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
+            string next;
+            if (practiceMode)
+            {
+                // After the rehearsal, go to the first real scenario (NextScenarioScene does not
+                // advance the index, so the first scenario is not consumed).
+                next = !string.IsNullOrEmpty(practiceNextScene)
+                    ? practiceNextScene
+                    : TrolleyGameState.Instance?.NextScenarioScene() ?? "VRTLoginManager";
+            }
+            else
+            {
+                next = TrolleyGameState.Instance != null && TrolleyGameState.Instance.HasMoreScenarios()
+                    ? TrolleyGameState.Instance.NextScenarioScene()
+                    : TrolleyGameState.Instance?.endScene ?? "VRTLoginManager";
+            }
             PilotController.Instance.LoadNewScene(next);
         }
 
