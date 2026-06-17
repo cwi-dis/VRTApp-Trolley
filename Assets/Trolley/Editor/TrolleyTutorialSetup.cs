@@ -27,7 +27,10 @@ namespace VRT.Pilots.Trolley.Editor
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyBystander.unity";
         const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
-        const string NarrationPath = "Assets/Trolley/Audio/narration_tutorial.mp3";
+        const string IntroPath = "Assets/Trolley/Audio/narration_tutorial_intro.mp3";
+        const string PressPath = "Assets/Trolley/Audio/narration_tutorial_press.mp3";
+        const string BackPath  = "Assets/Trolley/Audio/narration_tutorial_back.mp3";
+        const string SortPath  = "Assets/Trolley/Audio/narration_tutorial_sort.mp3";
 
         [MenuItem("Trolley/Build Tutorial From Bystander")]
         public static void BuildTutorialFromBystander()
@@ -70,21 +73,42 @@ namespace VRT.Pilots.Trolley.Editor
             var timerCanvas = GameObject.Find("TimerCanvas");
             if (timerCanvas != null) timerCanvas.SetActive(false);
 
-            // ── Keep the reused pieces ─────────────────────────────────────────
-            var toggle    = Object.FindFirstObjectByType<TrolleyToggleDecision>();
-            var narration = Object.FindFirstObjectByType<NarrationPlayer>();
-            if (toggle == null) Debug.LogWarning("Build Tutorial: TrolleyToggleDecision not found — drill has no input.");
+            // ── Reused input: the A/B toggle owns the control buttons + the two lower monitor rims ──
+            var toggle = Object.FindFirstObjectByType<TrolleyToggleDecision>();
+            GameObject buttonA = null, buttonB = null, rimMain = null, rimSide = null;
+            if (toggle != null)
+            {
+                var tSO = new SerializedObject(toggle);
+                buttonA = tSO.FindProperty("buttonA").objectReferenceValue as GameObject;
+                buttonB = tSO.FindProperty("buttonB").objectReferenceValue as GameObject;
+                rimMain = tSO.FindProperty("rimA").objectReferenceValue as GameObject; // Track1East = main/current
+                rimSide = tSO.FindProperty("rimB").objectReferenceValue as GameObject; // Track2East = diverting
+            }
+            else Debug.LogWarning("Build Tutorial: TrolleyToggleDecision not found — tutorial has no input.");
 
-            // narration: tutorial clip if present, else clear so Bystander narration doesn't play
+            // The two upper monitors have no rim yet — clone the existing rim onto them so all four
+            // can blink during the intro. (Reuses the same rim object; not new highlight code.)
+            var rimApproach = CloneRim(rimMain, "Monitor_WestView",    "RimApproach");
+            var rimSwitch   = CloneRim(rimMain, "Monitor_SwitchPoint", "RimSwitch");
+
+            // ── Silence the Bystander NarrationPlayer — the tutorial uses its own clips ──
+            var narration = Object.FindFirstObjectByType<NarrationPlayer>();
             if (narration != null)
             {
                 var nSO = new SerializedObject(narration);
-                var clipsProp = nSO.FindProperty("clips");
-                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(NarrationPath);
-                if (clip != null) { clipsProp.arraySize = 1; clipsProp.GetArrayElementAtIndex(0).objectReferenceValue = clip; }
-                else { clipsProp.arraySize = 0; Debug.LogWarning("Build Tutorial: narration_tutorial.mp3 not found — cleared clips (record + assign it)."); }
+                nSO.FindProperty("clips").arraySize = 0;
                 nSO.ApplyModifiedProperties();
             }
+
+            // ── Tutorial narration source + the four step clips (assign after recording) ──
+            var narrGO = new GameObject("TutorialNarration");
+            var narrSrc = narrGO.AddComponent<AudioSource>();
+            narrSrc.playOnAwake = false;
+            narrSrc.loop = false;
+            var introClip = LoadClip(IntroPath, "narration_tutorial_intro.mp3");
+            var pressClip = LoadClip(PressPath, "narration_tutorial_press.mp3");
+            var backClip  = LoadClip(BackPath,  "narration_tutorial_back.mp3");
+            var sortClip  = LoadClip(SortPath,  "narration_tutorial_sort.mp3");
 
             // ── Top-right score counter (world-space; reposition to taste) ─────
             var scoreText = BuildScoreCanvas();
@@ -94,14 +118,24 @@ namespace VRT.Pilots.Trolley.Editor
             var sfx = sfxGO.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
 
-            // ── The drill controller ───────────────────────────────────────────
+            // ── The tutorial controller ────────────────────────────────────────
             var drillGO = new GameObject("TutorialTrainDrill");
             var drill = drillGO.AddComponent<TutorialTrainDrill>();
             var dSO = new SerializedObject(drill);
             dSO.FindProperty("rail").objectReferenceValue           = railRef;
             dSO.FindProperty("train").objectReferenceValue          = trainRef;
             dSO.FindProperty("toggle").objectReferenceValue         = toggle;
-            dSO.FindProperty("narrationPlayer").objectReferenceValue = narration;
+            dSO.FindProperty("rimApproach").objectReferenceValue    = rimApproach;
+            dSO.FindProperty("rimSwitch").objectReferenceValue      = rimSwitch;
+            dSO.FindProperty("rimMain").objectReferenceValue        = rimMain;
+            dSO.FindProperty("rimSide").objectReferenceValue        = rimSide;
+            dSO.FindProperty("buttonA").objectReferenceValue        = buttonA;
+            dSO.FindProperty("buttonB").objectReferenceValue        = buttonB;
+            dSO.FindProperty("narrationSource").objectReferenceValue = narrSrc;
+            dSO.FindProperty("introClip").objectReferenceValue      = introClip;
+            dSO.FindProperty("pressClip").objectReferenceValue      = pressClip;
+            dSO.FindProperty("backClip").objectReferenceValue       = backClip;
+            dSO.FindProperty("sortClip").objectReferenceValue       = sortClip;
             dSO.FindProperty("scoreText").objectReferenceValue      = scoreText;
             dSO.FindProperty("sfxSource").objectReferenceValue      = sfx;
             dSO.ApplyModifiedProperties();
@@ -110,13 +144,17 @@ namespace VRT.Pilots.Trolley.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("Build Tutorial: TrolleyTutorial.unity created.\n" +
-                      "Done: workers removed, TrolleyController/TrainController removed, TutorialTrainDrill wired " +
-                      "(rail/train/toggle/score), added to Build Settings.\n" +
-                      "MANUAL: (1) assign ding/buzz clips to DrillSFX (correctClip/wrongClip) on TutorialTrainDrill; " +
-                      "(2) record + assign narration_tutorial.mp3; (3) reposition DrillScoreCanvas to the top-right of " +
-                      "the player's view; (4) check trainSpeed/decisionWindow feel; (5) to run it in the flow, point " +
-                      "AvatarSetupController at TrolleyGameState.tutorialScene (that line is in AvatarSetup — left for you).");
+            Debug.Log("Build Tutorial: TrolleyTutorial.unity created (two-round practice).\n" +
+                      "Done: workers removed, TrolleyController/TrainController removed; cloned RimApproach/RimSwitch " +
+                      "onto the two upper monitors; TutorialNarration source created; TutorialTrainDrill wired " +
+                      "(rail/train/toggle/4 rims/2 buttons/4 narration clips/score/sfx); added to Build Settings.\n" +
+                      "MANUAL: (1) record + assign the four clips — narration_tutorial_{intro,press,back,sort}.mp3 — " +
+                      "and tune monitorHighlightTimes to the intro recording; (2) assign ding/buzz to DrillSFX " +
+                      "(correctClip/wrongClip); (3) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch " +
+                      "to sit on their monitors; (4) check trainSpeed and set divertThreshold to the switch point on the rail; " +
+                      "(5) run 'Trolley > Build Practice Questionnaire From Questionnaire' so the after-scene exists; " +
+                      "(6) to run it in the flow, point AvatarSetupController at TrolleyGameState.tutorialScene " +
+                      "(that line is in AvatarSetup — left for you).");
         }
 
         static TextMeshProUGUI BuildScoreCanvas()
@@ -134,7 +172,7 @@ namespace VRT.Pilots.Trolley.Editor
             var textGO = new GameObject("ScoreText");
             textGO.transform.SetParent(canvasGO.transform, false);
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Correct: 0 / 10";
+            tmp.text = "Correct decisions: 0 / 5";
             tmp.fontSize = 60;
             tmp.alignment = TextAlignmentOptions.TopRight;
             tmp.color = Color.white;
@@ -142,6 +180,45 @@ namespace VRT.Pilots.Trolley.Editor
             rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             return tmp;
+        }
+
+        // Clones the existing monitor rim onto another monitor so all four can blink in the intro.
+        static GameObject CloneRim(GameObject rimSource, string monitorName, string newName)
+        {
+            if (rimSource == null)
+            {
+                Debug.LogWarning($"Build Tutorial: no source rim (toggle RimA) — cannot create {newName}.");
+                return null;
+            }
+            var monitor = FindInScene(monitorName);
+            if (monitor == null)
+            {
+                Debug.LogWarning($"Build Tutorial: monitor '{monitorName}' not found — cannot place {newName}.");
+                return null;
+            }
+            var clone = Object.Instantiate(rimSource, monitor.transform);
+            clone.name = newName;
+            clone.transform.localPosition = rimSource.transform.localPosition;
+            clone.transform.localRotation = rimSource.transform.localRotation;
+            clone.transform.localScale    = rimSource.transform.localScale;
+            clone.SetActive(false);
+            return clone;
+        }
+
+        static AudioClip LoadClip(string path, string label)
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+            if (clip == null)
+                Debug.LogWarning($"Build Tutorial: {label} not found at {path} — record + assign it on TutorialTrainDrill.");
+            return clip;
+        }
+
+        static GameObject FindInScene(string name)
+        {
+            foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+                foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                    if (t.name == name) return t.gameObject;
+            return null;
         }
 
         static void AddToBuildSettings(string scenePath)
