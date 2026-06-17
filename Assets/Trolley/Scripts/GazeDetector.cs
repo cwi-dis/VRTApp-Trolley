@@ -42,14 +42,16 @@ namespace VRT.Pilots.Trolley
 
             if (newTarget == m_CurrentTarget) return;
 
-            m_CurrentTarget?.NotifyGazeExit();
+            // Unity-aware null checks: '?.' uses true C# null and ignores Unity's destroyed-object
+            // state, so it would still call into a target destroyed during scene teardown (NRE).
+            if (m_CurrentTarget != null) m_CurrentTarget.NotifyGazeExit();
             m_CurrentTarget = newTarget;
-            m_CurrentTarget?.NotifyGazeEnter();
+            if (m_CurrentTarget != null) m_CurrentTarget.NotifyGazeEnter();
         }
 
         void OnDisable()
         {
-            m_CurrentTarget?.NotifyGazeExit();
+            if (m_CurrentTarget != null) m_CurrentTarget.NotifyGazeExit();
             m_CurrentTarget = null;
         }
     }

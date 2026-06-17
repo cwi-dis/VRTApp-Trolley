@@ -80,3 +80,6 @@ config-user.json
 # Claude
 settings.local.json
 
+
+# Voice-recording test artifacts (RecordUserVoice output in project root)
+voicerecording-*.wav

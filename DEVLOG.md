@@ -8,6 +8,53 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 12 (2026-06-17) — Tutorial redesigned into TWO ROUNDS + practice questionnaire
+
+**Context:** Suzy reviewed the Day 11 single-round drill and reworked it into a **two-round** tutorial (guided button round, then a sorting drill). She records a new 4-clip narration. Constraint: stay in **tutorial-only** scripts/scene — do NOT touch shared controllers (TrolleyController, etc.). Permission granted through commit (master, not pushed). Can't run Unity — deliverables are code + setup scripts; not compile-checked in Editor.
+
+A single-round first pass earlier in the session (no-timer, 10-train, /10) was reworked into the two-round version below before committing. The practice-questionnaire half (and the no-timer / spatial-commit mechanic) carried over from that pass unchanged.
+
+**TutorialTrainDrill.cs — rewritten as a two-round flow (still fully standalone, touches no shared controller):**
+- **Round 1 — button familiarisation (guided).** Plays an intro clip describing the four CCTV monitors; each monitor's green rim **blinks in turn** as it's named (`monitorHighlightTimes`, tunable to the recording), then a 3s pause (`introPauseAfter`). Then "press to divert" → button B blinks, waits for the **real** B press (side monitor lights via the toggle); "now change it back" → button A blinks, waits for the real A press. Reuses the existing `TrolleyToggleDecision` (A=main/RimA, B=divert/RimB) and the four monitor rims — no new highlight system.
+- **Round 2 — sorting drill.** Fixed order **RED, BLUE, BLUE, RED, BLUE** (5 trains, was 10), ~10s apart (`interRoundDelay`). **No timer** — decision commits spatially when the train passes `divertThreshold`. Counter `Correct decisions: N / 5` (hidden during Round 1, shown for Round 2).
+- Ends by loading the **practice questionnaire** scene (`practiceQuestionnaireScene`), then the first real scenario.
+- Narration is now **four separate clips** (`introClip`/`pressClip`/`backClip`/`sortClip`) on a dedicated `narrationSource` — separate clips let the flow genuinely wait for each button press. Removed the old single `narrationPlayer` path.
+- Button prompt blink uses a bright contrasting colour (button A starts green-selected, so green-on-green wouldn't show). After each guided press, `toggle.ApplyRemoteState(...)` re-asserts the toggle's own colours/rims.
+
+**TrolleyTutorialSetup.cs — wiring for the two rounds:**
+- Reads `buttonA`/`buttonB`/`rimA`/`rimB` straight off the `ToggleDecision`'s serialized fields (the buttons are inside a prefab, so `GameObject.Find` by name won't reach them).
+- **Clones the existing rim** onto `Monitor_WestView` + `Monitor_SwitchPoint` (→ `RimApproach`/`RimSwitch`) so all four monitors can blink — reuses the same rim object, not new code.
+- Creates a `TutorialNarration` AudioSource, loads the 4 clips if present (warns + leaves null otherwise), wires everything, silences the carried-over Bystander NarrationPlayer. Score canvas default → `/ 5`.
+
+**Narration:** `NARRATION_SCRIPTS.md` tutorial section rewritten as the 4-clip, two-round script (intro ~80w, press ~13w, back ~16w, sort ~46w) drafted from Suzy's outline. Files: `narration_tutorial_{intro,press,back,sort}.mp3`.
+
+**Driver tutorial:** Suzy will add one later (same pattern, explained then) — out of scope today.
+
+**Practice ("fake") questionnaire — reuses the real `QuestionnaireController` via a new `practiceMode`:**
+- `QuestionnaireController.cs`: added `practiceMode` (default **false** — real questionnaire unchanged), `practiceQuestionSet`, `practiceNextScene`. In practice mode: generic reflection prompt (`BuildConsequenceText`), **no DataLogger writes** (answers + reflection skipped), skips the paired-only block, transition text says "the study is about to begin", and `ExecuteSceneLoad` loads the **first real scenario** (`NextScenarioScene()` — doesn't advance the index, so no scenario is consumed). Participants still practise the slider + Done/Record controls and (paired) the partner-sync barrier.
+- New `TrolleyPracticeQuestionnaireSetup.cs` — `Trolley > Build Practice Questionnaire From Questionnaire`: duplicates `TrolleyQuestionnaire.unity` → `TrolleyPracticeQuestionnaire.unity` (saveAsCopy, preserves hand-tuned booths/UI), flips `practiceMode=true`, creates+assigns `PracticeQuestions.asset` (2 dummy Likert items), adds to Build Settings. Non-destructive to the real scene.
+
+**Housekeeping:** added `voicerecording-*.wav` to `.gitignore` (9 test recordings were cluttering the root, per Day 11 note).
+
+**Late fix (shared util, not a controller):** `GazeDetector.cs` threw `MissingReferenceException` on scene unload — `m_CurrentTarget?.NotifyGazeExit()` in `OnDisable`/`Update` used `?.`, which ignores Unity's destroyed-object state, so a `GazeTarget` torn down with the scene still got called. Switched to Unity-aware `if (m_CurrentTarget != null)` checks. Pre-existing bug, surfaced while testing the tutorial transitions.
+
+**End-of-day state (2026-06-17):**
+- ✅ Suzy rewired the two scripts in-Editor (`TutorialTrainDrill` two-round + `GazeDetector` fix confirmed working).
+- ⏳ The four narration MP3s are NOT recorded yet — Suzy records them tomorrow.
+
+**Tomorrow — start here:**
+1. **Record the 4 clips** and drop them in `Assets/Trolley/Audio/` with exact names: `narration_tutorial_intro.mp3`, `_press.mp3`, `_back.mp3`, `_sort.mp3` (scripts in `NARRATION_SCRIPTS.md`). Then **drag each onto its field** on `TutorialTrainDrill` (`introClip`/`pressClip`/`backClip`/`sortClip`) — do NOT re-run `Build Tutorial From Bystander`, it would wipe the manual rewire + rim nudging. (Re-running only auto-assigns clips; not worth losing the tweaks.)
+2. **Tune `monitorHighlightTimes`** on `TutorialTrainDrill` so each rim blinks when the intro clip names that monitor (default `1,5,9,13`s).
+3. **Assign ding/buzz** to `DrillSFX` (`correctClip`/`wrongClip`) — no such asset exists yet.
+4. **Set `divertThreshold`** to the actual switch point on the rail; tune `trainSpeed`.
+5. **Run `Trolley > Build Practice Questionnaire From Questionnaire`** if not done — creates the after-scene `TrolleyPracticeQuestionnaire`.
+6. **Playtest the full chain:** Round 1 (intro blinks + button practice waits for real B then A press) → Round 2 (5 trains R,B,B,R,B, counter /5) → practice questionnaire → first scenario.
+7. **Driver tutorial** — Suzy to explain; build with the same two-round pattern.
+
+**Committed** to `master` (NOT pushed) in three grouped commits: (1) tutorial two-round flow + scene, (2) practice questionnaire + scene/asset, (3) GazeDetector fix + chore/docs. Includes Suzy's in-Editor rewire of `TrolleyTutorial.unity` and the generated `TrolleyPracticeQuestionnaire` scene + `PracticeQuestions` asset. Compile not verified by Claude (no Unity here); the two-round + gaze scripts confirmed working in-Editor by Suzy.
+
+---
+
 ### Day 11 (2026-06-16) — Selfharm-from-Driver, Tutorial-from-Bystander, questionnaire P2 fix (Claude, autonomous session)
 
 **Context:** Suzy asked for the three remaining items this week, then left for the day and approved running everything (no commit/push — she commits after reviewing output). Constraint: do NOT touch ResearcherSetup or AvatarSetup. Claude cannot run Unity menus or test 2 clients, so deliverables are code + scripts to run in Unity.
