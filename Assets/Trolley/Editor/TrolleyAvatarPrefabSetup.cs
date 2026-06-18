@@ -128,6 +128,16 @@ namespace VRT.Pilots.Trolley.Editor
             //    matching P_Mannequin's layout).
             //    rigTargets → skeleton bones / IK targets.
             //    vrTargets left null — PlayerRepresentationWirer fills them at runtime.
+            var existingSync = wrapperGO.GetComponentInChildren<SyncSkeletonToVRRig>();
+            if (existingSync != null)
+            {
+                Debug.LogError("[TrolleyAvatarPrefabSetup] A SyncSkeletonToVRRig already exists under this GO. " +
+                               "Revert to the pre-setup prefab before re-running.");
+                Undo.CollapseUndoOperations(undoGroup);
+                Undo.RevertAllInCurrentGroup();
+                return;
+            }
+
             var syncGO = new GameObject("SyncSkeletonToVRRig");
             Undo.RegisterCreatedObjectUndo(syncGO, "Create SyncSkeletonToVRRig");
             syncGO.transform.SetParent(wrapperGO.transform, false);
