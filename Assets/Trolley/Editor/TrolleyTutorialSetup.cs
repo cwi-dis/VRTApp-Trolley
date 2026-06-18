@@ -167,25 +167,29 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         /// <summary>
-        /// Non-destructive: assigns all 10 narration + 2 SFX clips to the TutorialTrainDrill in the
-        /// currently open scene. Use after recording (or re-recording) clips — it touches only the
+        /// Non-destructive: opens the bystander tutorial scene and assigns all 10 narration + 2 SFX clips
+        /// to its TutorialTrainDrill. Use after recording (or re-recording) clips — it touches only the
         /// clip fields, so manual tweaks (rim placement, score canvas, speeds) are preserved.
         /// </summary>
         [MenuItem("Trolley/Tutorial – Assign Narration & SFX Clips")]
         public static void AssignTutorialClips()
         {
-            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>();
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(TutorialScene, OpenSceneMode.Single);
+            if (!scene.IsValid()) { Debug.LogError($"Assign Tutorial Clips: could not open {TutorialScene}."); return; }
+
+            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>(FindObjectsInactive.Include);
             if (drill == null)
             {
-                Debug.LogError("Assign Tutorial Clips: no TutorialTrainDrill in the open scene — " +
-                               "open TrolleyTutorial.unity first.");
+                Debug.LogError($"Assign Tutorial Clips: no TutorialTrainDrill found in {TutorialScene} — " +
+                               "run 'Trolley > Build Tutorial From Bystander' first.");
                 return;
             }
             var dSO = new SerializedObject(drill);
             AssignClips(dSO);
             dSO.ApplyModifiedProperties();
-            EditorSceneManager.MarkSceneDirty(drill.gameObject.scene);
-            EditorSceneManager.SaveScene(drill.gameObject.scene);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
             Debug.Log("Assign Tutorial Clips: wired 10 narration + 2 SFX clips to TutorialTrainDrill " +
                       "(non-destructive). Any 'clip not found' warnings above are still-missing files.");
         }

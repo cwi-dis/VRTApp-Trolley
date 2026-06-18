@@ -153,18 +153,26 @@ namespace VRT.Pilots.Trolley.Editor
         [MenuItem("Trolley/Driver Tutorial – Assign Narration & SFX Clips")]
         public static void AssignDriverTutorialClips()
         {
-            var drill = Object.FindFirstObjectByType<TutorialDriverDrill>();
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(TutorialScene, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"Assign Driver Tutorial Clips: could not open {TutorialScene} — " +
+                               "run 'Trolley > Build Driver Tutorial From Driver' first.");
+                return;
+            }
+            var drill = Object.FindFirstObjectByType<TutorialDriverDrill>(FindObjectsInactive.Include);
             if (drill == null)
             {
-                Debug.LogError("Assign Driver Tutorial Clips: no TutorialDriverDrill in the open scene — " +
-                               "open TrolleyTutorialDriver.unity first.");
+                Debug.LogError($"Assign Driver Tutorial Clips: no TutorialDriverDrill in {TutorialScene} — " +
+                               "run 'Trolley > Build Driver Tutorial From Driver' first.");
                 return;
             }
             var dSO = new SerializedObject(drill);
             AssignClips(dSO);
             dSO.ApplyModifiedProperties();
-            EditorSceneManager.MarkSceneDirty(drill.gameObject.scene);
-            EditorSceneManager.SaveScene(drill.gameObject.scene);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
             Debug.Log("Assign Driver Tutorial Clips: wired narration + SFX (any 'not found' warnings = missing files).");
         }
 
