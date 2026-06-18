@@ -26,7 +26,7 @@ namespace VRT.Pilots.Trolley.Editor
     public static class TrolleyTutorialSetup
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyBystander.unity";
-        const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorialBystander.unity";
 
         const string AudioDir = "Assets/Trolley/Audio/";
         // Round 1 intro (preamble ×2, then one clip per monitor)
@@ -42,6 +42,8 @@ namespace VRT.Pilots.Trolley.Editor
         const string ConfirmPath  = AudioDir + "narration_tutorial_bystander_button_confirm.mp3";
         // Round 2
         const string SortPath     = AudioDir + "narration_tutorial_bystander_sortingtrain.mp3";
+        // Closing line (after 5 correct, before the next tutorial)
+        const string ClosingPath  = AudioDir + "narration_tutorial_bystander_closing.mp3";
         // SFX
         const string CorrectPath  = AudioDir + "sfx_correct.wav";
         const string WrongPath    = AudioDir + "sfx_wrong.wav";
@@ -205,6 +207,7 @@ namespace VRT.Pilots.Trolley.Editor
             Set("backClip",          BackPath,     "bystander_button_side");
             Set("confirmClip",       ConfirmPath,  "bystander_button_confirm");
             Set("sortClip",          SortPath,     "bystander_sortingtrain");
+            Set("closingClip",       ClosingPath,  "bystander_closing");
             Set("correctClip",       CorrectPath,  "sfx_correct");
             Set("wrongClip",         WrongPath,    "sfx_wrong");
         }

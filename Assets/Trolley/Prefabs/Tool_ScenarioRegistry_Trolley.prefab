@@ -110,7 +110,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[2].scenarioName
-      value: TrolleyTutorial
+      value: TrolleyTutorialBystander
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[3].scenarioName
@@ -154,7 +154,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[2].scenarioSceneName
-      value: TrolleyTutorial
+      value: TrolleyTutorialBystander
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[3].scenarioSceneName
