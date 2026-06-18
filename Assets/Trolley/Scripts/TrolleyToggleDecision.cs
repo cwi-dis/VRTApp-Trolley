@@ -76,13 +76,24 @@ namespace VRT.Pilots.Trolley
         void Start()
         {
             SetInteractionEnabled(false);
-            RefreshMaterials();
+            SetNeutral(); // neutral during narration — the selection only appears once buttons are pressable
         }
 
         public void SetInteractionEnabled(bool enabled)
         {
             if (interactableA != null) interactableA.enabled = enabled;
             if (interactableB != null) interactableB.enabled = enabled;
+            if (enabled) RefreshMaterials(); // reveal the current selection only once buttons can be pressed
+        }
+
+        // Both buttons grey, no rim lit — WITHOUT changing the decision (IsAction is preserved). Shown
+        // during narration so the default selection only appears when the decision window opens.
+        public void SetNeutral()
+        {
+            SetColor(rendererA, colorDefault);
+            SetColor(rendererB, colorDefault);
+            if (rimA != null) rimA.SetActive(false);
+            if (rimB != null) rimB.SetActive(false);
         }
 
         // Called by TrolleyController to apply a remote partner's toggle.
