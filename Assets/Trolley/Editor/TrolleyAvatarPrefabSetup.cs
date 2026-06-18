@@ -133,6 +133,12 @@ namespace VRT.Pilots.Trolley.Editor
             syncGO.transform.SetParent(wrapperGO.transform, false);
             var sync = syncGO.AddComponent<SyncSkeletonToVRRig>();
 
+            // VRMap fields are class references — null on a fresh component; initialize before use
+            sync.head      = new SyncSkeletonToVRRig.VRMap();
+            sync.neck      = new SyncSkeletonToVRRig.VRMap();
+            sync.leftHand  = new SyncSkeletonToVRRig.VRMap();
+            sync.rightHand = new SyncSkeletonToVRRig.VRMap();
+
             sync.head.rigTarget = headBone;
 
             // neck drives the body root position:
