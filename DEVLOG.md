@@ -69,8 +69,20 @@ ORDER left to Suzy.
   place SignalLight/score canvas, tune `approachDistance`/`postForkDistance`, playtest.
 - ⏳ Bystander `closingClip` field not yet serialized in the scene — run the Assign Clips menu (or drag) to wire it.
 
-**Committed** to `master` (NOT pushed): the first 4 groups (audio, drill, toggle, room tooling) before the
-driver-tutorial build; questionnaire + rename + Tutorial 2 to follow in this session's commits.
+**Committed** to `master` (NOT pushed) — 11 commits this session: audio, drill, toggle, room tooling,
+questionnaire, rename, Tutorial 2 scaffolding, DEVLOG, Assign-menu robustness, bystander clip wiring,
+generated driver scene. ✅ Suzy ran the Assign menu (bystander clips wired) and `Build Driver Tutorial
+From Driver` (TrolleyTutorialDriver scene now exists), both committed.
+
+**Open for tomorrow (Day 14):**
+1. **Narration audit (all scenes except bystander tutorial, which is done):** real scenes reference
+   `Narration_Bystander.mp3` (Bystander), `narration_driver.mp3` (Driver), `narration_selfharm.mp3`
+   (Self-harm) — verify the content is current. **Driver tutorial: 8 clips still to record**
+   (`narration_tutorial_driver_*.mp3`). Stale/unreferenced duplicates: `Narration_Bystander.wav`,
+   `Narration_Driver.wav`, `Narration_Optional.wav` (safe to delete later).
+2. **Button UI → graphic:** the A/B buttons are text ("A"/"B") in every scene; replace with a graphic/icon
+   throughout (Bystander, Driver, Self-harm, both tutorials). Note `TrolleyToggleDecision` recolours the
+   button renderer by name ("Button" child) — a graphic swap should keep that renderer reachable.
 
 ---
 
