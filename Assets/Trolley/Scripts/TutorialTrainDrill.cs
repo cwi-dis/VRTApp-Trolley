@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Splines;
 using TMPro;
 using VRT.Pilots.Common;
@@ -13,10 +14,12 @@ namespace VRT.Pilots.Trolley
     /// TrolleyController so it can't affect the real scenario flow.
     ///
     /// ROUND 1 — button familiarisation (guided):
-    ///   • Intro narration describes the four CCTV monitors; each monitor's green rim blinks in
-    ///     turn as it is named (timings in monitorHighlightTimes), then a short pause.
-    ///   • "Press the button to divert" → button B blinks, we wait for the real press (the side
-    ///     monitor highlights). "Now change it back" → button A blinks, we wait for the A press.
+    ///   • Intro narration: a preamble, then one short clip per CCTV monitor — each monitor's green
+    ///     rim blinks for exactly as long as its clip plays (sync is automatic, no timestamp tuning),
+    ///     then a short pause.
+    ///   • "Press the right button to divert" → wait for the real B press; "now press the left button
+    ///     to send it back" → wait for the A press. Buttons are NOT blinked — they behave like the real
+    ///     scene (colour changes on click, the matching monitor rim glows green).
     ///
     /// ROUND 2 — sorting drill:
     ///   • A short sequence of trains approaches one at a time, each coloured RED or BLUE:
@@ -35,7 +38,6 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Bystander rail: spline 0 = straight (left/inaction), spline 1 = branch (right/action).")]
         [SerializeField] SplineContainer rail;
         [SerializeField] Transform train;
-        [SerializeField] float trainSpeed = 6f;
         [SerializeField] float modelForwardYaw = 180f;
 
         [Header("Input")]
@@ -48,30 +50,64 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject rimSwitch;     // top-right — Monitor_SwitchPoint
         [SerializeField] GameObject rimMain;       // bottom-left  — Monitor_Track1East (= toggle RimA)
         [SerializeField] GameObject rimSide;       // bottom-right — Monitor_Track2East (= toggle RimB)
-        [Tooltip("Seconds into the intro clip at which each monitor (in the order above) starts blinking. " +
-                 "Tune to your recording.")]
-        [SerializeField] float[] monitorHighlightTimes = { 1f, 5f, 9f, 13f };
-        [Tooltip("Quiet pause after the intro narration before the button practice begins.")]
-        [SerializeField] float introPauseAfter = 3f;
+        [Tooltip("If a monitor's intro clip is missing, blink its rim for this many seconds instead, so " +
+                 "the tutorial still demonstrates each monitor. Ignored when the clip is present — then " +
+                 "the rim blinks for exactly the clip's length.")]
+        [SerializeField] float fallbackCueSeconds = 4f;
+        [Tooltip("Delay after the scene loads before the first narration plays, so participants can settle " +
+                 "into the headset before anything happens.")]
+        [SerializeField] float startDelay = 5f;
+        [Tooltip("Silent pause inserted after every narration clip, so the recordings don't run together.")]
+        [SerializeField] float betweenClipsPause = 2f;
 
-        [Header("Round 1 — control buttons (blink as a prompt)")]
+        [Header("Round 1 — control buttons (the named button pulses during its monitor clip)")]
+        [Tooltip("Kept so the setup script's name-based wiring stays valid. Buttons are pulsed only during " +
+                 "the main/side monitor clips; in the practice round they use their own real-scene feedback.")]
         [SerializeField] GameObject buttonA;       // OBJ_NetworkButton_A (left — main track)
         [SerializeField] GameObject buttonB;       // OBJ_NetworkButton_B (right — divert)
+        [Tooltip("Blink cadence for the monitor rims (and the paired button) during the intro.")]
         [SerializeField] float blinkInterval = 0.4f;
-        [Tooltip("Pulse colour for the prompted button. Bright/contrasting so it shows on both the grey " +
-                 "and green button states (button A starts green-selected).")]
-        [SerializeField] Color blinkColor = new Color(1f, 0.9f, 0.2f);
+        [Tooltip("Highlight colour a button pulses to while its monitor is introduced (the main/side clips). " +
+                 "Green, to match the toggle's selected state.")]
+        [SerializeField] Color blinkColor = new Color(0.2f, 0.75f, 0.2f);
+        [Tooltip("Unselected button colour shown while neither button is chosen (the whole intro). " +
+                 "Match the toggle's default grey.")]
+        [SerializeField] Color unselectedColor = new Color(0.35f, 0.35f, 0.35f);
 
-        [Header("Narration (separate clip per step; optional — falls back to short pauses)")]
+        [Header("Narration — Round 1 intro (one clip per step; rim sync is automatic)")]
         [SerializeField] AudioSource narrationSource;
-        [SerializeField] AudioClip introClip;      // control room + four monitors
-        [SerializeField] AudioClip pressClip;      // "let's try pressing — press to divert"
-        [SerializeField] AudioClip backClip;       // "great, now change it back"
-        [SerializeField] AudioClip sortClip;       // "now let's sort the trains…"
+        [Tooltip("Preamble 1 — 'control room … two buttons'. No rim blinks.")]
+        [SerializeField] AudioClip introClip;         // narration_tutorial_bystander_intro
+        [Tooltip("Preamble 2 — 'four CCTV monitors …'. No rim blinks.")]
+        [SerializeField] AudioClip monitorsClip;      // narration_tutorial_bystander_monitors
+        [Tooltip("Per-monitor clips — each blinks its rim while it plays. Order: approach, switch, main, side.")]
+        [SerializeField] AudioClip introApproachClip; // ..._monitor_approach → rimApproach (top-left)
+        [SerializeField] AudioClip introSwitchClip;   // ..._monitor_switch   → rimSwitch  (top-right)
+        [SerializeField] AudioClip introMainClip;     // ..._monitor_main     → rimMain    (bottom-left)
+        [SerializeField] AudioClip introSideClip;     // ..._monitor_side     → rimSide    (bottom-right)
+
+        [Header("Narration — Round 1 button practice (no blink; toggle behaves like the real scene)")]
+        [SerializeField] AudioClip pressClip;         // ..._button_main: 'press the right button to divert'
+        [SerializeField] AudioClip backClip;          // ..._button_side: 'press the left button to send it back'
+        [SerializeField] AudioClip confirmClip;       // ..._button_confirm: 'selected button + rim glow green'
+
+        [Header("Narration — Round 2")]
+        [SerializeField] AudioClip sortClip;          // ..._sortingtrain: 'now let's sort the trains…'
 
         [Header("Round 2 — sorting drill")]
-        [Tooltip("Fraction along the straight track where the switch is. Input stays open until the " +
-                 "train passes this point, then the decision commits — no timer, purely spatial.")]
+        [Tooltip("Where on the straight spline each train starts. Together with End this sets how long the " +
+                 "visible run is; the train travels Start → End over 'roundDuration' seconds.")]
+        [Range(0f, 0.9f)]
+        [SerializeField] float roundStartT = 0.25f;
+        [Tooltip("Where each train's run ends. A shorter Start→End span = a shorter, slower-looking run.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] float roundEndT = 0.75f;
+        [Tooltip("Seconds for one train to travel Start → End. With a shorter span this is the same time " +
+                 "at a slower world speed.")]
+        [SerializeField] float roundDuration = 12f;
+        [Tooltip("Fraction along the straight track where the switch is (between Start and End). Input stays " +
+                 "open until the train passes this point, then the decision commits and the sound plays. " +
+                 "Set it just before the visual fork.")]
         [Range(0.1f, 0.95f)]
         [SerializeField] float divertThreshold = 0.5f;
         [Tooltip("Gap between trains, in seconds: the train finishes its run, then this pause before the next.")]
@@ -86,9 +122,13 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip wrongClip;
 
         [Header("After the drill")]
-        [Tooltip("Practice questionnaire scene to load when the drill ends, so participants rehearse the " +
-                 "questionnaire before it counts. Empty = skip straight to the first real scenario.")]
-        [SerializeField] string practiceQuestionnaireScene = "TrolleyPracticeQuestionnaire";
+        [Tooltip("Closing line after all 5 rounds, before the next scene loads. " +
+                 "e.g. 'That's the first tutorial — now let's practise the second.'")]
+        [SerializeField] AudioClip closingClip;
+        [Tooltip("Scene to load when the drill ends. Bystander tutorial → the driver tutorial; the driver " +
+                 "tutorial → the practice questionnaire. Empty = skip straight to the first real scenario.")]
+        [FormerlySerializedAs("practiceQuestionnaireScene")]
+        [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order — identical for every participant (this is practice, not data).
         // true = BLUE (press, divert right) · false = RED (do nothing, runs straight).
@@ -119,6 +159,13 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunTutorial()
         {
+            // Let every Start() run first (the toggle lights its default rim on Start), then force a
+            // neutral look — both buttons unselected, no rim lit — and hold before the first narration
+            // so participants can settle into the headset.
+            yield return null;
+            SetButtonsNeutral();
+            yield return new WaitForSeconds(startDelay);
+
             // ── Round 1 — button familiarisation ──────────────────────────────
             yield return StartCoroutine(RunIntro());
             yield return StartCoroutine(RunButtonPractice());
@@ -132,7 +179,9 @@ namespace VRT.Pilots.Trolley
 
             if (scoreText != null)
                 scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
-            yield return new WaitForSeconds(2f);
+
+            // Closing line, e.g. "That's the first tutorial — now let's practise the second."
+            yield return StartCoroutine(PlayAndWait(closingClip));
             LoadAfterDrill();
         }
 
@@ -140,87 +189,107 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunIntro()
         {
-            var cueRims    = new[] { rimApproach, rimSwitch, rimMain, rimSide };
-            var cueButtons = new[] { (GameObject)null, null, buttonA, buttonB }; // A names the main track, B the divert
+            var cueRims  = new[] { rimApproach, rimSwitch, rimMain, rimSide };
+            var cueClips = new[] { introApproachClip, introSwitchClip, introMainClip, introSideClip };
             foreach (var r in cueRims) SetActiveSafe(r, false);
 
-            if (narrationSource != null && introClip != null)
+            // Preamble 1 — 'control room … two buttons'. No blink.
+            yield return StartCoroutine(PlayAndWait(introClip));
+
+            // Preamble 2 — 'four CCTV monitors …'. Blink ALL FOUR rims together to introduce them.
+            yield return StartCoroutine(PlayClipWhileBlinking(monitorsClip, cueRims));
+
+            // One clip per monitor: that monitor's rim blinks for exactly as long as its clip plays —
+            // sync is automatic, no timestamp tuning, and it survives re-recording. The main/side clips
+            // also pulse their control button (A/B) so the button↔track link is clear.
+            var cueButtons = new[] { (GameObject)null, null, buttonA, buttonB };
+            for (int i = 0; i < cueRims.Length; i++)
+                yield return StartCoroutine(PlayClipWhileBlinking(cueClips[i], new[] { cueRims[i] }, cueButtons[i]));
+        }
+
+        // Plays a clip while the given rims (and, optionally, a button) blink together; if the clip is
+        // missing, blinks for a fixed beat so each monitor is still demonstrated. Resets to neutral at end.
+        IEnumerator PlayClipWhileBlinking(AudioClip clip, GameObject[] rims, GameObject button = null)
+        {
+            bool hasClip = clip != null && narrationSource != null;
+            if (hasClip)
             {
-                narrationSource.clip = introClip;
+                narrationSource.clip = clip;
                 narrationSource.loop = false;
                 narrationSource.Play();
             }
+            float until = Time.time + fallbackCueSeconds;
+            Func<bool> stop = () => hasClip ? !narrationSource.isPlaying : Time.time >= until;
 
-            float start = Time.time;
-            for (int i = 0; i < cueRims.Length; i++)
-            {
-                float cueStart = start + CueTime(i);
-                yield return new WaitUntil(() => Time.time >= cueStart);
-
-                // This cue blinks until the next cue is due (last one: until the narration ends).
-                int idx = i;
-                yield return StartCoroutine(BlinkCue(cueRims[i], cueButtons[i], () =>
-                    idx + 1 < cueRims.Length
-                        ? Time.time >= start + CueTime(idx + 1)
-                        : !(narrationSource != null && narrationSource.isPlaying)));
-
-                SetActiveSafe(cueRims[i], false);
-            }
-
-            if (narrationSource != null && narrationSource.isPlaying)
-                yield return new WaitUntil(() => !narrationSource.isPlaying);
-
-            yield return new WaitForSeconds(introPauseAfter);
-        }
-
-        float CueTime(int i) => (i < monitorHighlightTimes.Length) ? monitorHighlightTimes[i] : i * 4f;
-
-        IEnumerator RunButtonPractice()
-        {
-            // Default state: main track selected (RimA on, RimB off), input enabled.
-            toggle.ApplyRemoteState(false);
-            toggle.SetInteractionEnabled(true);
-
-            // "Let's try pressing the button. Press the button to divert the train."
-            yield return StartCoroutine(PlayAndWait(pressClip));
-            yield return StartCoroutine(BlinkCue(null, buttonB, () => toggle.IsAction));
-            toggle.ApplyRemoteState(true);   // re-assert the toggle's own colours/rims after the blink
-
-            // "Great, now let's change the track back to the original position."
-            yield return StartCoroutine(PlayAndWait(backClip));
-            yield return StartCoroutine(BlinkCue(null, buttonA, () => !toggle.IsAction));
-            toggle.ApplyRemoteState(false);
-
-            toggle.SetInteractionEnabled(false);
-        }
-
-        // Blinks a monitor rim and/or pulses a button until stop() returns true.
-        IEnumerator BlinkCue(GameObject rim, GameObject button, Func<bool> stop)
-        {
             Renderer btn = button != null ? FindButtonRenderer(button) : null;
-            Color baseCol = btn != null ? GetColor(btn) : default;
 
             bool on = false;
             while (!stop())
             {
                 on = !on;
-                SetActiveSafe(rim, on);
-                if (btn != null) SetColor(btn, on ? blinkColor : baseCol);
-
+                foreach (var r in rims) SetActiveSafe(r, on);
+                if (btn != null) SetColor(btn, on ? blinkColor : unselectedColor);
                 float w = 0f;
                 while (w < blinkInterval && !stop()) { w += Time.deltaTime; yield return null; }
             }
-            SetActiveSafe(rim, false);
-            if (btn != null) SetColor(btn, baseCol);
+            foreach (var r in rims) SetActiveSafe(r, false);
+            if (btn != null) SetColor(btn, unselectedColor);
+
+            yield return new WaitForSeconds(betweenClipsPause);
+        }
+
+        IEnumerator RunButtonPractice()
+        {
+            // No blinking here: the buttons behave exactly like the real scene — clicking changes the
+            // button colour and lights the matching monitor rim. The narration says what to press.
+            toggle.ApplyRemoteState(false);     // start on the main track
+            toggle.SetInteractionEnabled(true);
+
+            // "Press the button on the right to divert the train." → wait for the real B press.
+            yield return StartCoroutine(PlayAndWait(pressClip));
+            yield return new WaitUntil(() => toggle.IsAction);
+
+            // "Now press the button on the left to send it back to the main track." → wait for the A press.
+            yield return StartCoroutine(PlayAndWait(backClip));
+            yield return new WaitUntil(() => !toggle.IsAction);
+
+            // "Perfect — the selected button and its monitor rim glow green."
+            yield return StartCoroutine(PlayAndWait(confirmClip));
+
+            toggle.SetInteractionEnabled(false);
+        }
+
+        // Neutral look for the whole intro: both buttons unselected, no monitor rim lit. The shared
+        // toggle has no "neither selected" state, so we set it here (the toggle isn't interactive yet).
+        void SetButtonsNeutral()
+        {
+            SetActiveSafe(rimMain, false);
+            SetActiveSafe(rimSide, false);
+            SetButtonColor(buttonA, unselectedColor);
+            SetButtonColor(buttonB, unselectedColor);
+        }
+
+        void SetButtonColor(GameObject button, Color col)
+        {
+            if (button == null) return;
+            var r = FindButtonRenderer(button);
+            if (r != null) SetColor(r, col);
         }
 
         IEnumerator PlayAndWait(AudioClip clip)
         {
-            if (narrationSource == null || clip == null) { yield return new WaitForSeconds(0.5f); yield break; }
-            narrationSource.clip = clip;
-            narrationSource.loop = false;
-            narrationSource.Play();
-            yield return new WaitUntil(() => !narrationSource.isPlaying);
+            if (narrationSource != null && clip != null)
+            {
+                narrationSource.clip = clip;
+                narrationSource.loop = false;
+                narrationSource.Play();
+                yield return new WaitUntil(() => !narrationSource.isPlaying);
+            }
+            else
+            {
+                yield return new WaitForSeconds(0.5f);
+            }
+            yield return new WaitForSeconds(betweenClipsPause);
         }
 
         // ── Round 2 ───────────────────────────────────────────────────────────
@@ -229,46 +298,44 @@ namespace VRT.Pilots.Trolley
         {
             ColorTrain(isBlue ? blueColor : redColor);
 
-            // Reset to the start of the straight spline.
+            // Reset to the configured start point on the straight spline (a visible approach point).
             _current = rail.Splines[0];
-            _t = 0f;
-            train.position = EvaluateWorld(_current, 0f);
+            _t = roundStartT;
+            train.position = EvaluateWorld(_current, _t);
             OrientToTrack();
 
             toggle.ApplyRemoteState(false);     // back to "not diverted"
             toggle.SetInteractionEnabled(true);
 
-            // No timer: input stays open while the train approaches the switch. Pressing diverts;
-            // once the train passes divertThreshold the decision commits and input locks.
+            // The participant may press any time to ARM a divert, but the train only actually switches
+            // tracks AT the diverting point (like a real rail switch) — and the correct/wrong sound plays
+            // there too, once the train is visibly on the right track. Then it runs the chosen track out:
+            // the branch all the way (so it shows on the divert monitor), the straight track to roundEndT.
             bool diverted = false;
-            bool inputLocked = false;
-            while (_t < 1f)
+            bool resolved = false;
+            while (true)
             {
-                if (!inputLocked)
+                // The participant can press (or change their mind) until the train reaches the fork; the
+                // toggle's state AT the fork is the decision. The train switches there and the sound plays.
+                if (!resolved && _t >= divertThreshold)
                 {
-                    if (toggle.IsAction)
-                    {
-                        Divert();
-                        diverted = true;
-                        inputLocked = true;
-                        toggle.SetInteractionEnabled(false);
-                    }
-                    else if (_t >= divertThreshold)
-                    {
-                        // Train passed the switch — too late to divert, decision is "do nothing".
-                        inputLocked = true;
-                        toggle.SetInteractionEnabled(false);
-                    }
+                    if (toggle.IsAction) { Divert(); diverted = true; } // switch onto the branch at the fork
+                    toggle.SetInteractionEnabled(false);
+
+                    bool correct = (isBlue && diverted) || (!isBlue && !diverted);
+                    if (correct) _correct++;
+                    UpdateScore();
+                    PlaySfx(correct ? correctClip : wrongClip);
+                    resolved = true;
                 }
+
+                float endT = diverted ? 1f : roundEndT;
+                if (_t >= endT) break;
+
                 MoveStep();
                 yield return null;
             }
             toggle.SetInteractionEnabled(false);
-
-            bool correct = (isBlue && diverted) || (!isBlue && !diverted);
-            if (correct) _correct++;
-            UpdateScore();
-            PlaySfx(correct ? correctClip : wrongClip);
 
             yield return new WaitForSeconds(interRoundDelay);
         }
@@ -278,10 +345,11 @@ namespace VRT.Pilots.Trolley
         void MoveStep()
         {
             if (_current == null) return;
-            float len = _current.GetLength();
-            if (len < 0.01f) return;
 
-            _t += (trainSpeed / len) * Time.deltaTime;
+            // Advance from roundStartT to roundEndT over roundDuration seconds. Halving the Start→End span
+            // (a shorter visible run) at the same duration makes the train move at a slower world speed.
+            float rate = Mathf.Abs(roundEndT - roundStartT) / Mathf.Max(0.1f, roundDuration);
+            _t += rate * Time.deltaTime;
             if (_t > 1f) _t = 1f;
 
             train.position = EvaluateWorld(_current, _t);
@@ -345,14 +413,6 @@ namespace VRT.Pilots.Trolley
             return root.GetComponentInChildren<MeshRenderer>(true);
         }
 
-        static Color GetColor(Renderer rend)
-        {
-            var mat = rend.material;
-            if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor");
-            if (mat.HasProperty("_Color"))     return mat.GetColor("_Color");
-            return Color.white;
-        }
-
         static void SetColor(Renderer rend, Color col)
         {
             var mat = rend.material;
@@ -362,10 +422,9 @@ namespace VRT.Pilots.Trolley
 
         void LoadAfterDrill()
         {
-            // Prefer the practice questionnaire so participants rehearse it; if not set, go straight
-            // to the first real scenario.
-            string next = !string.IsNullOrEmpty(practiceQuestionnaireScene)
-                ? practiceQuestionnaireScene
+            // Bystander tutorial → driver tutorial → practice questionnaire → first real scenario.
+            string next = !string.IsNullOrEmpty(nextSceneAfterDrill)
+                ? nextSceneAfterDrill
                 : TrolleyGameState.Instance?.NextScenarioScene();
             if (string.IsNullOrEmpty(next))
             {

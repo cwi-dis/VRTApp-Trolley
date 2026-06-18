@@ -30,42 +30,62 @@ All scenarios use a button as the shared action point — referenced consistentl
 
 ---
 
-### Tutorial — Practice (no one at risk) — TWO ROUNDS, FOUR CLIPS
+### Tutorial — Practice (no one at risk) — TWO ROUNDS, TEN CLIPS
 
-The tutorial is split into a guided **button round** and a **sorting drill**. Record **four separate
-clips** so the flow can wait for each real button press. Files:
-`narration_tutorial_intro.mp3`, `_press.mp3`, `_back.mp3`, `_sort.mp3`.
+The tutorial is a guided **button round** (intro → monitors → per-monitor → press/back/confirm) then a
+**sorting drill**. Record **ten separate clips** so the flow waits for each real press and each monitor's
+rim blinks for exactly its own clip — sync is automatic, no timestamp tuning. Each clip maps to a field
+on `TutorialTrainDrill`.
 
-**Clip 1 — `intro` (control room + four monitors).** As it plays, each monitor's green rim blinks in
-turn; tune `monitorHighlightTimes` on `TutorialTrainDrill` to match this recording.
+**Blink behaviour:** during the four per-monitor clips the named monitor's green **rim** blinks. The
+**buttons are never blinked** — from the button-practice step on, they use their real-scene feedback
+(colour changes on click, the selected monitor's rim glows green).
 
-> Let's start with a short tutorial for using the buttons. You are sitting in a control room with four CCTV monitors, each showing a different part of the track. The **top-left** monitor shows the train approaching the diverting point. The **top-right** monitor shows the diverting point itself. The **bottom-left** monitor shows the main track, where the train runs — this is controlled by **button A**, on the left. The **bottom-right** monitor shows the diverting track — to send the train there, press **button B**, on the right.
+| # | File (`narration_tutorial_bystander_*.mp3`) | Field | Blinks |
+|---|---|---|---|
+| 1 | `…_intro` | `introClip` | — (preamble) |
+| 2 | `…_monitors` | `monitorsClip` | all four rims together |
+| 3 | `…_monitor_approach` | `introApproachClip` | rimApproach (top-left) |
+| 4 | `…_monitor_switch` | `introSwitchClip` | rimSwitch (top-right) |
+| 5 | `…_monitor_main` | `introMainClip` | rimMain (bottom-left) |
+| 6 | `…_monitor_side` | `introSideClip` | rimSide (bottom-right) |
+| 7 | `…_button_main` | `pressClip` | — (waits for real B / divert) |
+| 8 | `…_button_side` | `backClip` | — (waits for real A / main) |
+| 9 | `…_button_confirm` | `confirmClip` | — |
+| 10 | `…_sortingtrain` | `sortClip` | — (then 5 trains run) |
+| 11 | `…_closing` | `closingClip` | — (after 5 correct, before tutorial 2) |
 
-**Word count:** ~80 | **Est. duration:** ~36 s
+**1 — `intro`.** > Let's start with a short tutorial. You are now sitting in a control room managing the train track. In this room, you can divert trains approaching by switching two buttons.
+
+**2 — `monitors`.** All four monitor rims blink together while this plays.
+> On the front, there are four CCTV monitors, each showing a different part of the track.
+
+**3 — `monitor_approach`.** > The top-left monitor shows the train approaching the diverting point.
+
+**4 — `monitor_switch`.** > The top-right monitor shows the diverting point.
+
+**5 — `monitor_main`.** > The bottom-left monitor shows the main track, where the train runs. The button on the left sends the train along the main track.
+
+**6 — `monitor_side`.** > The bottom-right monitor shows the side track. The button on the right diverts the train to the side track.
+
 _(Then a 3-second pause — `introPauseAfter` — before the button practice.)_
 
-**Clip 2 — `press`.** Button B blinks; the flow waits for the real press.
+**7 — `button_main`.** Button practice begins: the left button (A) is now selected (green, its rim lit)
+to match "by default the left button is selected". Waits for the real **right** (B) press.
+> Let's try pressing the buttons. By default, the left button is selected, so the train follows the main track. Press the button on the right to divert the train.
 
-> Let's try it. Press the button on the right to divert the train.
-
-**Word count:** ~13 | **Est. duration:** ~6 s
-
-**Clip 3 — `back`.** Button A blinks; the flow waits for the real press.
-
+**8 — `button_side`.** Waits for the real **left** (A) press.
 > Great. Now press the button on the left to send it back to the main track.
 
-**Word count:** ~16 | **Est. duration:** ~7 s
+**9 — `button_confirm`.**
+> Perfect. As you may have noticed, the button you selected is highlighted in green, and the rim of its matching monitor glows green too.
 
-**Clip 4 — `sort` (Round 2 intro).** Then 5 trains run — RED, BLUE, BLUE, RED, BLUE — ~10 s apart,
+**10 — `sortingtrain` (Round 2 intro).** Then 5 trains run — RED, BLUE, BLUE, RED, BLUE — ~10 s apart,
 no timer; the top-right counter tracks correct decisions out of 5.
+> Now let's practise sorting the trains. If you see a red train, let it follow the main track. If you see a blue train, press the button on the right to divert it to the side track. Decide before the train reaches the diverting point.
 
-> Now let's practise sorting the trains. If a train is **red**, do nothing and let it follow the main track. If a train is **blue**, press the button to divert it to the side track. Decide before the train reaches the diverting point.
-
-**Word count:** ~46 | **Est. duration:** ~21 s
-
-**Framing:** RED = do nothing (main track, inaction) · BLUE = press the button (divert, action). Round 1
-uses the existing A/B toggle + the four monitor rims; Round 2 is the colour drill. No one is at risk in
-either round.
+**Framing:** RED = do nothing (main track, inaction) · BLUE = press the right button (divert, action).
+No one is at risk in either round.
 
 ---
 

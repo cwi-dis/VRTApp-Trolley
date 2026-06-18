@@ -27,10 +27,24 @@ namespace VRT.Pilots.Trolley.Editor
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyBystander.unity";
         const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
-        const string IntroPath = "Assets/Trolley/Audio/narration_tutorial_intro.mp3";
-        const string PressPath = "Assets/Trolley/Audio/narration_tutorial_press.mp3";
-        const string BackPath  = "Assets/Trolley/Audio/narration_tutorial_back.mp3";
-        const string SortPath  = "Assets/Trolley/Audio/narration_tutorial_sort.mp3";
+
+        const string AudioDir = "Assets/Trolley/Audio/";
+        // Round 1 intro (preamble ×2, then one clip per monitor)
+        const string IntroPath    = AudioDir + "narration_tutorial_bystander_intro.mp3";
+        const string MonitorsPath = AudioDir + "narration_tutorial_bystander_monitors.mp3";
+        const string ApproachPath = AudioDir + "narration_tutorial_bystander_monitor_approach.mp3";
+        const string SwitchPath   = AudioDir + "narration_tutorial_bystander_monitor_switch.mp3";
+        const string MainPath     = AudioDir + "narration_tutorial_bystander_monitor_main.mp3";
+        const string SidePath     = AudioDir + "narration_tutorial_bystander_monitor_side.mp3";
+        // Round 1 button practice
+        const string PressPath    = AudioDir + "narration_tutorial_bystander_button_main.mp3";
+        const string BackPath     = AudioDir + "narration_tutorial_bystander_button_side.mp3";
+        const string ConfirmPath  = AudioDir + "narration_tutorial_bystander_button_confirm.mp3";
+        // Round 2
+        const string SortPath     = AudioDir + "narration_tutorial_bystander_sortingtrain.mp3";
+        // SFX
+        const string CorrectPath  = AudioDir + "sfx_correct.wav";
+        const string WrongPath    = AudioDir + "sfx_wrong.wav";
 
         [MenuItem("Trolley/Build Tutorial From Bystander")]
         public static void BuildTutorialFromBystander()
@@ -100,15 +114,11 @@ namespace VRT.Pilots.Trolley.Editor
                 nSO.ApplyModifiedProperties();
             }
 
-            // ── Tutorial narration source + the four step clips (assign after recording) ──
+            // ── Tutorial narration source (clips auto-loaded below via AssignClips) ──
             var narrGO = new GameObject("TutorialNarration");
             var narrSrc = narrGO.AddComponent<AudioSource>();
             narrSrc.playOnAwake = false;
             narrSrc.loop = false;
-            var introClip = LoadClip(IntroPath, "narration_tutorial_intro.mp3");
-            var pressClip = LoadClip(PressPath, "narration_tutorial_press.mp3");
-            var backClip  = LoadClip(BackPath,  "narration_tutorial_back.mp3");
-            var sortClip  = LoadClip(SortPath,  "narration_tutorial_sort.mp3");
 
             // ── Top-right score counter (world-space; reposition to taste) ─────
             var scoreText = BuildScoreCanvas();
@@ -132,12 +142,9 @@ namespace VRT.Pilots.Trolley.Editor
             dSO.FindProperty("buttonA").objectReferenceValue        = buttonA;
             dSO.FindProperty("buttonB").objectReferenceValue        = buttonB;
             dSO.FindProperty("narrationSource").objectReferenceValue = narrSrc;
-            dSO.FindProperty("introClip").objectReferenceValue      = introClip;
-            dSO.FindProperty("pressClip").objectReferenceValue      = pressClip;
-            dSO.FindProperty("backClip").objectReferenceValue       = backClip;
-            dSO.FindProperty("sortClip").objectReferenceValue       = sortClip;
             dSO.FindProperty("scoreText").objectReferenceValue      = scoreText;
             dSO.FindProperty("sfxSource").objectReferenceValue      = sfx;
+            AssignClips(dSO); // 10 narration + 2 SFX clips, loaded by path
             dSO.ApplyModifiedProperties();
 
             AddToBuildSettings(TutorialScene);
@@ -147,14 +154,59 @@ namespace VRT.Pilots.Trolley.Editor
             Debug.Log("Build Tutorial: TrolleyTutorial.unity created (two-round practice).\n" +
                       "Done: workers removed, TrolleyController/TrainController removed; cloned RimApproach/RimSwitch " +
                       "onto the two upper monitors; TutorialNarration source created; TutorialTrainDrill wired " +
-                      "(rail/train/toggle/4 rims/2 buttons/4 narration clips/score/sfx); added to Build Settings.\n" +
-                      "MANUAL: (1) record + assign the four clips — narration_tutorial_{intro,press,back,sort}.mp3 — " +
-                      "and tune monitorHighlightTimes to the intro recording; (2) assign ding/buzz to DrillSFX " +
-                      "(correctClip/wrongClip); (3) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch " +
-                      "to sit on their monitors; (4) check trainSpeed and set divertThreshold to the switch point on the rail; " +
-                      "(5) run 'Trolley > Build Practice Questionnaire From Questionnaire' so the after-scene exists; " +
-                      "(6) to run it in the flow, point AvatarSetupController at TrolleyGameState.tutorialScene " +
-                      "(that line is in AvatarSetup — left for you).");
+                      "(rail/train/toggle/4 rims/2 buttons/10 narration + 2 SFX clips/score/sfx); added to Build Settings.\n" +
+                      "MANUAL: (1) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch to sit on their " +
+                      "monitors; (2) check trainSpeed and set divertThreshold to the switch point on the rail; " +
+                      "(3) run 'Trolley > Build Practice Questionnaire From Questionnaire' so the after-scene exists; " +
+                      "(4) to run it in the flow, point AvatarSetupController at TrolleyGameState.tutorialScene " +
+                      "(that line is in AvatarSetup — left for you).\n" +
+                      "Any 'clip not found' warnings above just mean that recording isn't in Assets/Trolley/Audio yet — " +
+                      "drop it in and re-run 'Trolley > Tutorial – Assign Narration & SFX Clips' (non-destructive).");
+        }
+
+        /// <summary>
+        /// Non-destructive: assigns all 10 narration + 2 SFX clips to the TutorialTrainDrill in the
+        /// currently open scene. Use after recording (or re-recording) clips — it touches only the
+        /// clip fields, so manual tweaks (rim placement, score canvas, speeds) are preserved.
+        /// </summary>
+        [MenuItem("Trolley/Tutorial – Assign Narration & SFX Clips")]
+        public static void AssignTutorialClips()
+        {
+            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>();
+            if (drill == null)
+            {
+                Debug.LogError("Assign Tutorial Clips: no TutorialTrainDrill in the open scene — " +
+                               "open TrolleyTutorial.unity first.");
+                return;
+            }
+            var dSO = new SerializedObject(drill);
+            AssignClips(dSO);
+            dSO.ApplyModifiedProperties();
+            EditorSceneManager.MarkSceneDirty(drill.gameObject.scene);
+            EditorSceneManager.SaveScene(drill.gameObject.scene);
+            Debug.Log("Assign Tutorial Clips: wired 10 narration + 2 SFX clips to TutorialTrainDrill " +
+                      "(non-destructive). Any 'clip not found' warnings above are still-missing files.");
+        }
+
+        // Loads every narration + SFX clip by path and assigns it to its field. Missing files warn
+        // (via LoadClip) and are left null. Shared by the full builder and the targeted assign menu.
+        static void AssignClips(SerializedObject dSO)
+        {
+            void Set(string field, string path, string label) =>
+                dSO.FindProperty(field).objectReferenceValue = LoadClip(path, label);
+
+            Set("introClip",         IntroPath,    "bystander_intro");
+            Set("monitorsClip",      MonitorsPath, "bystander_monitors");
+            Set("introApproachClip", ApproachPath, "bystander_monitor_approach");
+            Set("introSwitchClip",   SwitchPath,   "bystander_monitor_switch");
+            Set("introMainClip",     MainPath,     "bystander_monitor_main");
+            Set("introSideClip",     SidePath,     "bystander_monitor_side");
+            Set("pressClip",         PressPath,    "bystander_button_main");
+            Set("backClip",          BackPath,     "bystander_button_side");
+            Set("confirmClip",       ConfirmPath,  "bystander_button_confirm");
+            Set("sortClip",          SortPath,     "bystander_sortingtrain");
+            Set("correctClip",       CorrectPath,  "sfx_correct");
+            Set("wrongClip",         WrongPath,    "sfx_wrong");
         }
 
         static TextMeshProUGUI BuildScoreCanvas()
@@ -165,8 +217,9 @@ namespace VRT.Pilots.Trolley.Editor
             canvasGO.AddComponent<CanvasScaler>();
             canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(500f, 200f);
             // Reasonable spot in the control room, upper-right, facing the player. Reposition in-editor.
+            // Rotation matches the monitors (identity) so the text reads the right way round, not mirrored.
             canvasGO.transform.position   = new Vector3(1.6f, 2.4f, 2.2f);
-            canvasGO.transform.rotation   = Quaternion.Euler(0f, 180f, 0f);
+            canvasGO.transform.rotation   = Quaternion.identity;
             canvasGO.transform.localScale = Vector3.one * 0.004f;
 
             var textGO = new GameObject("ScoreText");
