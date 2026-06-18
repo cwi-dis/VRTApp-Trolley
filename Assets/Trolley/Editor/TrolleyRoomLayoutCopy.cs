@@ -21,7 +21,7 @@ namespace VRT.Pilots.Trolley.Editor
     /// </summary>
     public static class TrolleyRoomLayoutCopy
     {
-        const string TutorialScene  = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string TutorialScene  = "Assets/Trolley/Scenes/TrolleyTutorialBystander.unity";
         const string BystanderScene = "Assets/Trolley/Scenes/TrolleyBystander.unity";
 
         static readonly string[] Names =

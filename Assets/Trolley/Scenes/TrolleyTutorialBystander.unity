@@ -716,7 +716,8 @@ MonoBehaviour:
   sfxSource: {fileID: 25778743}
   correctClip: {fileID: 8300000, guid: 3561079168fcd44b4acd131dd31e9fac, type: 3}
   wrongClip: {fileID: 8300000, guid: 917b6069622754c729a8f0b5fdf3597a, type: 3}
-  practiceQuestionnaireScene: TrolleyPracticeQuestionnaire
+  closingClip: {fileID: 8300000, guid: 29fe863ed4e5f4d4b9fec8e30c1f21ae, type: 3}
+  nextSceneAfterDrill: TrolleyTutorialDriver
 --- !u!4 &216278858
 Transform:
   m_ObjectHideFlags: 0

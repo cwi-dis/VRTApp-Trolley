@@ -26,7 +26,7 @@ namespace VRT.Pilots.Trolley.Editor
     public static class TrolleyTutorialSetup
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyBystander.unity";
-        const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorial.unity";
+        const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorialBystander.unity";
 
         const string AudioDir = "Assets/Trolley/Audio/";
         // Round 1 intro (preamble ×2, then one clip per monitor)
@@ -42,6 +42,8 @@ namespace VRT.Pilots.Trolley.Editor
         const string ConfirmPath  = AudioDir + "narration_tutorial_bystander_button_confirm.mp3";
         // Round 2
         const string SortPath     = AudioDir + "narration_tutorial_bystander_sortingtrain.mp3";
+        // Closing line (after 5 correct, before the next tutorial)
+        const string ClosingPath  = AudioDir + "narration_tutorial_bystander_closing.mp3";
         // SFX
         const string CorrectPath  = AudioDir + "sfx_correct.wav";
         const string WrongPath    = AudioDir + "sfx_wrong.wav";
@@ -165,25 +167,29 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         /// <summary>
-        /// Non-destructive: assigns all 10 narration + 2 SFX clips to the TutorialTrainDrill in the
-        /// currently open scene. Use after recording (or re-recording) clips — it touches only the
+        /// Non-destructive: opens the bystander tutorial scene and assigns all 10 narration + 2 SFX clips
+        /// to its TutorialTrainDrill. Use after recording (or re-recording) clips — it touches only the
         /// clip fields, so manual tweaks (rim placement, score canvas, speeds) are preserved.
         /// </summary>
         [MenuItem("Trolley/Tutorial – Assign Narration & SFX Clips")]
         public static void AssignTutorialClips()
         {
-            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>();
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(TutorialScene, OpenSceneMode.Single);
+            if (!scene.IsValid()) { Debug.LogError($"Assign Tutorial Clips: could not open {TutorialScene}."); return; }
+
+            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>(FindObjectsInactive.Include);
             if (drill == null)
             {
-                Debug.LogError("Assign Tutorial Clips: no TutorialTrainDrill in the open scene — " +
-                               "open TrolleyTutorial.unity first.");
+                Debug.LogError($"Assign Tutorial Clips: no TutorialTrainDrill found in {TutorialScene} — " +
+                               "run 'Trolley > Build Tutorial From Bystander' first.");
                 return;
             }
             var dSO = new SerializedObject(drill);
             AssignClips(dSO);
             dSO.ApplyModifiedProperties();
-            EditorSceneManager.MarkSceneDirty(drill.gameObject.scene);
-            EditorSceneManager.SaveScene(drill.gameObject.scene);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
             Debug.Log("Assign Tutorial Clips: wired 10 narration + 2 SFX clips to TutorialTrainDrill " +
                       "(non-destructive). Any 'clip not found' warnings above are still-missing files.");
         }
@@ -205,6 +211,7 @@ namespace VRT.Pilots.Trolley.Editor
             Set("backClip",          BackPath,     "bystander_button_side");
             Set("confirmClip",       ConfirmPath,  "bystander_button_confirm");
             Set("sortClip",          SortPath,     "bystander_sortingtrain");
+            Set("closingClip",       ClosingPath,  "bystander_closing");
             Set("correctClip",       CorrectPath,  "sfx_correct");
             Set("wrongClip",         WrongPath,    "sfx_wrong");
         }

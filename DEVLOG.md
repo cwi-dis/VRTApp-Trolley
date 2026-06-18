@@ -8,6 +8,84 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 13 (2026-06-18) — Bystander tutorial polish, neutral buttons, room shell, real questionnaire, Tutorial 2 (driver) scaffolding
+
+**Context:** Suzy recorded all bystander-tutorial narration and iterated through playtests with Claude
+(full agency to edit scripts/scenes through commit). Big day: finished the bystander tutorial, applied
+the "neutral until pressable" button behaviour to the real scenes, built room tooling, loaded the real
+questionnaire, renamed the tutorial scene, and scaffolded the second (driver) tutorial.
+
+**Bystander tutorial (`TutorialTrainDrill.cs`) — finished + reworked:**
+- Intro is now **per-monitor, clip-driven**: preamble (`intro` + `monitors`, monitors blinks all four
+  rims) then one clip per monitor; each rim (and, for main/side, its A/B button) blinks for exactly its
+  clip's length — sync is automatic, no `monitorHighlightTimes`. Button pulse colour is **green**.
+- **Neutral start:** both buttons unselected / no rim lit through the whole intro; the default selection
+  only appears at button practice. Button practice no longer blinks (real-scene feedback).
+- **Uniform 2s pause** after every narration clip (`betweenClipsPause`; replaced introPauseAfter/preSortPause).
+- **Round-2 trains time-based** (`roundStartT`/`roundEndT`/`roundDuration`) — the world-speed value was
+  crawling over the ~1000-unit Bystander spline. Span halved (0.25→0.75) at half speed.
+- **Divert fixed:** the train switches tracks AT the fork (deferred divert) and runs the branch fully, so
+  it shows on the divert monitor instead of vanishing. **Sound** plays when the train reaches the fork.
+- **Closing clip** after 5 correct; `nextSceneAfterDrill` (was `practiceQuestionnaireScene`) chains the
+  flow **Bystander tutorial → Driver tutorial → one practice questionnaire**.
+- 10 narration recordings + generated `sfx_correct/wrong.wav`; non-destructive
+  `Trolley > Tutorial – Assign Narration & SFX Clips` wires all 12.
+
+**Neutral buttons in the REAL scenes (`TrolleyToggleDecision.cs`):** the toggle starts neutral and only
+reveals the current selection when `SetInteractionEnabled(true)` is called (decision window open). Purely
+visual — `IsAction`/decision logic unchanged. Covers Bystander, Driver, Selfharm (shared toggle).
+
+**Room tooling (new editor scripts):** `Trolley > Build Control Room Shell` (encloses the console after
+its prefab shell was disabled) and `Trolley > Copy Room Layout: Tutorial → Bystander` (copies world
+transforms of MonitorGroup/MonitorLabelGroup/ControlRoomShell/buttons/gaze so the Bystander room matches
+the rescaled tutorial). Applied to Bystander.
+
+**Real questionnaire (`TrolleyQuestions.asset` + `QuestionSet.cs`):** loaded the full item set —
+**14 common** (agency ×3, responsibility ×3, decision-evaluation ×5, threat/seriousness ×3) and **5
+paired-only** (partner influence). All Likert5 / "Strongly disagree–agree" (group 3 can be switched to
+7-point if wanted). Controller iterates the arrays, so the count change is safe.
+
+**Scene rename:** `TrolleyTutorial` → **`TrolleyTutorialBystander`** (file+meta, Build Settings path
+in place, `TrolleyGameState.tutorialScene`, ScenarioRegistry data[2], layout-copy path). Build Settings
+ORDER left to Suzy.
+
+**Tutorial 2 — Driver (new, scaffolded):**
+- `TutorialDriverDrill.cs` — standalone, mirrors the two-round structure but uses **environment-movement**
+  (TrackEnvironment slides toward the seated player; divert yaws about DivertMarker, same rate as
+  `DriverTrainController`). Round 2 = **signal-light drill**: a light ahead turns BLUE (divert) / RED (stay),
+  5 reps; tram switches at the fork; sound at the fork.
+- `TrolleyDriverTutorialSetup.cs` — `Trolley > Build Driver Tutorial From Driver` duplicates Driver, copies
+  movement params off `DriverTrainController`, strips it + TrolleyController + both worker groups, adds the
+  drill + SignalLight + score + SFX + narration source. **Does NOT touch Build Settings.** Plus a
+  non-destructive `Driver Tutorial – Assign Narration & SFX Clips` menu.
+- Driver narration script drafted in `NARRATION_SCRIPTS.md` (Suzy records `narration_tutorial_driver_*.mp3`).
+
+**End-of-day state (2026-06-18):**
+- ✅ Bystander tutorial: narration recorded + wired; playtested through several fixes. The divert-at-fork
+  + sound-timing fix (commit `e200eb0`) was committed but is the last thing pending a fresh playtest.
+- ✅ Neutral buttons, room tooling, real questionnaire, scene rename — committed.
+- ⏳ **Driver tutorial:** code + setup written but NOT run/tested. Suzy to: run `Build Driver Tutorial From
+  Driver`, ADD `TrolleyTutorialDriver` to Build Settings, record driver narration + run the assign menu,
+  place SignalLight/score canvas, tune `approachDistance`/`postForkDistance`, playtest.
+- ⏳ Bystander `closingClip` field not yet serialized in the scene — run the Assign Clips menu (or drag) to wire it.
+
+**Committed** to `master` (NOT pushed) — 11 commits this session: audio, drill, toggle, room tooling,
+questionnaire, rename, Tutorial 2 scaffolding, DEVLOG, Assign-menu robustness, bystander clip wiring,
+generated driver scene. ✅ Suzy ran the Assign menu (bystander clips wired) and `Build Driver Tutorial
+From Driver` (TrolleyTutorialDriver scene now exists), both committed.
+
+**Open for tomorrow (Day 14):**
+1. **Narration audit (all scenes except bystander tutorial, which is done):** real scenes reference
+   `Narration_Bystander.mp3` (Bystander), `narration_driver.mp3` (Driver), `narration_selfharm.mp3`
+   (Self-harm) — verify the content is current. **Driver tutorial: 8 clips still to record**
+   (`narration_tutorial_driver_*.mp3`). Stale/unreferenced duplicates: `Narration_Bystander.wav`,
+   `Narration_Driver.wav`, `Narration_Optional.wav` (safe to delete later).
+2. **Button UI → graphic:** the A/B buttons are text ("A"/"B") in every scene; replace with a graphic/icon
+   throughout (Bystander, Driver, Self-harm, both tutorials). Note `TrolleyToggleDecision` recolours the
+   button renderer by name ("Button" child) — a graphic swap should keep that renderer reachable.
+
+---
+
 ### Day 12 (2026-06-17) — Tutorial redesigned into TWO ROUNDS + practice questionnaire
 
 **Context:** Suzy reviewed the Day 11 single-round drill and reworked it into a **two-round** tutorial (guided button round, then a sorting drill). She records a new 4-clip narration. Constraint: stay in **tutorial-only** scripts/scene — do NOT touch shared controllers (TrolleyController, etc.). Permission granted through commit (master, not pushed). Can't run Unity — deliverables are code + setup scripts; not compile-checked in Editor.

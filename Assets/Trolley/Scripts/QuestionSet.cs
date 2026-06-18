@@ -25,30 +25,36 @@ namespace VRT.Pilots.Trolley
 
         // ── Post-scenario: shown after every scenario, solo and paired ────────
 
-        [Header("Post-scenario — all participants (Q1–Q5)")]
+        // Agency (1–3), Responsibility (4–6), Decision evaluation (7–11), Threat/seriousness (12–14).
+        [Header("Post-scenario — all participants")]
         public Question[] postScenarioCommon = new Question[]
         {
-            new Question { text = "The decision felt like mine.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "I felt personally responsible for the outcome.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "I regret the decision that was made.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "I would make the same decision again.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "I felt personally at risk during this scenario.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
+            new Question { text = "The decision felt like mine." },
+            new Question { text = "I was in control of the decision." },
+            new Question { text = "The outcome depended on my actions." },
+            new Question { text = "I felt personally responsible for the outcome." },
+            new Question { text = "The outcome was a consequence of my decision." },
+            new Question { text = "I should be held accountable for what happened." },
+            new Question { text = "It was the right decision." },
+            new Question { text = "I regret the choice that was made." },
+            new Question { text = "I would go for the same choice if I had to do it over again." },
+            new Question { text = "The decision did me a lot of harm." },
+            new Question { text = "The decision was a wise one." },
+            new Question { text = "I felt personally at risk during the scenario." },
+            new Question { text = "The situation felt threatening to me." },
+            new Question { text = "The consequences of the decision felt serious." },
         };
 
         // ── Post-scenario: paired condition only ──────────────────────────────
 
-        [Header("Post-scenario — paired condition only (Q6–Q7)")]
+        [Header("Post-scenario — paired condition only")]
         public Question[] postScenarioPairedOnly = new Question[]
         {
-            new Question { text = "My partner influenced my decision.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
-            new Question { text = "My partner's presence made the situation feel less threatening.",
-                           scaleMin = "Strongly disagree", scaleMax = "Strongly agree" },
+            new Question { text = "My partner influenced my decision." },
+            new Question { text = "I took my partner's views into account when deciding." },
+            new Question { text = "My decision would have been different if my partner had not been present." },
+            new Question { text = "I felt pressure to agree with my partner." },
+            new Question { text = "I changed my decision because of my partner." },
         };
     }
 }
