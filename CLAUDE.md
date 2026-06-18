@@ -23,6 +23,7 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Driver – Wire Movement` / `Driver – Wire Toggle Buttons` (targeted; full wire removed) | `TrolleyDriverSetup.cs` |
 | `Trolley > Build Selfharm From Driver` (duplicates Driver → cliff/mountain on action track) | `TrolleySelfharmSetup.cs` |
 | `Trolley > Build Tutorial From Bystander` (duplicates Bystander → no workers, practice) | `TrolleyTutorialSetup.cs` |
+| `Trolley > Build Driver Tutorial From Driver` / `Driver Tutorial – Assign Narration & SFX Clips` (first-person signal drill; does NOT touch Build Settings) | `TrolleyDriverTutorialSetup.cs` |
 | `Trolley > Bystander – …` (targeted menus) | `TrolleyBystanderSetup.cs` |
 | `Trolley > Wire Researcher Setup Scene` | `TrolleyResearcherSetupSceneSetup.cs` |
 | `Trolley > Wire Avatar Setup Scene` | `TrolleyAvatarSetupSceneSetup.cs` |

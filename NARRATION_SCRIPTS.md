@@ -89,6 +89,44 @@ No one is at risk in either round.
 
 ---
 
+### Tutorial 2 — Driver (first-person, no one at risk)
+
+You ARE the driver this time, seated in the cab; the environment slides toward you. Round 1 = intro +
+button practice; Round 2 = a signal-light drill (a light ahead turns BLUE = divert / RED = stay, 5 reps).
+Files: `narration_tutorial_driver_*.mp3`. Each clip maps to a field on `TutorialDriverDrill`.
+
+| File | Field | Notes |
+|---|---|---|
+| `…_intro` | `introClip` | preamble |
+| `…_buttons` | `buttonsClip` | — |
+| `…_signal` | `signalClip` | signal light blinks while this plays |
+| `…_button_main` | `pressClip` | waits for the real right (B) press |
+| `…_button_side` | `backClip` | waits for the real left (A) press |
+| `…_button_confirm` | `confirmClip` | — |
+| `…_sortingtrain` | `sortClip` | then 5 signal reps run |
+| `…_closing` | `closingClip` | after 5 correct, before the study begins |
+
+**intro.** > Now it's your turn to drive. You're sitting in the cab, operating the tram yourself. Don't worry — this is just practice, and no one is at risk.
+
+**buttons.** > In front of you are two buttons. The button on the left keeps the tram on the main track. The button on the right diverts it to the side track.
+
+**signal.** > Watch the signal light ahead. When it turns blue, divert by pressing the right button. When it stays red, keep to the main track by doing nothing.
+
+**button_main.** > Let's try it. Press the button on the right to divert the tram.
+
+**button_side.** > Great. Now press the button on the left to return to the main track.
+
+**button_confirm.** > Perfect. The button you press lights up green, just like the real controls.
+
+**sortingtrain.** > Now let's practise. Remember: a blue signal means divert, a red signal means stay. Decide before you reach the switch.
+
+**closing.** > That's the end of the tutorials. The real study is about to begin.
+
+**Framing:** identical red/blue meaning to Tutorial 1, but you're the driver — the tram turns onto the
+side track when you divert, instead of you watching it from a control room.
+
+---
+
 ## Recording Notes
 
 - Tone: calm, neutral, factual. Not urgent — urgency is provided by the approaching train/vehicle.
