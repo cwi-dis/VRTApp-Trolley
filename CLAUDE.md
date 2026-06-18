@@ -26,6 +26,9 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Bystander – …` (targeted menus) | `TrolleyBystanderSetup.cs` |
 | `Trolley > Wire Researcher Setup Scene` | `TrolleyResearcherSetupSceneSetup.cs` |
 | `Trolley > Wire Avatar Setup Scene` | `TrolleyAvatarSetupSceneSetup.cs` |
+| `Trolley > Tutorial – Assign Narration & SFX Clips` (non-destructive; wires the 10 narration + 2 SFX clips) | `TrolleyTutorialSetup.cs` |
+| `Trolley > Build Control Room Shell` (enclosing ceiling+walls around the console; operates on open scene, doesn't save) | `TrolleyControlRoomShell.cs` |
+| `Trolley > Copy Room Layout: Tutorial → Bystander` (copies world transforms of MonitorGroup/MonitorLabelGroup/ControlRoomShell/Button_TrackA/B/GazeTarget_Buttons; saves Bystander) | `TrolleyRoomLayoutCopy.cs` |
 
 Self-harm and Tutorial are built by **duplicating** a known-good scene (Driver / Bystander) and applying targeted edits — they preserve all hand-tuned geometry. Re-running overwrites the target scene, so make manual tweaks only after the final run.
 
