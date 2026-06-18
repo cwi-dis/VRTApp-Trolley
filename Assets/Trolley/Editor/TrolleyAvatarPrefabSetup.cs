@@ -172,7 +172,11 @@ namespace VRT.Pilots.Trolley.Editor
             Undo.RecordObject(sizeAdjust, "Wire SizeAdjust");
             sizeAdjust.Destination       = wrapperGO;
             sizeAdjust.DestinationTop    = headBone.gameObject;
-            sizeAdjust.DestinationBottom = hipsBone.gameObject;
+            // Use the model root as DestinationBottom: Mixamo FBX roots sit at ground level,
+            // so headBone.y − modelRoot.y = full avatar height, matching the player-side
+            // measurement (SourceTop = headTop, SourceBottom = player root at ground).
+            // Using hipsBone here gives only head-to-hips (~0.9m) and causes ~2x overscale.
+            sizeAdjust.DestinationBottom = modelGO;
             sizeAdjust.setHeightOnStart  = true;
             EditorUtility.SetDirty(sizeAdjust);
 
