@@ -179,7 +179,7 @@ namespace VRT.Pilots.Trolley.Editor
         /// Returns the IK Target transform, which SyncSkeletonToVRRig will drive at runtime.
         /// </summary>
         static Transform CreateTwoBoneIK(Transform parent, string label,
-            Transform root, Transform mid, Transform tip, bool isLeft)
+            Transform root, Transform mid, Transform tip)
         {
             var ikGO = new GameObject(label);
             Undo.RegisterCreatedObjectUndo(ikGO, $"Create {label}");
