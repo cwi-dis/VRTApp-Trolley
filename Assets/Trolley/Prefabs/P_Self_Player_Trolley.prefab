@@ -123,6 +123,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3387919120034082196, guid: 670e78ebada95483a880547d731f8130, type: 3}
   m_PrefabInstance: {fileID: 7149390352008696945}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7703884417808343439 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 711021917803869694, guid: 670e78ebada95483a880547d731f8130, type: 3}
+  m_PrefabInstance: {fileID: 7149390352008696945}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5490999381185788389}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.SizeAdjust
 --- !u!1001 &9104418074712961776
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -430,7 +441,7 @@ PrefabInstance:
     - target: {fileID: 6825110016853729052, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: viewAdjusted.m_PersistentCalls.m_Calls.Array.data[2].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 7703884417808343439}
     - target: {fileID: 6825110016853729052, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: viewAdjusted.m_PersistentCalls.m_Calls.Array.data[2].m_MethodName
       value: AdjustHeight

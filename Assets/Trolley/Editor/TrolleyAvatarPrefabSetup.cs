@@ -268,7 +268,7 @@ namespace VRT.Pilots.Trolley.Editor
             data.target = targetGO.transform;
             data.hint   = hintGO.transform;
             data.targetPositionWeight = 1f;
-            data.targetRotationWeight = 1f;
+            data.targetRotationWeight = hintOffset.HasValue ? 0f : 1f; // legs: position only; arms: position+rotation
             data.hintWeight           = 1f;
             data.maintainTargetPositionOffset = false;
             data.maintainTargetRotationOffset = false;

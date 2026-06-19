@@ -66,3 +66,18 @@ When renaming a serialized field, add `[FormerlySerializedAs("oldName")]` (from 
 - **Recording file path** — `RecordUserVoice` passes the filename directly to `FileStream` with no path prefix. VRTConfig may remap this to the stats/log output directory (where VRTRun looks), but this needs to be verified in a Quest build.
 - **WAV flush on scene unload** — resolved. `VoicePipelineSelf.OnDestroy` calls `reader.Stop()` → `AsyncVoiceReader.AsyncOnStop()` → `StopRecording()` → `FinalizeWavFile`. WAV is written cleanly on scene unload; no explicit stop needed.
 - **Marker support in RecordUserVoice** — questionnaire reflection "Done" button has a `// TODO: emit AddMarker("reflection_done")` comment. This requires adding `AddMarker(string name)` to `RecordUserVoice` in the VR2Gather package (not this repo), which outputs a `stats:` line so VRTstatistics can locate the segment in the audio file.
+
+## Avatar lotus-position bug — root cause and fix (TODO)
+
+**Root cause (confirmed 2026-06-19):** Remy uses a **Humanoid rig**. The Animator resets the hips to its default body position (near floor) every animation step. The RigBuilder leg IK then evaluates with hips at the wrong height → lotus. `SyncSkeletonToVRRig` corrects the hips in LateUpdate, but that runs *after* the IK has already computed the wrong pose. P_Mannequin uses a **Generic rig**, so the Animator never fights the hips — which is why P_Mannequin works without this fix.
+
+**Fix required:** Add a `MultiPositionConstraint` ("Body Constraint") to the VR Constraints rig, evaluated inside the animation step after the Animator but before the leg IK. `SyncSkeletonToVRRig.neck.rigTarget` should point to the Body Constraint's source GO (a "Body Target" child of VR Constraints), not directly to `hipsBone`. Because the constraint runs in the same animation step as the leg IK, the legs see the correct hip position. P_Mannequin already has this GO wired up (weight=0 since Generic rig doesn't need it).
+
+**What needs changing in `TrolleyAvatarPrefabSetup.cs`:**
+
+1. In `SetupHumanoidAvatarPrefab()`, after creating VR Constraints, add:
+   - A "Body Target" child GO positioned at `hipsBone.position` (T-pose world pos)
+   - A `MultiPositionConstraint` component on hipsBone's GO... actually on a new sibling GO "Body Constraint", constrained object = hipsBone, source = Body Target GO, weight = 1
+2. Change `sync.neck.rigTarget = hipsBone` → `sync.neck.rigTarget = bodyTargetGO.transform`
+
+Also: `animator.applyRootMotion = false` should be set/ensured in the script (Humanoid rigs default to true, which fights body position).
