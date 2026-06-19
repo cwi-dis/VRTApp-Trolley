@@ -270,7 +270,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7957250788412427322, guid: e4a2ad980cb30454eab747ddbac46ff6, type: 3}
       propertyPath: m_Name
-      value: Tool_scenesetup_solo_Trolley Variant
+      value: Tool_scenesetup_solo_Trolley
       objectReference: {fileID: 0}
     - target: {fileID: 7957250788412427323, guid: e4a2ad980cb30454eab747ddbac46ff6, type: 3}
       propertyPath: m_LocalPosition.x
@@ -369,6 +369,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 631722948202878896, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2500216158102949712, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2969309931917272303, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3293270133915450939, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
@@ -605,7 +613,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7242573755789359156, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 9.12631
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7242573755789359156, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -638,6 +646,18 @@ PrefabInstance:
     - target: {fileID: 7242573755789359179, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_Name
       value: P_Self_Player_Trolley
+      objectReference: {fileID: 0}
+    - target: {fileID: 7483862428735163480, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8003520753622458581, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: previewPlayer
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809303176992794770, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
