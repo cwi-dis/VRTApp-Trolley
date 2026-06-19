@@ -1,27 +1,25 @@
-using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Serialization;
 using TMPro;
 using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Standalone two-round practice for the DRIVER Tutorial scene — the first-person counterpart of
+    /// Standalone first-person practice for the DRIVER Tutorial scene — the counterpart of
     /// TutorialTrainDrill. Completely separate from TrolleyController/DriverTrainController so it can't
     /// affect the real scenario flow.
     ///
     /// The player sits in the cab; the whole environment (TrackEnvironment) slides toward them, exactly
     /// like the real Driver scene. A divert yaws the environment about the player's seat (DivertMarker).
     ///
-    /// ROUND 1 — button familiarisation (guided):
-    ///   • Intro narration (you're the driver, the two buttons, the signal ahead).
-    ///   • "Press the right button to divert" → wait for the real B press; "now the left button" → A press.
-    ///     Buttons aren't blinked — they use their real-scene feedback (colour on click).
+    /// Buttons are NOT re-taught here — the participant already practised them in the bystander tutorial.
+    /// Flow: intro → "watch the window" → the rules → 3 rock-blocker reps → closing.
     ///
-    /// ROUND 2 — signal drill:
-    ///   • A signal light ahead turns RED or BLUE each round: BLUE → press right (divert), RED → do nothing.
+    /// Rock-blocker reps:
+    ///   • Each round one track ahead is blocked by a rocky mountain barrier; the other is clear. The
+    ///     player must end up on the CLEAR track: rocks on the main track → divert; rocks on the side
+    ///     track → do nothing.
     ///   • The tram switches tracks AT the diverting point (after sliding 'approachDistance'); the
     ///     correct/wrong sound plays there, once the move is committed. Fixed order, 3 reps.
     ///   • Between reps the screen fades to black to hide the world snapping back to its start pose
@@ -38,8 +36,10 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Transform environment;
         [SerializeField] Vector3 approachDirection = Vector3.back;
         [SerializeField] float approachSpeed = 9.5f;
-        [Tooltip("World distance the environment slides before reaching the diverting point (the switch).")]
-        [SerializeField] float approachDistance = 60f;
+        [Tooltip("World distance the environment slides before the turn begins (the switch). Matches the " +
+                 "real Driver scene, where the divert fires at decision-window close = approachSpeed (9.5) × " +
+                 "8s window ≈ 76 units. 60 turned before reaching the fork (too early).")]
+        [SerializeField] float approachDistance = 76f;
         [Tooltip("Extra distance the environment keeps moving past the switch before the round ends.")]
         [SerializeField] float postForkDistance = 25f;
 
@@ -52,35 +52,31 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Reused A/B toggle. The drill reads IsAction (right = divert) and resets it each round.")]
         [SerializeField] TrolleyToggleDecision toggle;
 
-        [Header("Signal light ahead (red = stay, blue = divert)")]
-        [SerializeField] GameObject signalLight;
-        [SerializeField] Color redColor  = new Color(0.85f, 0.15f, 0.15f);
-        [SerializeField] Color blueColor = new Color(0.15f, 0.30f, 0.90f);
+        [Header("Rock blockers — one per track; the BLOCKED track is the one to avoid")]
+        [Tooltip("Rocky barrier on the MAIN track. Shown when this round's answer is to divert.")]
+        [SerializeField] GameObject mainTrackBlocker;
+        [Tooltip("Rocky barrier on the SIDE track. Shown when this round's answer is to stay.")]
+        [SerializeField] GameObject sideTrackBlocker;
 
-        [Header("Narration — Round 1 (one clip per step; ~2s pause added after each)")]
+        [Header("Narration — four clips; buttons were already taught in the bystander tutorial")]
         [SerializeField] AudioSource narrationSource;
-        [Tooltip("Preamble — 'now you're the driver, in the cab'.")]
+        [Tooltip("'second tutorial — you're driving now, divert with the two buttons'.")]
         [SerializeField] AudioClip introClip;            // narration_tutorial_driver_intro
-        [Tooltip("'two buttons — left keeps to the main track, right diverts'.")]
-        [SerializeField] AudioClip buttonsClip;          // narration_tutorial_driver_buttons
-        [Tooltip("'watch the signal ahead — blue divert, red stay'. Signal light blinks while this plays.")]
-        [SerializeField] AudioClip signalClip;           // narration_tutorial_driver_signal
-        [SerializeField] AudioClip pressClip;            // ..._button_main: 'press the right button to divert'
-        [SerializeField] AudioClip backClip;             // ..._button_side: 'press the left button to come back'
-        [SerializeField] AudioClip confirmClip;          // ..._button_confirm
-
-        [Header("Narration — Round 2 + end")]
-        [SerializeField] AudioClip sortClip;             // ..._sortingtrain: 'now let's practise…'
-        [Tooltip("Closing line after 5 reps, before the next scene. e.g. 'tutorials done — the study begins'.")]
-        [SerializeField] AudioClip closingClip;
+        [Tooltip("'watch for obstacles ahead through the front window'.")]
+        [SerializeField] AudioClip windowClip;           // narration_tutorial_driver_window
+        [Tooltip("The rules: 'one side is blocked with rocks — drive to the other side. Three rounds.'")]
+        [SerializeField] AudioClip sortClip;             // narration_tutorial_driver_sortingtrain
+        [Tooltip("'this is the end of the second tutorial'.")]
+        [SerializeField] AudioClip closingClip;          // narration_tutorial_driver_closing
 
         [Header("Timing")]
         [SerializeField] float startDelay = 5f;
-        [Tooltip("Silent pause after every narration clip so the recordings don't run together.")]
-        [SerializeField] float betweenClipsPause = 2f;
-        [SerializeField] float blinkInterval = 0.4f;
-        [Tooltip("Gap between reps: the round ends, then this pause before the next.")]
-        [SerializeField] float interRoundDelay = 4f;
+        [Tooltip("Extra silent pause after each narration clip. The recordings already carry ~2s of their " +
+                 "own trailing pause, so keep this small to avoid double gaps.")]
+        [SerializeField] float betweenClipsPause = 0f;
+        [Tooltip("Distance past the fork before the correct/wrong beep plays — i.e. when the train reaches " +
+                 "the rocks and you can see whether you cleared them. Keep < postForkDistance. Smaller = earlier.")]
+        [SerializeField] float beepAfterForkDistance = 14f;
 
         [Header("Feedback")]
         [SerializeField] TextMeshProUGUI scoreText;
@@ -93,12 +89,14 @@ namespace VRT.Pilots.Trolley
                  "Empty = skip straight to the first real scenario.")]
         [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
-        // Fixed, predetermined order (practice, not data). true = BLUE (divert) · false = RED (stay).
-        // 3 reps: BLUE, RED, BLUE — diverting is the skill that needs the most practice.
+        // Fixed, predetermined order (practice, not data). true = rocks on the MAIN track (divert) ·
+        // false = rocks on the SIDE track (stay). 3 reps: divert, stay, divert — diverting is the skill
+        // that needs the most practice.
         static readonly bool[] Sequence = { true, false, true };
 
         Vector3 _envStartPos;
         Quaternion _envStartRot;
+        float _traveled;   // distance the environment has slid since the last reset (≈ displacement from start)
         int _correct;
         int _total;
 
@@ -106,8 +104,8 @@ namespace VRT.Pilots.Trolley
         {
             _total = Sequence.Length;
             UpdateScore();
-            if (scoreText != null) scoreText.gameObject.SetActive(false); // counter is for Round 2 only
-            SetActiveSafe(signalLight, false);
+            if (scoreText != null) scoreText.gameObject.SetActive(false); // counter shown only during the reps
+            HideBlockers();
 
             if (environment == null || toggle == null)
             {
@@ -129,35 +127,28 @@ namespace VRT.Pilots.Trolley
         IEnumerator RunTutorial()
         {
             yield return null;                 // let the toggle's Start() run first
-            toggle.ApplyRemoteState(false);
+            toggle.SetNeutral();               // both buttons neutral during the intro — nothing pre-selected
             toggle.SetInteractionEnabled(false);
             yield return new WaitForSeconds(startDelay);
 
-            // ── Round 1 — intro + button familiarisation ──────────────────────
+            // ── Intro (buttons were already taught in the bystander tutorial) ──
             yield return StartCoroutine(PlayAndWait(introClip));
-            yield return StartCoroutine(PlayAndWait(buttonsClip));
-            yield return StartCoroutine(PlayClipWhileBlinkingSignal(signalClip));
-            yield return StartCoroutine(RunButtonPractice());
+            yield return StartCoroutine(PlayAndWait(windowClip));
 
-            // ── Round 2 — signal drill ────────────────────────────────────────
+            // ── Rock-blocker drill — the rules, then 3 reps ───────────────────
             yield return StartCoroutine(PlayAndWait(sortClip));
             if (scoreText != null) scoreText.gameObject.SetActive(true);
 
+            ResetEnvironment();   // start the first approach from the seat's start pose
             for (int i = 0; i < Sequence.Length; i++)
             {
-                if (i == 0)
-                {
-                    ResetEnvironment();                         // already at start; no fade needed
-                }
-                else
-                {
-                    // Hide the snap-back behind a fade so it isn't a jarring teleport in VR.
-                    yield return StartCoroutine(FadeOutIfPossible());
-                    ResetEnvironment();
-                    yield return StartCoroutine(FadeInIfPossible());
-                }
                 yield return StartCoroutine(RunRound(Sequence[i]));
+                // Between reps: keep the train rolling while we fade out, snap the world back under
+                // black, then fade in — so the train never visibly stops.
+                if (i < Sequence.Length - 1)
+                    yield return StartCoroutine(TransitionToNextRound());
             }
+            HideBlockers();
 
             if (scoreText != null)
                 scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
@@ -166,77 +157,39 @@ namespace VRT.Pilots.Trolley
             LoadAfterDrill();
         }
 
-        // ── Round 1 ───────────────────────────────────────────────────────────
+        // ── Rock-blocker reps ──────────────────────────────────────────────────
 
-        IEnumerator RunButtonPractice()
+        IEnumerator RunRound(bool rocksOnMain)
         {
-            // No blinking: the buttons behave like the real scene (colour on click). Narration guides.
-            toggle.ApplyRemoteState(false);     // main track selected to start
-            toggle.SetInteractionEnabled(true);
+            // The environment is at its start pose (reset by the caller). Block one track with rocks:
+            // main blocked → the answer is to divert.
+            ShowBlocker(rocksOnMain);
 
-            yield return StartCoroutine(PlayAndWait(pressClip));
-            yield return new WaitUntil(() => toggle.IsAction);
-
-            yield return StartCoroutine(PlayAndWait(backClip));
-            yield return new WaitUntil(() => !toggle.IsAction);
-
-            yield return StartCoroutine(PlayAndWait(confirmClip));
-            toggle.SetInteractionEnabled(false);
-        }
-
-        IEnumerator PlayClipWhileBlinkingSignal(AudioClip clip)
-        {
-            // Show the signal (neutral colour) and blink it while the clip introduces it.
-            SetSignal(Color.white, true);
-            bool hasClip = clip != null && narrationSource != null;
-            if (hasClip) { narrationSource.clip = clip; narrationSource.loop = false; narrationSource.Play(); }
-            float until = Time.time + 4f;
-            Func<bool> stop = () => hasClip ? !narrationSource.isPlaying : Time.time >= until;
-
-            bool on = false;
-            while (!stop())
-            {
-                on = !on;
-                SetActiveSafe(signalLight, on);
-                float w = 0f;
-                while (w < blinkInterval && !stop()) { w += Time.deltaTime; yield return null; }
-            }
-            SetActiveSafe(signalLight, false);
-            yield return new WaitForSeconds(betweenClipsPause);
-        }
-
-        // ── Round 2 ───────────────────────────────────────────────────────────
-
-        IEnumerator RunRound(bool isBlue)
-        {
-            // The environment was already reset to its start pose by the caller (under a fade between
-            // reps). Show the signal for this round.
-            SetSignal(isBlue ? blueColor : redColor, true);
-
+            // Reset to the inaction default; SetInteractionEnabled(true) then reveals it (A highlighted)
+            // exactly as the real scenes do when their decision window opens.
             toggle.ApplyRemoteState(false);
             toggle.SetInteractionEnabled(true);
 
-            float traveled = 0f;
             float turned = 0f;
             bool resolved = false;
+            bool beeped   = false;
             bool diverted = false;
+            bool correct  = false;
 
-            while (true)
+            float roundEnd = approachDistance + postForkDistance;
+            while (_traveled < roundEnd)
             {
-                float dist = approachSpeed * Time.deltaTime;
-                environment.Translate(approachDirection.normalized * dist, Space.World);
-                traveled += dist;
+                float dist = DriveStep();
 
-                // Reaching the diverting point: lock the decision (toggle state now), play the sound,
-                // and begin the divert turn if the right button is selected.
-                if (!resolved && traveled >= approachDistance)
+                // Reaching the fork: lock the decision (no switching past the switch) and score it —
+                // silently. The beep is held back until the train reaches the rocks (below).
+                if (!resolved && _traveled >= approachDistance)
                 {
                     diverted = toggle.IsAction;
                     toggle.SetInteractionEnabled(false);
-                    bool correct = (isBlue && diverted) || (!isBlue && !diverted);
+                    correct = (rocksOnMain && diverted) || (!rocksOnMain && !diverted);
                     if (correct) _correct++;
                     UpdateScore();
-                    PlaySfx(correct ? correctClip : wrongClip);
                     resolved = true;
                 }
 
@@ -252,12 +205,53 @@ namespace VRT.Pilots.Trolley
                     environment.RotateAround(pivot, Vector3.up, stepDeg * Mathf.Sign(branchTurnAngle));
                 }
 
-                if (resolved && traveled >= approachDistance + postForkDistance) break;
+                // Beep only once the train reaches the rocks — the moment you can see whether you cleared them.
+                if (resolved && !beeped && _traveled >= approachDistance + beepAfterForkDistance)
+                {
+                    PlaySfx(correct ? correctClip : wrongClip);
+                    beeped = true;
+                }
+
                 yield return null;
             }
+            // The train keeps moving: the caller's transition fades out, hides the blockers, resets the
+            // world under black, and fades back in — all while it's still rolling.
+        }
 
-            SetActiveSafe(signalLight, false);
-            yield return new WaitForSeconds(interRoundDelay);
+        // Translate the environment one frame's worth along the approach axis and track how far it's slid
+        // since the last reset (≈ its displacement from the start pose, so the fork fires at the right place).
+        float DriveStep()
+        {
+            float dist = approachSpeed * Time.deltaTime;
+            environment.Translate(approachDirection.normalized * dist, Space.World);
+            _traveled += dist;
+            return dist;
+        }
+
+        // Keep the train rolling forward while the screen fades out, snap the world back to its start pose
+        // under full black (invisible), then fade in — still rolling. No visible stop, no teleport.
+        IEnumerator TransitionToNextRound()
+        {
+            HideBlockers();
+            yield return StartCoroutine(DriveWhileFading(toBlack: true));
+            ResetEnvironment();
+            yield return StartCoroutine(DriveWhileFading(toBlack: false));
+        }
+
+        IEnumerator DriveWhileFading(bool toBlack)
+        {
+            var fader = SceneFader.Instance;
+            if (fader == null)
+            {
+                // No fader (standalone test): coast briefly so motion stays continuous.
+                float t = 0f;
+                while (t < 0.5f) { DriveStep(); t += Time.deltaTime; yield return null; }
+                yield break;
+            }
+            bool done = false;
+            if (toBlack) fader.FadeToBlack(() => done = true);
+            else         fader.FadeFromBlack(() => done = true);
+            while (!done) { DriveStep(); yield return null; }
         }
 
         // ── Narration / helpers ─────────────────────────────────────────────────
@@ -278,17 +272,18 @@ namespace VRT.Pilots.Trolley
             yield return new WaitForSeconds(betweenClipsPause);
         }
 
-        void SetSignal(Color col, bool on)
+        // Block exactly one track. rocksOnMain → the main-track barrier is shown (answer: divert);
+        // otherwise the side-track barrier is shown (answer: stay).
+        void ShowBlocker(bool rocksOnMain)
         {
-            SetActiveSafe(signalLight, on);
-            if (signalLight == null || !on) return;
-            var r = signalLight.GetComponentInChildren<Renderer>();
-            if (r == null) return;
-            var mat = r.material;
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", col);
-            if (mat.HasProperty("_Color"))     mat.SetColor("_Color", col);
-            // Make it glow if the shader supports emission, so it reads as a lit signal.
-            if (mat.HasProperty("_EmissionColor")) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", col); }
+            SetActiveSafe(mainTrackBlocker, rocksOnMain);
+            SetActiveSafe(sideTrackBlocker, !rocksOnMain);
+        }
+
+        void HideBlockers()
+        {
+            SetActiveSafe(mainTrackBlocker, false);
+            SetActiveSafe(sideTrackBlocker, false);
         }
 
         void UpdateScore()
@@ -310,26 +305,7 @@ namespace VRT.Pilots.Trolley
         {
             environment.localPosition = _envStartPos;
             environment.localRotation = _envStartRot;
-        }
-
-        // Fade the screen to/from black so the between-rep reset is invisible. No-op (instant) if no
-        // fader is present, so the drill still runs.
-        IEnumerator FadeOutIfPossible()
-        {
-            var fader = SceneFader.Instance;
-            if (fader == null) yield break;
-            bool done = false;
-            fader.FadeToBlack(() => done = true);
-            yield return new WaitUntil(() => done);
-        }
-
-        IEnumerator FadeInIfPossible()
-        {
-            var fader = SceneFader.Instance;
-            if (fader == null) yield break;
-            bool done = false;
-            fader.FadeFromBlack(() => done = true);
-            yield return new WaitUntil(() => done);
+            _traveled = 0f;
         }
 
         void LoadAfterDrill()
