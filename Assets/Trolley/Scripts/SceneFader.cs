@@ -74,6 +74,13 @@ namespace VRT.Pilots.Trolley
             StartCoroutine(DoFade(0f, 1f, onComplete));
         }
 
+        /// <summary>Fade from black back to clear. Use after a hidden in-scene reset (e.g. the driver
+        /// tutorial snapping the world back between practice reps).</summary>
+        public void FadeFromBlack(Action onComplete)
+        {
+            StartCoroutine(DoFade(1f, 0f, onComplete));
+        }
+
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             StartCoroutine(IntroFadeIn());

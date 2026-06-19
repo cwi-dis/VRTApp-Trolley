@@ -104,7 +104,9 @@ namespace VRT.Pilots.Trolley.Editor
             signal.transform.localScale = Vector3.one * 0.8f;
             var sigCol = signal.GetComponent<Collider>();
             if (sigCol != null) Object.DestroyImmediate(sigCol);
-            var sigShader = Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
+            // "Standard" is the built-in-pipeline shader → renders MAGENTA in URP. Use a URP shader.
+            var sigShader = Shader.Find("Universal Render Pipeline/Unlit")
+                         ?? Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
             signal.GetComponent<Renderer>().sharedMaterial = new Material(sigShader) { name = "M_SignalLight" };
             signal.SetActive(false);
 
@@ -207,7 +209,7 @@ namespace VRT.Pilots.Trolley.Editor
             var textGO = new GameObject("ScoreText");
             textGO.transform.SetParent(canvasGO.transform, false);
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Correct decisions: 0 / 5";
+            tmp.text = "Correct decisions: 0 / 3";
             tmp.fontSize = 60;
             tmp.alignment = TextAlignmentOptions.TopRight;
             tmp.color = Color.white;

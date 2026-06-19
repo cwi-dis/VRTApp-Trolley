@@ -23,7 +23,9 @@ namespace VRT.Pilots.Trolley
     /// ROUND 2 — signal drill:
     ///   • A signal light ahead turns RED or BLUE each round: BLUE → press right (divert), RED → do nothing.
     ///   • The tram switches tracks AT the diverting point (after sliding 'approachDistance'); the
-    ///     correct/wrong sound plays there, once the move is committed. Fixed order, 5 reps.
+    ///     correct/wrong sound plays there, once the move is committed. Fixed order, 3 reps.
+    ///   • Between reps the screen fades to black to hide the world snapping back to its start pose
+    ///     (a hard teleport reads as a glitch / is uncomfortable in first-person VR).
     ///   • After the drill, the practice questionnaire loads.
     ///
     /// Reuses the Driver rail/cab/movement + the A/B TrolleyToggleDecision, all wired by
@@ -92,8 +94,8 @@ namespace VRT.Pilots.Trolley
         [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order (practice, not data). true = BLUE (divert) · false = RED (stay).
-        // RED, BLUE, BLUE, RED, BLUE.
-        static readonly bool[] Sequence = { false, true, true, false, true };
+        // 3 reps: BLUE, RED, BLUE — diverting is the skill that needs the most practice.
+        static readonly bool[] Sequence = { true, false, true };
 
         Vector3 _envStartPos;
         Quaternion _envStartRot;
@@ -114,6 +116,12 @@ namespace VRT.Pilots.Trolley
             }
             _envStartPos = environment.localPosition;
             _envStartRot = environment.localRotation;
+
+            // Ensure a fader exists so the between-rep reset can be hidden. The real flow already has
+            // one (DontDestroyOnLoad singleton from an earlier scene); this covers standalone testing.
+            if (SceneFader.Instance == null)
+                new GameObject("SceneFader").AddComponent<SceneFader>();
+
             toggle.SetInteractionEnabled(false);
             StartCoroutine(RunTutorial());
         }
@@ -135,8 +143,21 @@ namespace VRT.Pilots.Trolley
             yield return StartCoroutine(PlayAndWait(sortClip));
             if (scoreText != null) scoreText.gameObject.SetActive(true);
 
-            foreach (bool isBlue in Sequence)
-                yield return StartCoroutine(RunRound(isBlue));
+            for (int i = 0; i < Sequence.Length; i++)
+            {
+                if (i == 0)
+                {
+                    ResetEnvironment();                         // already at start; no fade needed
+                }
+                else
+                {
+                    // Hide the snap-back behind a fade so it isn't a jarring teleport in VR.
+                    yield return StartCoroutine(FadeOutIfPossible());
+                    ResetEnvironment();
+                    yield return StartCoroutine(FadeInIfPossible());
+                }
+                yield return StartCoroutine(RunRound(Sequence[i]));
+            }
 
             if (scoreText != null)
                 scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
@@ -188,9 +209,8 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunRound(bool isBlue)
         {
-            // Reset the environment to its start pose, then show the signal for this round.
-            environment.localPosition = _envStartPos;
-            environment.localRotation = _envStartRot;
+            // The environment was already reset to its start pose by the caller (under a fade between
+            // reps). Show the signal for this round.
             SetSignal(isBlue ? blueColor : redColor, true);
 
             toggle.ApplyRemoteState(false);
@@ -284,6 +304,32 @@ namespace VRT.Pilots.Trolley
         static void SetActiveSafe(GameObject go, bool active)
         {
             if (go != null && go.activeSelf != active) go.SetActive(active);
+        }
+
+        void ResetEnvironment()
+        {
+            environment.localPosition = _envStartPos;
+            environment.localRotation = _envStartRot;
+        }
+
+        // Fade the screen to/from black so the between-rep reset is invisible. No-op (instant) if no
+        // fader is present, so the drill still runs.
+        IEnumerator FadeOutIfPossible()
+        {
+            var fader = SceneFader.Instance;
+            if (fader == null) yield break;
+            bool done = false;
+            fader.FadeToBlack(() => done = true);
+            yield return new WaitUntil(() => done);
+        }
+
+        IEnumerator FadeInIfPossible()
+        {
+            var fader = SceneFader.Instance;
+            if (fader == null) yield break;
+            bool done = false;
+            fader.FadeFromBlack(() => done = true);
+            yield return new WaitUntil(() => done);
         }
 
         void LoadAfterDrill()
