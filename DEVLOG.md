@@ -8,6 +8,63 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 14 (2026-06-19) — Arrow button graphics; driver tutorial reworked to a rock-blocker drill
+
+**Context:** Picked up Day 13's two open threads — the placeholder A/B button labels and the unfinished
+driver tutorial — then redesigned the driver tutorial's practice mechanic and locked the final narration.
+Four commits landed on master (not pushed): `f0c2a39` buttons, `3aa00d4` first (signal-light) driver
+tutorial — **superseded the same day**, `47d75e1` final narration + scripts, `e22d8d6` rock-blocker
+rework + player-spawn copy.
+
+**Button graphics — A/B text → arrows (commit f0c2a39):**
+- The decision buttons showed literal "A" / "B" TMP labels. Replaced them with arrow icons: a straight-up
+  arrow for TrackA (stay on main track / inaction), an elbow-right arrow for TrackB (divert / action).
+- **Generated the PNGs myself** (`Assets/Trolley/Textures/button_arrow_straight.png`,
+  `button_arrow_divert.png`) — 256×256, white fill + dark edge, transparent bg, 4× supersampled, via a
+  throwaway Pillow venv. White reads on both the grey (unselected) and green (selected) button states.
+- **Editor script** `TrolleyButtonGraphicSetup.cs` (menu `Trolley > Buttons – Swap A_B Labels To Arrow
+  Graphics`): disables (doesn't delete) the TMP label, adds a child `ArrowIcon` quad decal anchored on
+  the label transform, strips its collider so it never blocks the XR interactable, assigns the icon
+  material. Idempotent — re-runnable.
+- **Pink-button fix:** first pass rendered magenta. Cause = URP doesn't resolve the URP/Unlit surface
+  keywords on a bare material. Switched the icon material to **`Sprites/Default`** (built-in, URP-safe,
+  unlit + alpha-blended) with a force shader-reset to repair the already-created material.
+- Both buttons are **prefab variants**, so editing the two prefab assets propagates the graphic to all
+  five scenes at once (Bystander, Driver, Self-harm, both tutorials).
+
+**Driver tutorial — first built as a signal-light drill (commit 3aa00d4):** 3 reps with a red/blue signal
+ahead (blue = divert, red = stay), fade-to-black reset between reps (`SceneFader.FadeFromBlack`), score
+canvas `… / 3`. This shipped, then got **replaced the same day** — see below.
+
+**Driver tutorial — redesigned to a rock-blocker drill (commit e22d8d6):**
+- **Signal light → rocks.** Suzy's call: a colour-coded light is an arbitrary rule to memorise; a physical
+  obstacle is self-explanatory and fits the first-person cab (you steer away from what's blocking you).
+  Two rocky-mountain barriers (reusing the self-harm look), one per track — the **blocked** track is the
+  one to avoid (rocks on main → divert; rocks on side → stay). Built by `TrolleyDriverTutorialSetup` at
+  the captured worker positions, so they ride in on the correct track.
+- **Buttons no longer re-taught** — already practised in the bystander tutorial. Narration cut to **4
+  clips**: intro → window → sortingtrain (rules) → closing.
+- **Divert no longer fires early.** The turn now triggers at `approachDistance = 76` (= the real Driver
+  scene's 9.5 speed × 8 s decision window) instead of a short 60, so it lines up with the fork.
+- **Train keeps moving** — removed the 4 s dead stop between reps; it now rolls continuously, the reset is
+  hidden under the fade, and a shared `_traveled` counter keeps the fork aligned despite the motion.
+- **Beep held** until the train reaches the rocks (`beepAfterForkDistance`) — was firing at the fork (too
+  early). Decision still locks silently at the fork.
+- **Neutral button state** during the intro (`SetNeutral()`); was pre-selecting A.
+
+**Player spawns (commit e22d8d6):** `TrolleyDriver` corrected by hand (canonical). New editor menu
+`Trolley > Copy Player Locations: Driver → Selfharm + TutorialDriver` copies the `Player Initial
+Locations/Player1+2` world transforms into the other two scenes (finds them inside the
+`Tool_scenesetup_Trolley` prefab by parent name).
+
+**Still open (Suzy, in Unity):**
+- Confirm `Approach Distance = 76` on `TutorialDriverDrill` in the scene (C# default updated; the existing
+  scene still had 60) and playtest the driver tutorial in headset — divert-at-fork, continuous motion,
+  beep timing, neutral start.
+- Check `RockBlocker_Main` / `RockBlocker_Side` sit cleanly on their tracks; the side "stay" round may read
+  weakly from the cab (angle/scale it up if so).
+- Eyeball the arrow icon facing on a button; optionally flip the divert arrow to bend left.
+
 ### Day 13 (2026-06-18) — Bystander tutorial polish, neutral buttons, room shell, real questionnaire, Tutorial 2 (driver) scaffolding
 
 **Context:** Suzy recorded all bystander-tutorial narration and iterated through playtests with Claude
