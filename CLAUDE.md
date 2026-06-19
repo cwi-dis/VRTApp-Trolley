@@ -30,11 +30,27 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Tutorial – Assign Narration & SFX Clips` (non-destructive; wires the 10 narration + 2 SFX clips) | `TrolleyTutorialSetup.cs` |
 | `Trolley > Build Control Room Shell` (enclosing ceiling+walls around the console; operates on open scene, doesn't save) | `TrolleyControlRoomShell.cs` |
 | `Trolley > Copy Room Layout: Tutorial → Bystander` (copies world transforms of MonitorGroup/MonitorLabelGroup/ControlRoomShell/Button_TrackA/B/GazeTarget_Buttons; saves Bystander) | `TrolleyRoomLayoutCopy.cs` |
-| `Trolley > Setup Humanoid Avatar Prefab` (operates on selected Humanoid FBX root in scene; adds RigBuilder + Two Bone IK for arms + SyncSkeletonToVRRig + SizeAdjust + PlayerRepresentationWirer; see below for workflow) | `TrolleyAvatarPrefabSetup.cs` |
+| `Trolley > Setup Humanoid Avatar Prefab` (step 1 of 2 — operates on selected wrapper GO in scene; adds RigBuilder + Two Bone IK for arms and legs + foot colliders + SyncSkeletonToVRRig + SizeAdjust + PlayerRepresentationWirer; see below for full workflow) | `TrolleyAvatarPrefabSetup.cs` |
+| `Trolley > Save and Wire Avatar into Players` (step 2 of 2 — saves the wrapper GO as a prefab asset, adds it as `altRepOne` in both `P_Self_Player_Trolley` and `P_Player_Trolley`, wires SizeAdjust SourceTop/SourceBottom and localScale) | `TrolleyAvatarPrefabSetup.cs` |
 
 Self-harm and Tutorial are built by **duplicating** a known-good scene (Driver / Bystander) and applying targeted edits — they preserve all hand-tuned geometry. Re-running overwrites the target scene, so make manual tweaks only after the final run.
 
 **Gotcha:** setup scripts wire fields by string name via `SerializedObject.FindProperty("fieldName")`. If a C# field is renamed, the string in the setup script must be updated manually — there is no compiler error if they drift. `[FormerlySerializedAs]` on the C# field handles existing scene YAML but does NOT fix the setup script.
+
+## Avatar prefab workflow
+
+Full workflow when creating or re-creating `P_Avatar_Trolley_Male` / `P_Avatar_Trolley_Female`:
+
+1. Revert the prefab asset to its raw state (wrapper GO + FBX child, no `SyncSkeletonToVRRig`) via git.
+2. Open the `tmp` scene and drag the reverted prefab into the Hierarchy.
+3. Select the instance and run `Trolley > Setup Humanoid Avatar Prefab`. The script aborts if a `SyncSkeletonToVRRig` already exists.
+4. Enter Play Mode briefly (Animation Rigging needs one play-mode visit to bake constraint bindings), then exit.
+5. **Select the instance again**, then run `Trolley > Save and Wire Avatar into Players`. This saves the prefab to `Assets/Trolley/Prefabs/{name}.prefab` and automatically wires it as `altRepOne` in `P_Self_Player_Trolley` and `P_Player_Trolley`, sets `localScale = (0.5, 0.5, 0.5)`, and sets `SizeAdjust.SourceTop/SourceBottom`.
+6. **Two manual steps still required after step 5:**
+   - **SizeAdjust > HMD Tracking Action** (on the avatar prefab) → assign `XRI Head/IsTracked` from the XRI default input actions asset. (`setHeightOnStart` is already false and `setHeightOnHMDTracking` true by the script; only the `InputActionReference` needs manual wiring.)
+   - **`P_Self_Player_Trolley.ViewAdjust.viewAdjusted`** → re-wire to the avatar's `SizeAdjust.AdjustHeight` if that link was lost (it is not automatable from a script).
+
+**Gotcha — SizeAdjust DestinationBottom:** must be the model root GO (Mixamo FBX root sits at y=0 in T-pose), not `hipsBone`. Using `hipsBone` gives head-to-hips height (~0.9 m) instead of full height (~1.75 m), causing ~2× overscale. The setup script sets this correctly; just don't override it in the Inspector.
 
 ## C# field renames
 
