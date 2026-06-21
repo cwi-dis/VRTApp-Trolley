@@ -350,135 +350,152 @@ namespace VRT.Pilots.Trolley.Editor
             EditorUtility.SetDirty(kfag);
         }
 
-        // ─── Save & Wire ──────────────────────────────────────────────────────────
+        // ─── Wire into player ─────────────────────────────────────────────────────
 
         /// <summary>
-        /// Second step after "Setup Humanoid Avatar Prefab" + Play Mode bake.
-        /// Saves the selected GO as a prefab and wires it into P_Self_Player_Trolley
-        /// (and P_Player_Trolley if found):
-        ///   • Adds the avatar as a nested child (if not already present)
-        ///   • Sets PlayerControllerBase.altRepOne → the nested avatar instance
-        ///   • Sets localScale = (0.5, 0.5, 0.5)
-        ///   • Sets SizeAdjust.SourceTop → RiggingAttachPointHeadTop
-        ///   • Sets SizeAdjust.SourceBottom → player root GO
-        ///
-        /// Still requires manual wiring after:
-        ///   • SizeAdjust HMD Tracking Action → "XRI Head/IsTracked"
-        ///   • ViewAdjust.viewAdjusted event → SizeAdjust.AdjustHeight
+        /// Scene-based wiring: drag the avatar prefab as a child of a player prefab
+        /// instance in the scene, select the avatar, then run one of these menu items.
+        /// The script discovers the player from the selection's parent chain.
+        /// Wires: altRepOne/Two, SizeAdjust sources, ViewAdjust.viewAdjusted (self-player only).
+        /// Afterwards: apply overrides to the player prefab to persist the wiring.
         /// </summary>
-        [MenuItem("Trolley/Save and Wire Avatar into Players")]
-        static void SaveAndWireAvatarIntoPlayers()
-        {
-            var wrapperGO = Selection.activeGameObject;
-            if (wrapperGO == null || wrapperGO.GetComponentInChildren<SyncSkeletonToVRRig>() == null)
-            {
-                Debug.LogError("[TrolleyAvatarPrefabSetup] Select a wrapper GO that has already been " +
-                               "set up via 'Setup Humanoid Avatar Prefab', then run this.");
-                return;
-            }
+        [MenuItem("Trolley/Wire as AltRepOne")]
+        static void WireAsAltRepOne() => WireSelectedAvatarIntoParent("altRepOne");
 
-            string prefabPath = $"Assets/Trolley/Prefabs/{wrapperGO.name}.prefab";
-            var avatarPrefab = PrefabUtility.SaveAsPrefabAsset(wrapperGO, prefabPath);
-            if (avatarPrefab == null)
-            {
-                Debug.LogError($"[TrolleyAvatarPrefabSetup] Failed to save prefab to {prefabPath}.");
-                return;
-            }
-            AssetDatabase.Refresh();
-            Debug.Log($"[TrolleyAvatarPrefabSetup] Saved {wrapperGO.name} → {prefabPath}");
+        [MenuItem("Trolley/Wire as AltRepTwo")]
+        static void WireAsAltRepTwo() => WireSelectedAvatarIntoParent("altRepTwo");
 
-            WireAvatarIntoPlayerPrefab(
-                "Assets/Trolley/Prefabs/P_Self_Player_Trolley.prefab",
-                avatarPrefab, "altRepOne");
+        [MenuItem("Trolley/Wire as AltRepOne", validate = true)]
+        static bool ValidateWireAsAltRepOne() => SelectionHasSyncSkeleton();
 
-            WireAvatarIntoPlayerPrefab(
-                "Assets/Trolley/Prefabs/P_Player_Trolley.prefab",
-                avatarPrefab, "altRepOne");
+        [MenuItem("Trolley/Wire as AltRepTwo", validate = true)]
+        static bool ValidateWireAsAltRepTwo() => SelectionHasSyncSkeleton();
 
-            Debug.Log("[TrolleyAvatarPrefabSetup] Done.\n" +
-                      "Remaining manual steps:\n" +
-                      "  • SizeAdjust > HMD Tracking Action → 'XRI Head/IsTracked' (in the avatar prefab)\n" +
-                      "  • ViewAdjust.viewAdjusted → SizeAdjust.AdjustHeight (in P_Self_Player_Trolley)");
-        }
-
-        [MenuItem("Trolley/Save and Wire Avatar into Players", validate = true)]
-        static bool ValidateSaveAndWireAvatarIntoPlayers()
+        static bool SelectionHasSyncSkeleton()
         {
             var go = Selection.activeGameObject;
-            return go != null && go.GetComponentInChildren<SyncSkeletonToVRRig>() != null;
+            return go != null && go.GetComponentInChildren<SyncSkeletonToVRRig>(true) != null;
         }
 
-        /// <summary>
-        /// Opens <paramref name="playerPrefabPath"/> in prefab-contents mode, finds or adds
-        /// the avatar as a nested child, wires <paramref name="altRepField"/> and SizeAdjust
-        /// source references, then saves.
-        /// </summary>
-        static void WireAvatarIntoPlayerPrefab(string playerPrefabPath,
-            GameObject avatarPrefab, string altRepField)
+        static void WireSelectedAvatarIntoParent(string altRepField)
         {
-            if (!System.IO.File.Exists(playerPrefabPath))
+            var avatarGO = Selection.activeGameObject;
+            if (avatarGO == null)
             {
-                Debug.Log($"[TrolleyAvatarPrefabSetup] {playerPrefabPath} not found — skipping.");
+                Debug.LogError("[TrolleyAvatarPrefabSetup] Select the avatar GO in the Hierarchy first.");
                 return;
             }
 
-            var playerContents = PrefabUtility.LoadPrefabContents(playerPrefabPath);
-            try
+            // Walk up parent chain to find the player
+            PlayerControllerBase controller = null;
+            for (var t = avatarGO.transform.parent; t != null; t = t.parent)
             {
-                // Find existing nested instance by name (avatar prefab names are unique)
-                var avatarInstance = playerContents.transform
-                    .Cast<Transform>()
-                    .Select(t => t.gameObject)
-                    .FirstOrDefault(go => go.name == avatarPrefab.name);
+                controller = t.GetComponent<PlayerControllerBase>();
+                if (controller != null) break;
+            }
+            if (controller == null)
+            {
+                Debug.LogError("[TrolleyAvatarPrefabSetup] No PlayerControllerBase found in any ancestor. " +
+                               "Drag the avatar into a player prefab instance in the scene first.");
+                return;
+            }
+            var playerGO = controller.gameObject;
 
-                if (avatarInstance == null)
-                {
-                    avatarInstance = PrefabUtility.InstantiatePrefab(
-                        avatarPrefab, playerContents.transform) as GameObject;
-                    avatarInstance.SetActive(false);
-                    Debug.Log($"[TrolleyAvatarPrefabSetup] Added {avatarPrefab.name} as nested child in {playerPrefabPath}.");
-                }
+            // Wire altRepOne / altRepTwo
+            var cso = new SerializedObject(controller);
+            var altRepProp = cso.FindProperty(altRepField);
+            if (altRepProp == null)
+            {
+                Debug.LogError($"[TrolleyAvatarPrefabSetup] Field '{altRepField}' not found on " +
+                               $"{controller.GetType().Name} — is this the right player type?");
+                return;
+            }
+            altRepProp.objectReferenceValue = avatarGO;
+            cso.ApplyModifiedPropertiesWithoutUndo();
 
-                // Use the scale already set on the prefab (determined via overlap test against
-                // P_Mannequin at edit time). Do not hardcode — different avatars may differ.
-                avatarInstance.transform.localPosition = Vector3.zero;
-                avatarInstance.transform.localScale    = avatarPrefab.transform.localScale;
+            // Wire SizeAdjust source references
+            var sizeAdjust = avatarGO.GetComponent<SizeAdjust>();
+            if (sizeAdjust == null)
+            {
+                Debug.LogWarning($"[TrolleyAvatarPrefabSetup] No SizeAdjust on {avatarGO.name} — " +
+                                 "SourceTop/SourceBottom not wired.");
+            }
+            else
+            {
+                var headTop = FindInHierarchy(playerGO.transform, "RiggingAttachPointHeadTop");
+                if (headTop == null)
+                    Debug.LogWarning("[TrolleyAvatarPrefabSetup] RiggingAttachPointHeadTop not found " +
+                                     "in player hierarchy — SourceTop left null.");
+                var sso = new SerializedObject(sizeAdjust);
+                sso.FindProperty("SourceTop").objectReferenceValue    = headTop;
+                sso.FindProperty("SourceBottom").objectReferenceValue = playerGO;
+                sso.ApplyModifiedPropertiesWithoutUndo();
+            }
 
-                // altRepOne / altRepTwo on PlayerControllerBase
-                var controller = playerContents.GetComponent<PlayerControllerBase>()
-                               ?? playerContents.GetComponentInChildren<PlayerControllerBase>(true);
-                if (controller != null)
-                {
-                    var cso = new SerializedObject(controller);
-                    cso.FindProperty(altRepField).objectReferenceValue = avatarInstance;
-                    cso.ApplyModifiedPropertiesWithoutUndo();
-                }
+            // Alt reps are inactive by default; the representation system activates them at runtime
+            avatarGO.SetActive(false);
+
+            // Wire ViewAdjust.viewAdjusted → SizeAdjust.AdjustHeight (self-player only;
+            // other-player prefabs don't have ViewAdjust so this is skipped silently)
+            var viewAdjust = playerGO.GetComponentInChildren<ViewAdjust>(true);
+            if (viewAdjust != null)
+            {
+                if (sizeAdjust == null)
+                    Debug.LogWarning("[TrolleyAvatarPrefabSetup] ViewAdjust found but no SizeAdjust " +
+                                     "on avatar — viewAdjusted not wired.");
                 else
-                {
-                    Debug.LogWarning($"[TrolleyAvatarPrefabSetup] No PlayerControllerBase found in {playerPrefabPath}.");
-                }
-
-                // SizeAdjust source references
-                var sizeAdjust = avatarInstance.GetComponent<SizeAdjust>();
-                if (sizeAdjust != null)
-                {
-                    var headTop = FindInHierarchy(playerContents.transform, "RiggingAttachPointHeadTop");
-                    var sso = new SerializedObject(sizeAdjust);
-                    sso.FindProperty("SourceTop").objectReferenceValue    = headTop;
-                    sso.FindProperty("SourceBottom").objectReferenceValue = playerContents;
-                    sso.ApplyModifiedPropertiesWithoutUndo();
-
-                    if (headTop == null)
-                        Debug.LogWarning($"[TrolleyAvatarPrefabSetup] RiggingAttachPointHeadTop not found in {playerPrefabPath} — SourceTop left null.");
-                }
-
-                PrefabUtility.SaveAsPrefabAsset(playerContents, playerPrefabPath);
-                Debug.Log($"[TrolleyAvatarPrefabSetup] Wired into {playerPrefabPath}.");
+                    WireViewAdjusted(viewAdjust, sizeAdjust);
             }
-            finally
+
+            EditorUtility.SetDirty(playerGO);
+            Debug.Log($"[TrolleyAvatarPrefabSetup] Wired {avatarGO.name} as {altRepField} in {playerGO.name}.\n" +
+                      "Apply overrides to the player prefab to persist, then repeat for the other player prefab.\n" +
+                      "Remaining manual step: SizeAdjust > HMD Tracking Action → 'XRI Head/IsTracked' (avatar prefab).");
+        }
+
+        /// <summary>
+        /// Finds or adds a viewAdjusted persistent call for SizeAdjust.AdjustHeight,
+        /// identified by method name so re-running is idempotent.
+        /// </summary>
+        static void WireViewAdjusted(ViewAdjust viewAdjust, SizeAdjust sizeAdjust)
+        {
+            var so = new SerializedObject(viewAdjust);
+            var calls = so.FindProperty("viewAdjusted.m_PersistentCalls.m_Calls");
+            if (calls == null)
             {
-                PrefabUtility.UnloadPrefabContents(playerContents);
+                Debug.LogWarning("[TrolleyAvatarPrefabSetup] viewAdjusted persistent calls not found " +
+                                 "— ViewAdjust not wired. Field name may have changed.");
+                return;
             }
+
+            // Find existing AdjustHeight entry (idempotent on re-run) or append a new one
+            int idx = -1;
+            for (int i = 0; i < calls.arraySize; i++)
+            {
+                if (calls.GetArrayElementAtIndex(i)
+                         .FindPropertyRelative("m_MethodName").stringValue == "AdjustHeight")
+                {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx == -1)
+            {
+                calls.arraySize++;
+                idx = calls.arraySize - 1;
+            }
+
+            var entry = calls.GetArrayElementAtIndex(idx);
+            entry.FindPropertyRelative("m_Target").objectReferenceValue        = sizeAdjust;
+            entry.FindPropertyRelative("m_MethodName").stringValue             = "AdjustHeight";
+            entry.FindPropertyRelative("m_TargetAssemblyTypeName").stringValue =
+                "VRT.Pilots.Common.SizeAdjust, VRT.Pilots.Common";
+            entry.FindPropertyRelative("m_Mode").intValue                      = 1; // void, no args
+            entry.FindPropertyRelative("m_CallState").intValue                 = 2; // RuntimeOnly
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(viewAdjust);
+
+            Debug.Log($"[TrolleyAvatarPrefabSetup] viewAdjusted[{idx}] → SizeAdjust.AdjustHeight.");
         }
 
         static GameObject FindInHierarchy(Transform root, string name)

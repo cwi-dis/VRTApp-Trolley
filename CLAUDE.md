@@ -48,10 +48,12 @@ Full workflow when creating or re-creating `P_Avatar_Trolley_Male` / `P_Avatar_T
 4.1. Apply the Play Mode overrides back to the prefab: with the instance selected, click **Overrides** in the Inspector → **Apply All to Prefab**.
 4.5. **Optional IK sanity check** (useful after changes to the setup script): while the avatar is in the `tmp` scene, disable `SizeAdjust`, `PlayerRepresentationWirer`, and `SyncSkeletonToVRRig` on the wrapper GO (they require VR2Gather framework and will throw errors in isolation), then enter Play Mode and drag the hand/foot IK targets in the Inspector. Legs and arms should track the targets without lotus position or wild rotation. Also useful: drag P_Mannequin into the scene alongside Remy to compare behavior — P_Mannequin uses a Generic rig so it always works; Remy (Humanoid) is what needs fixing.
    - **Size/orientation check (edit mode, before Play):** with both the new avatar and P_Mannequin in the scene at (0,0,0), temporarily enable both in the Inspector and adjust the avatar wrapper's scale until they overlap in the Scene view. Apply that scale as a prefab override before continuing. (`P_Avatar_Trolley_Male` / Remy: scale **0.475**.) The "Save and Wire" script reads the scale from the prefab, so the overlap test result carries through automatically.
-5. **Select the instance again**, then run `Trolley > Save and Wire Avatar into Players`. This saves the prefab to `Assets/Trolley/Prefabs/{name}.prefab` and automatically wires it as `altRepOne` in `P_Self_Player_Trolley` and `P_Player_Trolley`, sets `localScale = (0.5, 0.5, 0.5)`, and sets `SizeAdjust.SourceTop/SourceBottom`.
-6. **Two manual steps still required after step 5:**
+5. **Wire into each player prefab** (repeat for `P_Self_Player_Trolley` and `P_Player_Trolley`):
+   - Drag the player prefab into the `tmp` scene. Drag the avatar prefab as a child of it.
+   - Select the avatar child → `Trolley > Wire as AltRepOne` (or `AltRepTwo` for a second avatar). The script wires `altRepOne`, `SizeAdjust` sources, and (for self-player only) `ViewAdjust.viewAdjusted → SizeAdjust.AdjustHeight`.
+   - Apply overrides to the player prefab. Remove the player prefab from the scene and repeat for the other player prefab.
+6. **One manual step still required:**
    - **SizeAdjust > HMD Tracking Action** (on the avatar prefab) → assign `XRI Head/IsTracked` from the XRI default input actions asset. (`setHeightOnStart` is already false and `setHeightOnHMDTracking` true by the script; only the `InputActionReference` needs manual wiring.)
-   - **`P_Self_Player_Trolley.ViewAdjust.viewAdjusted`** → re-wire to the avatar's `SizeAdjust.AdjustHeight` if that link was lost (it is not automatable from a script).
 
 **Gotcha — SizeAdjust DestinationBottom:** must be the model root GO (Mixamo FBX root sits at y=0 in T-pose), not `hipsBone`. Using `hipsBone` gives head-to-hips height (~0.9 m) instead of full height (~1.75 m), causing ~2× overscale. The setup script sets this correctly; just don't override it in the Inspector.
 
