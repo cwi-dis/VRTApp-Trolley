@@ -184,6 +184,14 @@ PrefabInstance:
       propertyPath: SourceBottom
       value: 
       objectReference: {fileID: 5334556276695526315}
+    - target: {fileID: 3052017744499782513, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: SourceTop
+      value: 
+      objectReference: {fileID: 1357882038131043509}
+    - target: {fileID: 3052017744499782513, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: SourceBottom
+      value: 
+      objectReference: {fileID: 5334556276695526315}
     - target: {fileID: 3387919120034082196, guid: 670e78ebada95483a880547d731f8130, type: 3}
       propertyPath: m_Name
       value: P_Avatar_Trolley_Male
