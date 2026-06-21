@@ -164,11 +164,7 @@ namespace VRT.Pilots.Trolley.Editor
             var src0 = srcObjects.FindPropertyRelative("m_Item0");
             src0.FindPropertyRelative("transform").objectReferenceValue = bodyConstraintGO.transform;
             src0.FindPropertyRelative("weight").floatValue = 1f;
-            var posAxes = bodySO.FindProperty("m_Data.m_ConstrainedPositionAxes");
-            posAxes.FindPropertyRelative("x").boolValue = true;
-            posAxes.FindPropertyRelative("y").boolValue = true;
-            posAxes.FindPropertyRelative("z").boolValue = true;
-            bodySO.FindProperty("m_Data.m_MaintainPositionOffset").boolValue = false;
+            // All-axes constrained + no offset are already the MultiPositionConstraint defaults.
             bodySO.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(bodyConstraint);
 
@@ -443,9 +439,10 @@ namespace VRT.Pilots.Trolley.Editor
                     Debug.Log($"[TrolleyAvatarPrefabSetup] Added {avatarPrefab.name} as nested child in {playerPrefabPath}.");
                 }
 
-                // Scale — matches the SizeAdjust nativeSize baseline (Remy ~2× too large at scale 1)
+                // Use the scale already set on the prefab (determined via overlap test against
+                // P_Mannequin at edit time). Do not hardcode — different avatars may differ.
                 avatarInstance.transform.localPosition = Vector3.zero;
-                avatarInstance.transform.localScale    = Vector3.one * 0.5f;
+                avatarInstance.transform.localScale    = avatarPrefab.transform.localScale;
 
                 // altRepOne / altRepTwo on PlayerControllerBase
                 var controller = playerContents.GetComponent<PlayerControllerBase>()
