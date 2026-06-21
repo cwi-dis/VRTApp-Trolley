@@ -6,27 +6,21 @@ All scenarios use a button as the shared action point — referenced consistentl
 
 ---
 
-### Scenario A — Bystander
+### Scenario A — Bystander (`narration_bystander.mp3`)
 
-> You are monitoring the train in the control room. A train is approaching five workers on track A. They are wearing AirPods and cannot hear it coming. If you press the button, the train will divert to track B, where one person is standing. If you do nothing, the train continues toward the five workers.
-
-**Word count:** ~47 | **Est. duration:** ~21 s
+> You are monitoring trains in a control room. On the CCTV monitors, you see workers on the tracks. Five workers are on the main track and one worker is on the side track. A train is approaching and cannot be stopped. You have to hit either five workers or one worker.
 
 ---
 
-### Scenario B — Driver
+### Scenario B — Driver (`narration_driver.mp3`)
 
-> You are operating a tram, and the brakes have broken. Five workers are on the current track. They are wearing AirPods and cannot hear it coming. If you press the button, the tram will divert to the side track, where one person is standing. If you do nothing, the tram will continue toward the five workers.
-
-**Word count:** ~47 | **Est. duration:** ~21 s
+> You are operating a train. You see workers on the tracks. Five workers are on the main track and one worker is on the side track. The brake is broken. You have to hit either five workers or one worker.
 
 ---
 
-### Scenario C — Self-harm
+### Scenario C — Self-harm (`narration_selfharm.mp3`)
 
-> You are operating a tram, and the brakes have broken. Five workers are on the current track. They are wearing AirPods and cannot hear it coming. If you press the button, the tram will divert to the side and fall down the cliff. If you do nothing, the tram will continue toward the five workers.
-
-**Word count:** ~46 | **Est. duration:** ~21 s
+> You are operating a train. You see the tracks ahead. Five workers are on the main track and rocks are on the side track. The brake is broken. You have to either hit five workers or crash into the rocks.
 
 ---
 
@@ -55,10 +49,10 @@ on `TutorialTrainDrill`.
 | 10 | `…_sortingtrain` | `sortClip` | — (then 5 trains run) |
 | 11 | `…_closing` | `closingClip` | — (after 5 correct, before tutorial 2) |
 
-**1 — `intro`.** > Let's start with a short tutorial. You are now sitting in a control room managing the train track. In this room, you can divert trains approaching by switching two buttons.
+**1 — `intro`.** > Let's start with a short tutorial. You are now sitting in a control room managing the train track. In this room, you can divert approaching trains using two buttons.
 
 **2 — `monitors`.** All four monitor rims blink together while this plays.
-> On the front, there are four CCTV monitors, each showing a different part of the track.
+> In front of you, there are four CCTV monitors, each showing a different part of the track.
 
 **3 — `monitor_approach`.** > The top-left monitor shows the train approaching the diverting point.
 
@@ -72,7 +66,7 @@ _(Then a 3-second pause — `introPauseAfter` — before the button practice.)_
 
 **7 — `button_main`.** Button practice begins: the left button (A) is now selected (green, its rim lit)
 to match "by default the left button is selected". Waits for the real **right** (B) press.
-> Let's try pressing the buttons. By default, the left button is selected, so the train follows the main track. Press the button on the right to divert the train.
+> Let's try pressing the buttons. As default, the left button is selected so that the train follows the main track. Press the button on the right to divert the train.
 
 **8 — `button_side`.** Waits for the real **left** (A) press.
 > Great. Now press the button on the left to send it back to the main track.
@@ -84,6 +78,9 @@ to match "by default the left button is selected". Waits for the real **right** 
 no timer; the top-right counter tracks correct decisions out of 5.
 > Now let's practise sorting the trains. If you see a red train, let it follow the main track. If you see a blue train, press the button on the right to divert it to the side track. Decide before the train reaches the diverting point.
 
+**11 — `closing`.** Plays after the 5 correct sorts, before the driver tutorial loads.
+> This is the end of the first tutorial. Now let's move to the second tutorial, where you will be a driver of the train.
+
 **Framing:** RED = do nothing (main track, inaction) · BLUE = press the right button (divert, action).
 No one is at risk in either round.
 
@@ -91,39 +88,32 @@ No one is at risk in either round.
 
 ### Tutorial 2 — Driver (first-person, no one at risk)
 
-You ARE the driver this time, seated in the cab; the environment slides toward you. Round 1 = intro +
-button practice; Round 2 = a signal-light drill (a light ahead turns BLUE = divert / RED = stay, 5 reps).
-Files: `narration_tutorial_driver_*.mp3`. Each clip maps to a field on `TutorialDriverDrill`.
+You ARE the driver this time, seated in the cab; the environment slides toward you. Buttons are **not**
+re-taught — the participant already practised them in Tutorial 1. Flow: intro → "watch the window" → the
+rules → **3 rock-blocker reps** (one track blocked by a rocky barrier: rocks on the main track = divert,
+rocks on the side track = stay; order divert, stay, divert) → closing. The screen fades to black between
+reps to hide the world resetting. **Four clips only** — `narration_tutorial_driver_*.mp3`, each mapping to
+a field on `TutorialDriverDrill`. (Recordings carry their own ~2s trailing pause, so the drill's
+`betweenClipsPause` is 0.)
 
 | File | Field | Notes |
 |---|---|---|
-| `…_intro` | `introClip` | preamble |
-| `…_buttons` | `buttonsClip` | — |
-| `…_signal` | `signalClip` | signal light blinks while this plays |
-| `…_button_main` | `pressClip` | waits for the real right (B) press |
-| `…_button_side` | `backClip` | waits for the real left (A) press |
-| `…_button_confirm` | `confirmClip` | — |
-| `…_sortingtrain` | `sortClip` | then 5 signal reps run |
-| `…_closing` | `closingClip` | after 5 correct, before the study begins |
+| `…_intro` | `introClip` | preamble — you're the driver now |
+| `…_window` | `windowClip` | where to look |
+| `…_sortingtrain` | `sortClip` | the rules; then 3 rock reps run (main, side, main) |
+| `…_closing` | `closingClip` | after the 3 reps, before the study begins |
 
-**intro.** > Now it's your turn to drive. You're sitting in the cab, operating the tram yourself. Don't worry — this is just practice, and no one is at risk.
+**intro.** > Let's move on to the second tutorial. You are now operating a train. You can divert the train by using two buttons.
 
-**buttons.** > In front of you are two buttons. The button on the left keeps the tram on the main track. The button on the right diverts it to the side track.
+**window.** > Watch for obstacles ahead through the front window.
 
-**signal.** > Watch the signal light ahead. When it turns blue, divert by pressing the right button. When it stays red, keep to the main track by doing nothing.
+**sortingtrain.** > Ahead, one side of the track is blocked with rocks. Drive the train onto the other side to avoid hitting them. Decide before the train reaches the diverting point. We'll do three practice rounds.
 
-**button_main.** > Let's try it. Press the button on the right to divert the tram.
+**closing.** > This is the end of the second tutorial.
 
-**button_side.** > Great. Now press the button on the left to return to the main track.
-
-**button_confirm.** > Perfect. The button you press lights up green, just like the real controls.
-
-**sortingtrain.** > Now let's practise. Remember: a blue signal means divert, a red signal means stay. Decide before you reach the switch.
-
-**closing.** > That's the end of the tutorials. The real study is about to begin.
-
-**Framing:** identical red/blue meaning to Tutorial 1, but you're the driver — the tram turns onto the
-side track when you divert, instead of you watching it from a control room.
+**Framing:** same avoid-the-blocked-track logic as Tutorial 1's red/blue trains, but you're the driver —
+the train turns onto the side track when you divert, instead of you watching it from a control room. The
+rocks are a practice scaffold; no obstacles block the track in the real study.
 
 ---
 

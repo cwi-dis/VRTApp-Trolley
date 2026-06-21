@@ -8,21 +8,22 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Builds the DRIVER practice scene by duplicating the (working) Driver scene, then swapping the
-    /// single-decision flow for a repeated signal drill — the first-person counterpart of the Bystander
-    /// tutorial.
+    /// single-decision flow for a repeated rock-blocker drill — the first-person counterpart of the
+    /// Bystander tutorial.
     ///
     ///   Trolley > Build Driver Tutorial From Driver
     ///
-    /// Result: a TutorialDriverDrill runs reps where a signal light ahead turns RED or BLUE —
-    ///   • BLUE → press the right button (the tram diverts).
-    ///   • RED  → do nothing (stay on the main track).
+    /// Result: a TutorialDriverDrill runs reps where one track ahead is blocked by a rocky barrier —
+    ///   • rocks on the MAIN track → press the right button (the tram diverts to the clear side track).
+    ///   • rocks on the SIDE track → do nothing (stay on the clear main track).
     /// It copies the Driver's movement params (approach dir/speed, divert pivot/angle/radius) off the
-    /// DriverTrainController, then removes TrolleyController + DriverTrainController and both worker groups
-    /// from THIS scene only (their scripts are untouched).
+    /// DriverTrainController, then removes TrolleyController + DriverTrainController; the two worker groups
+    /// are replaced by rocky-mountain barriers (one per track) reusing the self-harm look, in THIS scene
+    /// only (their scripts are untouched).
     ///
     /// Does NOT add the scene to Build Settings — register/order it yourself.
     /// Non-destructive to the Driver scene. Overwrites TrolleyTutorialDriver.unity each run — make manual
-    /// tweaks (signal placement, speeds, score canvas) only after the last run.
+    /// tweaks (rock placement, speeds, score canvas) only after the last run.
     /// </summary>
     public static class TrolleyDriverTutorialSetup
     {
@@ -31,15 +32,13 @@ namespace VRT.Pilots.Trolley.Editor
 
         const string AudioDir = "Assets/Trolley/Audio/";
         const string IntroPath   = AudioDir + "narration_tutorial_driver_intro.mp3";
-        const string ButtonsPath  = AudioDir + "narration_tutorial_driver_buttons.mp3";
-        const string SignalPath   = AudioDir + "narration_tutorial_driver_signal.mp3";
-        const string PressPath    = AudioDir + "narration_tutorial_driver_button_main.mp3";
-        const string BackPath     = AudioDir + "narration_tutorial_driver_button_side.mp3";
-        const string ConfirmPath  = AudioDir + "narration_tutorial_driver_button_confirm.mp3";
-        const string SortPath     = AudioDir + "narration_tutorial_driver_sortingtrain.mp3";
-        const string ClosingPath  = AudioDir + "narration_tutorial_driver_closing.mp3";
-        const string CorrectPath  = AudioDir + "sfx_correct.wav";
-        const string WrongPath    = AudioDir + "sfx_wrong.wav";
+        const string WindowPath  = AudioDir + "narration_tutorial_driver_window.mp3";
+        const string SortPath    = AudioDir + "narration_tutorial_driver_sortingtrain.mp3";
+        const string ClosingPath = AudioDir + "narration_tutorial_driver_closing.mp3";
+        const string CorrectPath = AudioDir + "sfx_correct.wav";
+        const string WrongPath   = AudioDir + "sfx_wrong.wav";
+
+        static readonly Color RockColor = new Color(0.42f, 0.36f, 0.30f); // grey-brown rock (matches self-harm)
 
         [MenuItem("Trolley/Build Driver Tutorial From Driver")]
         public static void BuildDriverTutorialFromDriver()
@@ -76,12 +75,27 @@ namespace VRT.Pilots.Trolley.Editor
             var trolley = Object.FindFirstObjectByType<TrolleyController>();
             if (trolley != null) Object.DestroyImmediate(trolley);
 
-            // ── Remove workers from both tracks (practice — nobody at risk) ────
-            foreach (var name in new[] { "InactionTrackWorkers", "ActionTrackWorkers" })
+            // ── Swap the workers on both tracks for rocky-mountain barriers (practice — nobody at
+            //    risk). Capture each worker group's parent + local position FIRST so the rock blocker
+            //    inherits the exact track position and the same moving parent (rides with TrackEnvironment).
+            Transform mainParent = env, sideParent = env;
+            Vector3 mainLocal = new Vector3(0f, 0f, -15f), sideLocal = new Vector3(6f, 0f, -15f);
+            var inaction = GameObject.Find("InactionTrackWorkers");   // five workers on the MAIN track
+            if (inaction != null)
             {
-                var go = GameObject.Find(name);
-                if (go != null) Object.DestroyImmediate(go);
+                mainParent = inaction.transform.parent != null ? inaction.transform.parent : env;
+                mainLocal  = inaction.transform.localPosition;
+                Object.DestroyImmediate(inaction);
             }
+            else Debug.LogWarning("Build Driver Tutorial: InactionTrackWorkers not found — main-track rocks placed at a fallback; reposition manually.");
+            var action = GameObject.Find("ActionTrackWorkers");       // one worker on the SIDE track
+            if (action != null)
+            {
+                sideParent = action.transform.parent != null ? action.transform.parent : env;
+                sideLocal  = action.transform.localPosition;
+                Object.DestroyImmediate(action);
+            }
+            else Debug.LogWarning("Build Driver Tutorial: ActionTrackWorkers not found — side-track rocks placed at a fallback; reposition manually.");
 
             // ── Reused input: the A/B toggle ───────────────────────────────────
             var toggle = Object.FindFirstObjectByType<TrolleyToggleDecision>();
@@ -97,16 +111,13 @@ namespace VRT.Pilots.Trolley.Editor
                 nSO.ApplyModifiedProperties();
             }
 
-            // ── Signal light ahead (reposition in-editor to taste) ─────────────
-            var signal = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            signal.name = "SignalLight";
-            signal.transform.position = new Vector3(0f, 2.2f, 14f);
-            signal.transform.localScale = Vector3.one * 0.8f;
-            var sigCol = signal.GetComponent<Collider>();
-            if (sigCol != null) Object.DestroyImmediate(sigCol);
-            var sigShader = Shader.Find("Standard") ?? Shader.Find("Unlit/Color");
-            signal.GetComponent<Renderer>().sharedMaterial = new Material(sigShader) { name = "M_SignalLight" };
-            signal.SetActive(false);
+            // ── Rock blockers, one per track (the blocked track is the one to avoid) ──
+            // Reuses the self-harm rocky-mountain look. Each rides with its track; the drill shows only
+            // one per round. Start hidden.
+            var mainBlocker = BuildRockBlocker("RockBlocker_Main", mainParent, mainLocal);
+            var sideBlocker = BuildRockBlocker("RockBlocker_Side", sideParent, sideLocal);
+            mainBlocker.SetActive(false);
+            sideBlocker.SetActive(false);
 
             // ── Score counter + SFX + narration source ─────────────────────────
             var scoreText = BuildScoreCanvas();
@@ -128,7 +139,8 @@ namespace VRT.Pilots.Trolley.Editor
             dSO.FindProperty("branchTurnAngle").floatValue             = branchTurnAngle;
             dSO.FindProperty("branchRadius").floatValue                = branchRadius;
             dSO.FindProperty("toggle").objectReferenceValue            = toggle;
-            dSO.FindProperty("signalLight").objectReferenceValue       = signal;
+            dSO.FindProperty("mainTrackBlocker").objectReferenceValue  = mainBlocker;
+            dSO.FindProperty("sideTrackBlocker").objectReferenceValue  = sideBlocker;
             dSO.FindProperty("narrationSource").objectReferenceValue   = narrSrc;
             dSO.FindProperty("scoreText").objectReferenceValue         = scoreText;
             dSO.FindProperty("sfxSource").objectReferenceValue         = sfx;
@@ -137,16 +149,16 @@ namespace VRT.Pilots.Trolley.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("Build Driver Tutorial: TrolleyTutorialDriver.unity created (signal drill).\n" +
-                      "Done: copied movement params off DriverTrainController, removed it + TrolleyController + " +
-                      "both worker groups; created SignalLight + score canvas + SFX + narration source; wired " +
-                      "TutorialDriverDrill.\n" +
+            Debug.Log("Build Driver Tutorial: TrolleyTutorialDriver.unity created (rock-blocker drill).\n" +
+                      "Done: copied movement params off DriverTrainController, removed it + TrolleyController; " +
+                      "replaced both worker groups with RockBlocker_Main / RockBlocker_Side; created score canvas + " +
+                      "SFX + narration source; wired TutorialDriverDrill.\n" +
                       "MANUAL: (1) ADD TrolleyTutorialDriver to Build Settings yourself (order is yours); " +
-                      "(2) reposition SignalLight in front of the cab and DrillScoreCanvas; (3) record the driver " +
-                      "narration (narration_tutorial_driver_*.mp3) — any 'clip not found' warnings above list the " +
-                      "missing files — then re-run 'Trolley > Driver Tutorial – Assign Narration & SFX Clips'; " +
-                      "(4) tune approachDistance / postForkDistance to the rail; (5) point the Bystander tutorial's " +
-                      "nextSceneAfterDrill at this scene (already set to TrolleyTutorialDriver).");
+                      "(2) check RockBlocker_Main / RockBlocker_Side sit visibly on their tracks ahead of the cab, " +
+                      "and reposition DrillScoreCanvas; (3) record the driver narration (narration_tutorial_driver_*.mp3) " +
+                      "— any 'clip not found' warnings above list the missing files — then re-run 'Trolley > Driver " +
+                      "Tutorial – Assign Narration & SFX Clips'; (4) tune approachDistance / postForkDistance to the rail; " +
+                      "(5) point the Bystander tutorial's nextSceneAfterDrill at this scene (already set to TrolleyTutorialDriver).");
         }
 
         /// <summary>Non-destructive: (re)assign the driver-tutorial narration + SFX clips after recording.</summary>
@@ -182,15 +194,45 @@ namespace VRT.Pilots.Trolley.Editor
                 dSO.FindProperty(field).objectReferenceValue = LoadClip(path, label);
 
             Set("introClip",   IntroPath,   "driver_intro");
-            Set("buttonsClip", ButtonsPath, "driver_buttons");
-            Set("signalClip",  SignalPath,  "driver_signal");
-            Set("pressClip",   PressPath,   "driver_button_main");
-            Set("backClip",    BackPath,    "driver_button_side");
-            Set("confirmClip", ConfirmPath, "driver_button_confirm");
+            Set("windowClip",  WindowPath,  "driver_window");
             Set("sortClip",    SortPath,    "driver_sortingtrain");
             Set("closingClip", ClosingPath, "driver_closing");
             Set("correctClip", CorrectPath, "sfx_correct");
             Set("wrongClip",   WrongPath,   "sfx_wrong");
+        }
+
+        // A rocky-mountain barrier (same look as the self-harm scene). Parented to the track so it rides
+        // toward the seated player; collider stripped — it's a visual practice cue, not a physical block.
+        static GameObject BuildRockBlocker(string name, Transform parent, Vector3 localPos)
+        {
+            var root = new GameObject(name);
+            if (parent != null) root.transform.SetParent(parent, false);
+            root.transform.localPosition = localPos;
+
+            AddRock(root.transform, new Vector3(0f, 2f, 0f),      new Vector3(6f, 8f, 4f),  0f);
+            AddRock(root.transform, new Vector3(-2.5f, 1f, 1f),   new Vector3(3f, 4f, 3f),  20f);
+            AddRock(root.transform, new Vector3(2.5f, 1.2f, -1f), new Vector3(3.5f, 5f, 3f),-15f);
+            return root;
+        }
+
+        static void AddRock(Transform parent, Vector3 localPos, Vector3 scale, float yaw)
+        {
+            var rock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rock.name = "Rock";
+            rock.transform.SetParent(parent, false);
+            rock.transform.localPosition = localPos;
+            rock.transform.localScale = scale;
+            rock.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            var col = rock.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            var rend = rock.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = Object.Instantiate(rend.sharedMaterial);  // default URP Lit — no magenta
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", RockColor);
+                if (mat.HasProperty("_Color"))     mat.SetColor("_Color", RockColor);
+                rend.sharedMaterial = mat;
+            }
         }
 
         static TextMeshProUGUI BuildScoreCanvas()
@@ -207,7 +249,7 @@ namespace VRT.Pilots.Trolley.Editor
             var textGO = new GameObject("ScoreText");
             textGO.transform.SetParent(canvasGO.transform, false);
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Correct decisions: 0 / 5";
+            tmp.text = "Correct decisions: 0 / 3";
             tmp.fontSize = 60;
             tmp.alignment = TextAlignmentOptions.TopRight;
             tmp.color = Color.white;
