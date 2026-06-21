@@ -121,11 +121,56 @@ namespace VRT.Pilots.Trolley.Editor
             if (rigBuilder == null)
                 rigBuilder = Undo.AddComponent<RigBuilder>(modelGO);
 
+            // Humanoid rigs apply root motion by default, which fights body position.
+            // Disable it so the skeleton stays where SyncSkeletonToVRRig puts it.
+            Undo.RecordObject(animator, "Disable Apply Root Motion");
+            animator.applyRootMotion = false;
+            EditorUtility.SetDirty(animator);
+
             // 2. "VR Constraints" child of the model GO — holds the Rig and IK solvers
             var vrConstraintsGO = new GameObject("VR Constraints");
             Undo.RegisterCreatedObjectUndo(vrConstraintsGO, "Create VR Constraints");
             vrConstraintsGO.transform.SetParent(modelGO.transform, false);
             var rig = vrConstraintsGO.AddComponent<Rig>();
+
+            // 2b. Body Constraint — the first child of VR Constraints so it evaluates
+            //     before arm/leg IK. Pins hipsBone to this GO's own position, which
+            //     SyncSkeletonToVRRig.neck drives in LateUpdate.
+            //
+            //     Why this is needed for Humanoid rigs: the Animator resets hipsBone to
+            //     its default body position (near floor) every animation step, BEFORE
+            //     RigBuilder constraints run. SyncSkeletonToVRRig corrects hips in
+            //     LateUpdate — too late for leg IK. The Body Constraint runs inside the
+            //     animation step and restores hips from the previous frame's LateUpdate
+            //     position (1-frame lag, imperceptible). Leg IK then sees the correct
+            //     hip height and produces a normal standing pose instead of lotus.
+            //
+            //     The source of the MultiPositionConstraint is the Body Constraint GO's
+            //     OWN Transform — no separate target GO needed. This mirrors P_Mannequin
+            //     (where the same constraint exists at weight=0 since Generic rig is fine).
+            var bodyConstraintGO = new GameObject("Body Constraint");
+            Undo.RegisterCreatedObjectUndo(bodyConstraintGO, "Create Body Constraint");
+            bodyConstraintGO.transform.SetParent(vrConstraintsGO.transform, false);
+            bodyConstraintGO.transform.position = hipsBone.position;
+
+            var bodyConstraint = bodyConstraintGO.AddComponent<MultiPositionConstraint>();
+            bodyConstraint.weight = 1f;
+            // Wire via SerializedObject — WeightedTransformArray (m_SourceObjects) is a
+            // fixed-size struct (m_Length + m_Item0..7); direct .Add() is unreliable.
+            var bodySO = new SerializedObject(bodyConstraint);
+            bodySO.FindProperty("m_Data.m_ConstrainedObject").objectReferenceValue = hipsBone;
+            var srcObjects = bodySO.FindProperty("m_Data.m_SourceObjects");
+            srcObjects.FindPropertyRelative("m_Length").intValue = 1;
+            var src0 = srcObjects.FindPropertyRelative("m_Item0");
+            src0.FindPropertyRelative("transform").objectReferenceValue = bodyConstraintGO.transform;
+            src0.FindPropertyRelative("weight").floatValue = 1f;
+            var posAxes = bodySO.FindProperty("m_Data.m_ConstrainedPositionAxes");
+            posAxes.FindPropertyRelative("x").boolValue = true;
+            posAxes.FindPropertyRelative("y").boolValue = true;
+            posAxes.FindPropertyRelative("z").boolValue = true;
+            bodySO.FindProperty("m_Data.m_MaintainPositionOffset").boolValue = false;
+            bodySO.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(bodyConstraint);
 
             // 3. Two Bone IK for each arm and leg (children of VR Constraints)
             var leftArmTarget  = CreateTwoBoneIK(vrConstraintsGO.transform, "Left Arm IK",
@@ -186,8 +231,11 @@ namespace VRT.Pilots.Trolley.Editor
             sync.head.rigTarget = headConstraintGO.transform;
 
             // neck drives the body root position:
-            // Map() computes delta = vrTarget − rigSource (neck bone), applies it to rigTarget (hips).
-            sync.neck.rigTarget        = hipsBone;
+            // Map() computes delta = vrTarget − rigSource (neck bone), applies it to rigTarget.
+            // rigTarget is the Body Constraint GO (not hipsBone directly) so that
+            // SyncSkeletonToVRRig positions the constraint source in LateUpdate, and
+            // the Body Constraint then pulls hipsBone to match at the next animation step.
+            sync.neck.rigTarget        = bodyConstraintGO.transform;
             sync.neck.rigSource        = neckBone;
             sync.neck.positionOnly     = true;
             sync.neck.includeYRotation = true;
