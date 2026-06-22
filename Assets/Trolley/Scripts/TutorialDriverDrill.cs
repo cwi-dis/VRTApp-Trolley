@@ -85,9 +85,6 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip wrongClip;
 
         [Header("After the drill")]
-        [Tooltip("Scene to load when the drill ends. Driver tutorial → the practice questionnaire. " +
-                 "Empty = skip straight to the first real scenario.")]
-        [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order (practice, not data). true = rocks on the MAIN track (divert) ·
         // false = rocks on the SIDE track (stay). 3 reps: divert, stay, divert — diverting is the skill
@@ -310,12 +307,10 @@ namespace VRT.Pilots.Trolley
 
         void LoadAfterDrill()
         {
-            string next = !string.IsNullOrEmpty(nextSceneAfterDrill)
-                ? nextSceneAfterDrill
-                : TrolleyGameState.Instance?.NextScenarioScene();
+            string next = TrolleyGameState.Instance?.NextScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogWarning("[TutorialDriverDrill] Tutorial finished but no next scene set (standalone test?).");
+                Debug.LogWarning("[TutorialDriverDrill] Tutorial finished but TrolleyGameState has no next scene.");
                 return;
             }
             PilotController.Instance.LoadNewScene(next);

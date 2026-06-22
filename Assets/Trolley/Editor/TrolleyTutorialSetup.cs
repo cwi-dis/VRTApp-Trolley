@@ -160,8 +160,7 @@ namespace VRT.Pilots.Trolley.Editor
                       "MANUAL: (1) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch to sit on their " +
                       "monitors; (2) check trainSpeed and set divertThreshold to the switch point on the rail; " +
                       "(3) run 'Trolley > Build Practice Questionnaire From Questionnaire' so the after-scene exists; " +
-                      "(4) to run it in the flow, point AvatarSetupController at TrolleyGameState.tutorialScene " +
-                      "(that line is in AvatarSetup — left for you).\n" +
+                      "(4) flow wired: AvatarSetupController → tutorialBystanderScene → TutorialDriver → PracticeQuestionnaire → scenarioOrder.\n" +
                       "Any 'clip not found' warnings above just mean that recording isn't in Assets/Trolley/Audio yet — " +
                       "drop it in and re-run 'Trolley > Tutorial – Assign Narration & SFX Clips' (non-destructive).");
         }

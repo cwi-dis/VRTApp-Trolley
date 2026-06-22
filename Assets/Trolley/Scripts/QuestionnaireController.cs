@@ -20,8 +20,6 @@ namespace VRT.Pilots.Trolley
                  "a generic reflection prompt, no DataLogger writes, and loads the first real scenario after.")]
         [SerializeField] bool practiceMode = false;
         [SerializeField] QuestionSet practiceQuestionSet;
-        [Tooltip("Scene to load after the practice questionnaire. Empty = the first scenario from the order.")]
-        [SerializeField] string practiceNextScene = "";
 
         [Header("Reflection — 'Done' button ends the think-aloud period")]
         [FormerlySerializedAs("stopButtonA")]
@@ -360,11 +358,7 @@ namespace VRT.Pilots.Trolley
             string next;
             if (practiceMode)
             {
-                // After the rehearsal, go to the first real scenario (NextScenarioScene does not
-                // advance the index, so the first scenario is not consumed).
-                next = !string.IsNullOrEmpty(practiceNextScene)
-                    ? practiceNextScene
-                    : TrolleyGameState.Instance?.NextScenarioScene() ?? "VRTLoginManager";
+                next = TrolleyGameState.Instance?.NextScene() ?? "VRTLoginManager";
             }
             else
             {

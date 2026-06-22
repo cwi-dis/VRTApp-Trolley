@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Splines;
 using TMPro;
 using VRT.Pilots.Common;
@@ -125,10 +124,6 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Closing line after all 5 rounds, before the next scene loads. " +
                  "e.g. 'That's the first tutorial — now let's practise the second.'")]
         [SerializeField] AudioClip closingClip;
-        [Tooltip("Scene to load when the drill ends. Bystander tutorial → the driver tutorial; the driver " +
-                 "tutorial → the practice questionnaire. Empty = skip straight to the first real scenario.")]
-        [FormerlySerializedAs("practiceQuestionnaireScene")]
-        [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order — identical for every participant (this is practice, not data).
         // true = BLUE (press, divert right) · false = RED (do nothing, runs straight).
@@ -422,13 +417,10 @@ namespace VRT.Pilots.Trolley
 
         void LoadAfterDrill()
         {
-            // Bystander tutorial → driver tutorial → practice questionnaire → first real scenario.
-            string next = !string.IsNullOrEmpty(nextSceneAfterDrill)
-                ? nextSceneAfterDrill
-                : TrolleyGameState.Instance?.NextScenarioScene();
+            string next = TrolleyGameState.Instance?.NextScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogWarning("[TutorialTrainDrill] Tutorial finished but no next scene set (standalone test?).");
+                Debug.LogWarning("[TutorialTrainDrill] Tutorial finished but TrolleyGameState has no next scene.");
                 return;
             }
             PilotController.Instance.LoadNewScene(next);

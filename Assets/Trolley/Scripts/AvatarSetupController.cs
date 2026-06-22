@@ -55,6 +55,12 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
+            if (TrolleyGameState.Instance == null)
+            {
+                new GameObject("TrolleyGameState").AddComponent<TrolleyGameState>();
+                Debug.LogWarning("[AvatarSetupController] TrolleyGameState not found — created with defaults.");
+            }
+
             _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
@@ -117,12 +123,7 @@ namespace VRT.Pilots.Trolley
 
         void ExecuteLoad()
         {
-            string next = TrolleyGameState.Instance?.NextScenarioScene();
-            if (string.IsNullOrEmpty(next))
-            {
-                Debug.LogError("AvatarSetupController: no next scene in TrolleyGameState.");
-                return;
-            }
+            string next = TrolleyGameState.Instance?.NextScene() ?? "TrolleyTutorialBystander";
             PilotController.Instance.LoadNewScene(next);
         }
 
