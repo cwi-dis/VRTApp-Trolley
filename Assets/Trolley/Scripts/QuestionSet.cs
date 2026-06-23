@@ -56,5 +56,14 @@ namespace VRT.Pilots.Trolley
             new Question { text = "I felt pressure to agree with my partner." },
             new Question { text = "I changed my decision because of my partner." },
         };
+
+        // ── Page grouping — questions shown together on one screen, no visible labels ──
+        // Sizes are consumed in order against the question arrays above; they should sum to each array's
+        // length (common 3+3+5+3 = 14, paired 5). No page titles are shown to the participant (construct
+        // names would bias answers). The controller clamps to the available rows and question count, so a
+        // shorter set (e.g. the practice set) still paginates safely.
+        [Header("Page grouping — questions per page (no titles shown)")]
+        public int[] commonPageSizes = { 3, 3, 5, 3 };
+        public int[] pairedPageSizes = { 5 };
     }
 }
