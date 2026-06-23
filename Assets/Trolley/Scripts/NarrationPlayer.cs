@@ -16,6 +16,10 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip[] clips;
         [Tooltip("Seconds to wait when no clips are assigned (placeholder mode).")]
         [SerializeField] float placeholderDuration = 4f;
+        [Tooltip("Narration plays at this fraction of the source volume (0.5 = 50%), matching the tutorials. " +
+                 "Applied when Play() runs.")]
+        [Range(0f, 1f)]
+        [SerializeField] float narrationVolume = 0.5f;
 
         public event Action OnNarrationComplete;
 
@@ -34,6 +38,7 @@ namespace VRT.Pilots.Trolley
 
         public void Play()
         {
+            if (audioSource != null) audioSource.volume = narrationVolume;
             if (clips != null && clips.Length > 0 && clips[0] != null)
                 StartCoroutine(PlaySequence());
             else
