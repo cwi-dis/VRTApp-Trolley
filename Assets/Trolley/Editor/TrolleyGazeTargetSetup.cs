@@ -24,8 +24,8 @@ namespace VRT.Pilots.Trolley.Editor
 
         static readonly (string parentName, string childName)[] Targets =
         {
-            ("ActionTrackWorkers",   "GazeTarget_Workers_Five"),
-            ("InactionTrackWorkers", "GazeTarget_Workers_Single"),
+            ("ActionTrackWorkers",   "GazeTarget_Workers_Single"),
+            ("InactionTrackWorkers", "GazeTarget_Workers_Five"),
             ("Rock",                 "GazeTarget_Rock"),
         };
 
