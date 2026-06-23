@@ -41,8 +41,9 @@ namespace VRT.Pilots.Trolley.Editor
         const string BackPath     = AudioDir + "narration_tutorial_bystander_button_side.mp3";
         const string ConfirmPath  = AudioDir + "narration_tutorial_bystander_button_confirm.mp3";
         // Round 2
-        const string SortPath     = AudioDir + "narration_tutorial_bystander_sortingtrain.mp3";
-        // Closing line (after 5 correct, before the next tutorial)
+        const string SortPath        = AudioDir + "narration_tutorial_bystander_sortingtrain.mp3";
+        const string ApproachingPath = AudioDir + "narration_tutorial_bystander_approaching.mp3"; // per-round cue
+        // Closing line (after the 3 correct sorts, before the next tutorial)
         const string ClosingPath  = AudioDir + "narration_tutorial_bystander_closing.mp3";
         // SFX
         const string CorrectPath  = AudioDir + "sfx_correct.wav";
@@ -146,7 +147,7 @@ namespace VRT.Pilots.Trolley.Editor
             dSO.FindProperty("narrationSource").objectReferenceValue = narrSrc;
             dSO.FindProperty("scoreText").objectReferenceValue      = scoreText;
             dSO.FindProperty("sfxSource").objectReferenceValue      = sfx;
-            AssignClips(dSO); // 10 narration + 2 SFX clips, loaded by path
+            AssignClips(dSO); // 11 narration + 2 SFX clips, loaded by path
             dSO.ApplyModifiedProperties();
 
             AddToBuildSettings(TutorialScene);
@@ -156,7 +157,7 @@ namespace VRT.Pilots.Trolley.Editor
             Debug.Log("Build Tutorial: TrolleyTutorial.unity created (two-round practice).\n" +
                       "Done: workers removed, TrolleyController/TrainController removed; cloned RimApproach/RimSwitch " +
                       "onto the two upper monitors; TutorialNarration source created; TutorialTrainDrill wired " +
-                      "(rail/train/toggle/4 rims/2 buttons/10 narration + 2 SFX clips/score/sfx); added to Build Settings.\n" +
+                      "(rail/train/toggle/4 rims/2 buttons/11 narration + 2 SFX clips/score/sfx); added to Build Settings.\n" +
                       "MANUAL: (1) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch to sit on their " +
                       "monitors; (2) check trainSpeed and set divertThreshold to the switch point on the rail; " +
                       "(3) run 'Trolley > Build Practice Questionnaire From Questionnaire' so the after-scene exists; " +
@@ -166,7 +167,7 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         /// <summary>
-        /// Non-destructive: opens the bystander tutorial scene and assigns all 10 narration + 2 SFX clips
+        /// Non-destructive: opens the bystander tutorial scene and assigns all 11 narration + 2 SFX clips
         /// to its TutorialTrainDrill. Use after recording (or re-recording) clips — it touches only the
         /// clip fields, so manual tweaks (rim placement, score canvas, speeds) are preserved.
         /// </summary>
@@ -189,7 +190,7 @@ namespace VRT.Pilots.Trolley.Editor
             dSO.ApplyModifiedProperties();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("Assign Tutorial Clips: wired 10 narration + 2 SFX clips to TutorialTrainDrill " +
+            Debug.Log("Assign Tutorial Clips: wired 11 narration + 2 SFX clips to TutorialTrainDrill " +
                       "(non-destructive). Any 'clip not found' warnings above are still-missing files.");
         }
 
@@ -209,8 +210,9 @@ namespace VRT.Pilots.Trolley.Editor
             Set("pressClip",         PressPath,    "bystander_button_main");
             Set("backClip",          BackPath,     "bystander_button_side");
             Set("confirmClip",       ConfirmPath,  "bystander_button_confirm");
-            Set("sortClip",          SortPath,     "bystander_sortingtrain");
-            Set("closingClip",       ClosingPath,  "bystander_closing");
+            Set("sortClip",          SortPath,        "bystander_sortingtrain");
+            Set("approachingClip",   ApproachingPath, "bystander_approaching");
+            Set("closingClip",       ClosingPath,     "bystander_closing");
             Set("correctClip",       CorrectPath,  "sfx_correct");
             Set("wrongClip",         WrongPath,    "sfx_wrong");
         }
@@ -231,7 +233,7 @@ namespace VRT.Pilots.Trolley.Editor
             var textGO = new GameObject("ScoreText");
             textGO.transform.SetParent(canvasGO.transform, false);
             var tmp = textGO.AddComponent<TextMeshProUGUI>();
-            tmp.text = "Correct decisions: 0 / 5";
+            tmp.text = "Correct decisions: 0 / 3";
             tmp.fontSize = 60;
             tmp.alignment = TextAlignmentOptions.TopRight;
             tmp.color = Color.white;

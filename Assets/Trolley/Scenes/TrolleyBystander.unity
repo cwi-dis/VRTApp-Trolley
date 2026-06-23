@@ -3157,7 +3157,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 200
-  field of view: 70
+  field of view: 75
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -3665,7 +3665,7 @@ Transform:
   m_GameObject: {fileID: 1198137148}
   serializedVersion: 2
   m_LocalRotation: {x: 0.20982637, y: 0.23949265, z: -0.053094238, w: 0.9464657}
-  m_LocalPosition: {x: 6.7, y: 5.22, z: 156.17}
+  m_LocalPosition: {x: 8, y: 6, z: 156.17}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4146,7 +4146,7 @@ Transform:
   m_GameObject: {fileID: 1267866997}
   serializedVersion: 2
   m_LocalRotation: {x: 0.21813789, y: 0.0068130908, z: -0.001522906, w: 0.97589296}
-  m_LocalPosition: {x: 1.7, y: 16.45, z: 129.3}
+  m_LocalPosition: {x: 1.37, y: 23.91, z: 105.69}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4185,7 +4185,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 200
-  field of view: 30
+  field of view: 40
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -5065,7 +5065,7 @@ Transform:
   m_GameObject: {fileID: 1622130886}
   serializedVersion: 2
   m_LocalRotation: {x: 0.21638475, y: -0.021979254, z: 0.0048726825, w: 0.97604865}
-  m_LocalPosition: {x: 0, y: 5, z: 158}
+  m_LocalPosition: {x: 3, y: 6, z: 158}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5673,7 +5673,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 6af99d5f1e0eb4a3e9432dd3630650e3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4
+      value: 4.59
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af99d5f1e0eb4a3e9432dd3630650e3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -5681,7 +5681,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af99d5f1e0eb4a3e9432dd3630650e3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 17
+      value: 17.45
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6af99d5f1e0eb4a3e9432dd3630650e3, type: 3}
       propertyPath: m_LocalRotation.w
@@ -6500,12 +6500,12 @@ SceneRoots:
   - {fileID: 4243336072109787468}
   - {fileID: 5155280720308605122}
   - {fileID: 1377995301}
+  - {fileID: 1107019972}
   - {fileID: 1176628043}
   - {fileID: 1576207550}
   - {fileID: 182592872}
   - {fileID: 2024669545}
   - {fileID: 5804051200226897166}
-  - {fileID: 1107019972}
   - {fileID: 1341504475}
   - {fileID: 1460084445}
   - {fileID: 498567789}

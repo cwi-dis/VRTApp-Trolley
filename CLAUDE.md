@@ -29,6 +29,8 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Wire Avatar Setup Scene` | `TrolleyAvatarSetupSceneSetup.cs` |
 | `Trolley > Tutorial – Assign Narration & SFX Clips` (non-destructive; wires the 10 narration + 2 SFX clips) | `TrolleyTutorialSetup.cs` |
 | `Trolley > Build Control Room Shell` (enclosing ceiling+walls around the console; operates on open scene, doesn't save) | `TrolleyControlRoomShell.cs` |
+| `Trolley > Add Tutorial Skip Button (open scene)` (researcher-only grey skip button; run once per tutorial scene; preserves placement on re-run) | `TrolleySkipButtonSetup.cs` |
+| `Trolley > Add Tutorial Start Button (open scene)` (participant-facing green Start button; wires the drill's `gate` field; opens with an A/B button warm-up then waits for Start; run once per tutorial scene) | `TrolleyTutorialStartSetup.cs` |
 | `Trolley > Copy Room Layout: Tutorial → Bystander` (copies world transforms of MonitorGroup/MonitorLabelGroup/ControlRoomShell/Button_TrackA/B/GazeTarget_Buttons; saves Bystander) | `TrolleyRoomLayoutCopy.cs` |
 | `Trolley > Wire GazeTargets` (non-destructive; adds PFB_GazeTarget to ActionTrackWorkers/InactionTrackWorkers/Rock in the open scene; skips already-present; does NOT save) | `TrolleyGazeTargetSetup.cs` |
 
