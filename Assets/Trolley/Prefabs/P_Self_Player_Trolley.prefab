@@ -366,5 +366,5 @@ MonoBehaviour:
   m_GazeTargetLayer:
     serializedVersion: 2
     m_Bits: 128
-  m_MaxDistance: 20
+  m_MaxDistance: 200
   m_SphereRadius: 0.05
