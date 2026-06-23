@@ -201,6 +201,18 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 46
       objectReference: {fileID: 0}
+    - target: {fileID: 1797928435423939824, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].time
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1797928435423939824, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1797928435423939824, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].value
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3293270133915450939, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_SizeDelta.x
       value: 84.94
@@ -471,6 +483,30 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7242573755789359179, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
       propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthMultiplier
+      value: 0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].time
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[1].value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].inWeight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171537373500264365, guid: 68d1772efbeac40e5b0a5edaa5fb85e2, type: 3}
+      propertyPath: m_Parameters.widthCurve.m_Curve.Array.data[0].outWeight
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
