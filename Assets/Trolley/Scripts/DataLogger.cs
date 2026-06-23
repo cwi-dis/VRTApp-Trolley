@@ -15,6 +15,8 @@ namespace VRT.Pilots.Trolley
     {
         public static DataLogger Instance { get; private set; }
 
+        public string SessionID => _sessionID;
+
         bool _exportEnabled = false;
         bool _sessionStarted = false;
         string _sessionID;

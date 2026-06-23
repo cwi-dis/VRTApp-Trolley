@@ -61,6 +61,11 @@ namespace VRT.Pilots.Trolley
         [SerializeField] TextMeshProUGUI transitionTextB;
         [SerializeField] Button startButtonB;
 
+        [Header("Output")]
+        [Tooltip("JSON output filename. Supports {session}, {scenario}, {player}, {time} tokens. " +
+                 "Resolved via VRTConfig.ConfigFilename so the config-file folder controls output location.")]
+        [SerializeField] string outputFilename = "questionnaire_{session}_{scenario}_p{player}.json";
+
         [Header("Timing")]
         [SerializeField] float reflectionDuration = 60f;
 
@@ -91,6 +96,7 @@ namespace VRT.Pilots.Trolley
         string _completedScenario;
         string _lastDecision;
         bool _isPaired;
+        QuestionnaireRecord _record;
 
 
         void Start()
@@ -100,6 +106,8 @@ namespace VRT.Pilots.Trolley
             if (practiceMode) { _completedScenario = "practice"; _lastDecision = "practice"; }
             Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}, practice={practiceMode}");
             _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
+            _record = QuestionnaireRecord.Create(_completedScenario, _lastDecision, practiceMode,
+                DataLogger.Instance?.SessionID);
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
@@ -163,6 +171,9 @@ namespace VRT.Pilots.Trolley
             if (!practiceMode && _isPaired)
                 yield return StartCoroutine(ShowQuestions(set.postScenarioPairedOnly, set.postScenarioCommon.Length));
 
+            if (!practiceMode)
+                _record.Save(outputFilename);
+
             yield return StartCoroutine(ShowTransitionAndSignal());
         }
 
@@ -184,7 +195,7 @@ namespace VRT.Pilots.Trolley
                     if (!practiceMode)
                     {
                         FindFirstObjectByType<RecordUserVoice>()?.AddMarker($"reflection_done_{_completedScenario}");
-                        DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
+                        _record.MarkReflectionEnded();
                     }
                     done = true;
                 });
@@ -236,8 +247,7 @@ namespace VRT.Pilots.Trolley
                 string answer = null;
                 yield return StartCoroutine(ShowSingleQuestion(questions[i], i + indexOffset, a => answer = a));
                 if (!practiceMode)
-                    DataLogger.Instance?.LogQuestionnaireAnswer(
-                        scenario, i + indexOffset, questions[i].text, answer);
+                    _record.AddResponse(i + indexOffset, questions[i].text, answer);
             }
         }
 
