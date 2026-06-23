@@ -81,6 +81,10 @@ namespace VRT.Pilots.Trolley
 
         [Header("Narration — Round 1 intro (one clip per step; rim sync is automatic)")]
         [SerializeField] AudioSource narrationSource;
+        [Tooltip("Tutorial narration plays at this fraction of the source volume (0.7 = 70%). Applied in Start; " +
+                 "leaves the SFX source untouched.")]
+        [Range(0f, 1f)]
+        [SerializeField] float narrationVolume = 0.5f;
         [Tooltip("Preamble 1 — 'control room … two buttons'. No rim blinks.")]
         [SerializeField] AudioClip introClip;         // narration_tutorial_bystander_intro
         [Tooltip("Preamble 2 — 'four CCTV monitors …'. No rim blinks.")]
@@ -156,6 +160,7 @@ namespace VRT.Pilots.Trolley
                 Debug.LogError("[TutorialTrainDrill] rail / train / toggle not wired — tutorial cannot run.");
                 return;
             }
+            if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             SetActiveSafe(rimApproach, false);
             SetActiveSafe(rimSwitch, false);

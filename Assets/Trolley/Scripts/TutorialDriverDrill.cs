@@ -65,6 +65,10 @@ namespace VRT.Pilots.Trolley
 
         [Header("Narration — four clips; buttons were already taught in the bystander tutorial")]
         [SerializeField] AudioSource narrationSource;
+        [Tooltip("Tutorial narration plays at this fraction of the source volume (0.7 = 70%). Applied in Start; " +
+                 "leaves the SFX source untouched.")]
+        [Range(0f, 1f)]
+        [SerializeField] float narrationVolume = 0.5f;
         [Tooltip("'second tutorial — you're driving now, divert with the two buttons'.")]
         [SerializeField] AudioClip introClip;            // narration_tutorial_driver_intro
         [Tooltip("'watch for obstacles ahead through the front window'.")]
@@ -122,6 +126,7 @@ namespace VRT.Pilots.Trolley
             if (SceneFader.Instance == null)
                 new GameObject("SceneFader").AddComponent<SceneFader>();
 
+            if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             StartCoroutine(RunTutorial());
         }
