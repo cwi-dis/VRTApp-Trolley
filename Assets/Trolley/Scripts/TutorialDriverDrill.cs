@@ -52,6 +52,11 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Reused A/B toggle. The drill reads IsAction (right = divert) and resets it each round.")]
         [SerializeField] TrolleyToggleDecision toggle;
 
+        [Header("Pacing")]
+        [Tooltip("Optional Start button. If set, the A/B buttons go live for a free warm-up and the tutorial " +
+                 "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
+        [SerializeField] TutorialGate gate;
+
         [Header("Rock blockers — one per track; the BLOCKED track is the one to avoid")]
         [Tooltip("Rocky barrier on the MAIN track. Shown when this round's answer is to divert.")]
         [SerializeField] GameObject mainTrackBlocker;
@@ -126,7 +131,16 @@ namespace VRT.Pilots.Trolley
             yield return null;                 // let the toggle's Start() run first
             toggle.SetNeutral();               // both buttons neutral during the intro — nothing pre-selected
             toggle.SetInteractionEnabled(false);
-            yield return new WaitForSeconds(startDelay);
+            // Warm-up + self-paced start: A/B buttons go live so the participant can freely try them, a Start
+            // button appears, and pressing it begins the tutorial (falls back to startDelay if unwired).
+            if (gate != null)
+            {
+                toggle.SetInteractionEnabled(true);
+                yield return StartCoroutine(gate.WaitForPress());
+                toggle.SetInteractionEnabled(false);
+                toggle.SetNeutral();
+            }
+            else yield return new WaitForSeconds(startDelay);
 
             // ── Intro (buttons were already taught in the bystander tutorial) ──
             yield return StartCoroutine(PlayAndWait(introClip));

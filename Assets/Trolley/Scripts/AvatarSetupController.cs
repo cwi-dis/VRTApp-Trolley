@@ -123,7 +123,7 @@ namespace VRT.Pilots.Trolley
 
         void ExecuteLoad()
         {
-            string next = TrolleyGameState.Instance?.NextScene() ?? "TrolleyTutorialBystander";
+            string next = TrolleyGameState.Instance?.NextScene() ?? "TrolleyTutorialDriver";
             PilotController.Instance.LoadNewScene(next);
         }
 

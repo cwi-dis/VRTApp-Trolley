@@ -17,9 +17,12 @@ namespace VRT.Pilots.Trolley
         public static TrolleyGameState Instance { get; private set; }
 
         [Header("Fixed Pre-Sequence (after AvatarSetup, before scenarioOrder)")]
+        // Driver tutorial first — it's the simpler first-person concept to grasp (Jack's call, issue #59).
+        // NOTE: the tutorial narration's "first/second tutorial" wording and the button-teaching (currently
+        // only in the bystander tutorial) still assume bystander-first — both need a content pass.
         public string[] preSequence = {
-            "TrolleyTutorialBystander",
             "TrolleyTutorialDriver",
+            "TrolleyTutorialBystander",
             "TrolleyPracticeQuestionnaire",
         };
         int _preSequenceIndex = 0;
