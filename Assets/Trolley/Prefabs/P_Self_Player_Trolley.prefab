@@ -300,6 +300,10 @@ PrefabInstance:
       propertyPath: autoDisable
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6695701840291593632, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: movement.Array.size
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8547041186499601728, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0

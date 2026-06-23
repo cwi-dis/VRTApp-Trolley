@@ -162,19 +162,53 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunQuestionnaire()
         {
-            yield return StartCoroutine(ShowReflection());
+            bool inVR = !VRTPilotConfig.InstanceExists() || VRTPilotConfig.Instance.researcherConfig.questionnaireInVR;
 
-            QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
-            yield return StartCoroutine(ShowQuestions(set.postScenarioCommon, 0));
+            if (inVR)
+            {
+                yield return StartCoroutine(ShowReflection());
 
-            // Practice is a short rehearsal — skip the paired-only block.
-            if (!practiceMode && _isPaired)
-                yield return StartCoroutine(ShowQuestions(set.postScenarioPairedOnly, set.postScenarioCommon.Length));
+                QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
+                yield return StartCoroutine(ShowQuestions(set.postScenarioCommon, 0));
+
+                // Practice is a short rehearsal — skip the paired-only block.
+                if (!practiceMode && _isPaired)
+                    yield return StartCoroutine(ShowQuestions(set.postScenarioPairedOnly, set.postScenarioCommon.Length));
+            }
+            else
+            {
+                yield return StartCoroutine(ShowPaperQuestionnairePrompt());
+            }
 
             if (!practiceMode)
                 _record.Save(outputFilename);
 
             yield return StartCoroutine(ShowTransitionAndSignal());
+        }
+
+        IEnumerator ShowPaperQuestionnairePrompt()
+        {
+            if (transitionPanel != null) transitionPanel.SetActive(true);
+            if (transitionText != null)
+                transitionText.text = "You will now fill in a questionnaire (on paper).\n" +
+                                      "When you are done and return here, please press the Continue button.";
+            if (startButton != null)
+            {
+                SetButtonLabel(startButton, "Continue");
+                startButton.gameObject.SetActive(true);
+                bool clicked = false;
+                startButton.onClick.RemoveAllListeners();
+                startButton.onClick.AddListener(() => clicked = true);
+                yield return new WaitUntil(() => clicked);
+                startButton.gameObject.SetActive(false);
+            }
+            // Leave transitionPanel active — ShowTransitionAndSignal will reuse it immediately.
+        }
+
+        void SetButtonLabel(Button btn, string label)
+        {
+            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = label;
         }
 
         IEnumerator ShowReflection()
@@ -349,6 +383,7 @@ namespace VRT.Pilots.Trolley
                             : "You have completed all scenarios.\nThank you for your participation.";
                 if (startButton != null)
                 {
+                    SetButtonLabel(startButton, "Continue");
                     startButton.gameObject.SetActive(true);
                     bool clicked = false;
                     startButton.onClick.RemoveAllListeners();
