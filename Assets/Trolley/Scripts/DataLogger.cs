@@ -7,7 +7,7 @@ using UnityEngine;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Singleton that writes decision and questionnaire data to CSV.
+    /// Singleton that writes decision data to CSV.
     /// Call StartSession() from ResearcherSetupController when Begin Study is pressed.
     /// If exportEnabled is false, data is only logged to the console.
     /// </summary>
@@ -21,7 +21,6 @@ namespace VRT.Pilots.Trolley
         bool _sessionStarted = false;
         string _sessionID;
         string _decisionPath;
-        string _questionnairePath;
 
         void Awake()
         {
@@ -39,17 +38,12 @@ namespace VRT.Pilots.Trolley
             if (!_exportEnabled) return;
 
             string dir = Application.persistentDataPath;
-            _decisionPath      = Path.Combine(dir, $"decisions_{_sessionID}.csv");
-            _questionnairePath = Path.Combine(dir, $"questionnaire_{_sessionID}.csv");
+            _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
 
             WriteHeader(_decisionPath,
                 "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
                 "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
                 "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
-
-            WriteHeader(_questionnairePath,
-                "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
-                "scenarioOrder,avatarConfig,scenario,questionIndex,questionText,answer");
 
             Debug.Log($"DataLogger: export ON — writing to {dir}");
         }
@@ -72,34 +66,6 @@ namespace VRT.Pilots.Trolley
             Debug.Log($"[Decision] {line}");
             if (_exportEnabled && _sessionStarted)
                 AppendLine(_decisionPath, line);
-        }
-
-        public void LogQuestionnaireAnswer(string scenario, int questionIndex,
-                                           string questionText, string answer)
-        {
-            string line =
-                $"{Now()},{_sessionID},{Meta()},{scenario}," +
-                $"{questionIndex},{CSV(questionText)},{CSV(answer)}";
-
-            Debug.Log($"[Questionnaire] {line}");
-            if (_exportEnabled && _sessionStarted)
-                AppendLine(_questionnairePath, line);
-        }
-
-        public void LogReflection(string scenario, string decision, string audioFilename)
-        {
-            string line =
-                $"{Now()},{_sessionID},{Meta()},{scenario},{decision},{CSV(audioFilename)}";
-            Debug.Log($"[Reflection] {line}");
-            if (_exportEnabled && _sessionStarted)
-            {
-                string path = Path.Combine(Application.persistentDataPath, $"reflections_{_sessionID}.csv");
-                if (!File.Exists(path))
-                    WriteHeader(path,
-                        "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
-                        "scenarioOrder,avatarConfig,scenario,decision,audioFile");
-                AppendLine(path, line);
-            }
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
