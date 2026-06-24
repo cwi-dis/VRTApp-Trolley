@@ -158,7 +158,7 @@ namespace VRT.Pilots.Trolley.Editor
                       "and reposition DrillScoreCanvas; (3) record the driver narration (narration_tutorial_driver_*.mp3) " +
                       "— any 'clip not found' warnings above list the missing files — then re-run 'Trolley > Driver " +
                       "Tutorial – Assign Narration & SFX Clips'; (4) tune approachDistance / postForkDistance to the rail; " +
-                      "(5) point the Bystander tutorial's nextSceneAfterDrill at this scene (already set to TrolleyTutorialDriver).");
+                      "(5) bystander tutorial's nextSceneAfterDrill already points to this scene; driver drill's nextSceneAfterDrill points to TrolleyPracticeQuestionnaire.");
         }
 
         /// <summary>Non-destructive: (re)assign the driver-tutorial narration + SFX clips after recording.</summary>

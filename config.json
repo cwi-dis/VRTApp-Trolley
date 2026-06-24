@@ -10,8 +10,8 @@
     "autoInventUsername": true,
     "StatisticsConfig": {
         "interval": 10.0,
-        "outputFile": "",
-        "outputFileAppend": true
+        "outputFile": "stats-from-develop.json",
+        "outputFileAppend": false
     },
     "ScreenshotConfig": {
         "takeScreenshot": false,

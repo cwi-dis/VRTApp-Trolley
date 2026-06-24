@@ -52,6 +52,11 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Reused A/B toggle. The drill reads IsAction (right = divert) and resets it each round.")]
         [SerializeField] TrolleyToggleDecision toggle;
 
+        [Header("Pacing")]
+        [Tooltip("Optional Start button. If set, the A/B buttons go live for a free warm-up and the tutorial " +
+                 "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
+        [SerializeField] TutorialGate gate;
+
         [Header("Rock blockers — one per track; the BLOCKED track is the one to avoid")]
         [Tooltip("Rocky barrier on the MAIN track. Shown when this round's answer is to divert.")]
         [SerializeField] GameObject mainTrackBlocker;
@@ -60,6 +65,10 @@ namespace VRT.Pilots.Trolley
 
         [Header("Narration — four clips; buttons were already taught in the bystander tutorial")]
         [SerializeField] AudioSource narrationSource;
+        [Tooltip("Tutorial narration plays at this fraction of the source volume (0.7 = 70%). Applied in Start; " +
+                 "leaves the SFX source untouched.")]
+        [Range(0f, 1f)]
+        [SerializeField] float narrationVolume = 0.5f;
         [Tooltip("'second tutorial — you're driving now, divert with the two buttons'.")]
         [SerializeField] AudioClip introClip;            // narration_tutorial_driver_intro
         [Tooltip("'watch for obstacles ahead through the front window'.")]
@@ -85,9 +94,6 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip wrongClip;
 
         [Header("After the drill")]
-        [Tooltip("Scene to load when the drill ends. Driver tutorial → the practice questionnaire. " +
-                 "Empty = skip straight to the first real scenario.")]
-        [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order (practice, not data). true = rocks on the MAIN track (divert) ·
         // false = rocks on the SIDE track (stay). 3 reps: divert, stay, divert — diverting is the skill
@@ -120,6 +126,7 @@ namespace VRT.Pilots.Trolley
             if (SceneFader.Instance == null)
                 new GameObject("SceneFader").AddComponent<SceneFader>();
 
+            if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             StartCoroutine(RunTutorial());
         }
@@ -129,7 +136,16 @@ namespace VRT.Pilots.Trolley
             yield return null;                 // let the toggle's Start() run first
             toggle.SetNeutral();               // both buttons neutral during the intro — nothing pre-selected
             toggle.SetInteractionEnabled(false);
-            yield return new WaitForSeconds(startDelay);
+            // Warm-up + self-paced start: A/B buttons go live so the participant can freely try them, a Start
+            // button appears, and pressing it begins the tutorial (falls back to startDelay if unwired).
+            if (gate != null)
+            {
+                toggle.SetInteractionEnabled(true);
+                yield return StartCoroutine(gate.WaitForPress());
+                toggle.SetInteractionEnabled(false);
+                toggle.SetNeutral();
+            }
+            else yield return new WaitForSeconds(startDelay);
 
             // ── Intro (buttons were already taught in the bystander tutorial) ──
             yield return StartCoroutine(PlayAndWait(introClip));
@@ -310,12 +326,10 @@ namespace VRT.Pilots.Trolley
 
         void LoadAfterDrill()
         {
-            string next = !string.IsNullOrEmpty(nextSceneAfterDrill)
-                ? nextSceneAfterDrill
-                : TrolleyGameState.Instance?.NextScenarioScene();
+            string next = TrolleyGameState.Instance?.NextScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogWarning("[TutorialDriverDrill] Tutorial finished but no next scene set (standalone test?).");
+                Debug.LogWarning("[TutorialDriverDrill] Tutorial finished but TrolleyGameState has no next scene.");
                 return;
             }
             PilotController.Instance.LoadNewScene(next);

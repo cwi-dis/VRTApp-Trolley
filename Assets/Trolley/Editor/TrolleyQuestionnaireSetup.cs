@@ -17,8 +17,17 @@ namespace VRT.Pilots.Trolley.Editor
         static readonly Vector3 BoothBCenter  = new Vector3(0f,  0f, -30f);
         static readonly Vector3 DividerCenter = new Vector3(0f,  2f, -15f);
 
-        static readonly Color BtnDefault = new Color(0.2f, 0.2f, 0.8f);
         static readonly Color BtnGreen   = new Color(0.1f, 0.55f, 0.1f);
+
+        const int MaxRows = 5; // most questions shown on one page (Decision Evaluation / Partner = 5)
+
+        struct RowRefs
+        {
+            public GameObject root;
+            public TextMeshProUGUI text;
+            public Button[] buttons;
+            public TextMeshProUGUI[] labels;
+        }
 
         struct BoothRefs
         {
@@ -26,10 +35,9 @@ namespace VRT.Pilots.Trolley.Editor
             public TextMeshProUGUI refPrompt, refTimer;
             public Button doneButton;
             public GameObject qPanel;
-            public TextMeshProUGUI qBody;
-            public Button[] buttons;
-            public TextMeshProUGUI[] labels;
+            public RowRefs[] rows;
             public Button nextButton;
+            public RectTransform progressFill;
             public TextMeshProUGUI scaleMinLabel, scaleMaxLabel;
             public GameObject waitPanel;
             public TextMeshProUGUI waitText;
@@ -102,8 +110,8 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty($"reflectionTimerText{suffix}").objectReferenceValue  = r.refTimer;
             so.FindProperty($"reflectionDoneButton{suffix}").objectReferenceValue = r.doneButton;
             so.FindProperty($"questionPanel{suffix}").objectReferenceValue        = r.qPanel;
-            so.FindProperty($"questionBodyText{suffix}").objectReferenceValue     = r.qBody;
             so.FindProperty($"nextButton{suffix}").objectReferenceValue           = r.nextButton;
+            so.FindProperty($"progressFill{suffix}").objectReferenceValue         = r.progressFill;
             so.FindProperty($"scaleMinLabel{suffix}").objectReferenceValue        = r.scaleMinLabel;
             so.FindProperty($"scaleMaxLabel{suffix}").objectReferenceValue        = r.scaleMaxLabel;
             so.FindProperty($"waitingPanel{suffix}").objectReferenceValue         = r.waitPanel;
@@ -112,15 +120,26 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty($"transitionText{suffix}").objectReferenceValue       = r.transitionText;
             so.FindProperty($"startButton{suffix}").objectReferenceValue          = r.startButton;
 
-            var btnProp = so.FindProperty($"likertButtons{suffix}");
-            btnProp.arraySize = r.buttons.Length;
-            for (int i = 0; i < r.buttons.Length; i++)
-                btnProp.GetArrayElementAtIndex(i).objectReferenceValue = r.buttons[i];
+            // questionRows is an array of the controller's [Serializable] QuestionRow — wire each row's
+            // sub-fields (root / text / buttons[] / labels[]) via SerializedProperty navigation.
+            var rowsProp = so.FindProperty($"questionRows{suffix}");
+            rowsProp.arraySize = r.rows.Length;
+            for (int i = 0; i < r.rows.Length; i++)
+            {
+                var rp = rowsProp.GetArrayElementAtIndex(i);
+                rp.FindPropertyRelative("root").objectReferenceValue = r.rows[i].root;
+                rp.FindPropertyRelative("text").objectReferenceValue = r.rows[i].text;
 
-            var lblProp = so.FindProperty($"likertLabels{suffix}");
-            lblProp.arraySize = r.labels.Length;
-            for (int i = 0; i < r.labels.Length; i++)
-                lblProp.GetArrayElementAtIndex(i).objectReferenceValue = r.labels[i];
+                var bp = rp.FindPropertyRelative("buttons");
+                bp.arraySize = r.rows[i].buttons.Length;
+                for (int b = 0; b < r.rows[i].buttons.Length; b++)
+                    bp.GetArrayElementAtIndex(b).objectReferenceValue = r.rows[i].buttons[b];
+
+                var lp = rp.FindPropertyRelative("labels");
+                lp.arraySize = r.rows[i].labels.Length;
+                for (int b = 0; b < r.rows[i].labels.Length; b++)
+                    lp.GetArrayElementAtIndex(b).objectReferenceValue = r.rows[i].labels[b];
+            }
         }
 
         // ── Booth canvas builder ──────────────────────────────────────────────
@@ -152,66 +171,63 @@ namespace VRT.Pilots.Trolley.Editor
 
             refPanel.SetActive(false);
 
-            // ── Question panel ────────────────────────────────────────────────
+            // ── Question panel: a Likert matrix — the 7 point-words as a shared column header, then up to
+            //    MaxRows question rows, each a line of 7 circles aligned under the header words ──
             var qPanel = CreatePanel("QuestionPanel", canvasGO, Color.black);
 
-            var qBody = CreateTMP("QuestionBodyText", qPanel,
-                new Vector2(0.05f, 0.60f), new Vector2(0.95f, 0.95f), 34, "Question text here.");
-            qBody.alignment = TextAlignmentOptions.TopLeft;
+            // 7 evenly-spaced circle columns on the right; the question text occupies the (wider) left margin.
+            const float colsLeft = 0.47f, colsRight = 0.985f;
+            float colW = (colsRight - colsLeft) / 7f;
+            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"); // built-in circle
 
-            // Likert buttons row
-            var rowGO = new GameObject("LikertRow");
-            rowGO.transform.SetParent(qPanel.transform, false);
-            var rowRect = rowGO.AddComponent<RectTransform>();
-            rowRect.anchorMin = new Vector2(0.02f, 0.38f);
-            rowRect.anchorMax = new Vector2(0.98f, 0.60f);
-            rowRect.offsetMin = rowRect.offsetMax = Vector2.zero;
-            var hlg = rowGO.AddComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 8f;
-            hlg.childAlignment      = TextAnchor.MiddleCenter;
-            hlg.childForceExpandWidth  = true;
-            hlg.childForceExpandHeight = true;
-
-            var buttons = new Button[7];
-            var labels  = new TextMeshProUGUI[7];
+            // Column header — the 7 anchor words. col 0 / col 6 are returned to the controller as
+            // scaleMin/scaleMax (kept for compatibility; the header is otherwise static).
+            string[] anchors = { "Strongly\ndisagree", "Disagree", "Somewhat\ndisagree", "Neutral",
+                                 "Somewhat\nagree", "Agree", "Strongly\nagree" };
+            TextMeshProUGUI scaleMin = null, scaleMax = null;
             for (int i = 0; i < 7; i++)
             {
-                var btnGO = new GameObject($"LikertButton_{i + 1}");
-                btnGO.transform.SetParent(rowGO.transform, false);
-                btnGO.AddComponent<RectTransform>();
-                btnGO.AddComponent<Image>().color = BtnDefault;
-                var btn = btnGO.AddComponent<Button>();
-
-                var labelGO = new GameObject("Label");
-                labelGO.transform.SetParent(btnGO.transform, false);
-                var lr = labelGO.AddComponent<RectTransform>();
-                lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
-                lr.offsetMin = lr.offsetMax = Vector2.zero;
-                var tmp = labelGO.AddComponent<TextMeshProUGUI>();
-                tmp.text = (i + 1).ToString();
-                tmp.fontSize = 40;
-                tmp.alignment = TextAlignmentOptions.Center;
-                tmp.color = Color.white;
-
-                buttons[i] = btn;
-                labels[i]  = tmp;
+                float cx = colsLeft + i * colW;
+                var lbl = CreateTMP($"Anchor_{i + 1}", qPanel,
+                    new Vector2(cx, 0.88f), new Vector2(cx + colW, 0.985f), 14, anchors[i]);
+                lbl.alignment = TextAlignmentOptions.Center;
+                lbl.color = new Color(0.85f, 0.85f, 0.85f);
+                if (i == 0) scaleMin = lbl;
+                if (i == 6) scaleMax = lbl;
             }
 
-            // Scale endpoint labels
-            var scaleMin = CreateTMP("ScaleMinLabel", qPanel,
-                new Vector2(0.02f, 0.28f), new Vector2(0.35f, 0.37f), 22, "Not at all");
-            scaleMin.alignment = TextAlignmentOptions.MidlineLeft;
-            scaleMin.color = new Color(0.8f, 0.8f, 0.8f);
+            // Up to MaxRows question rows, stacked top → bottom, with a gap between them. The controller
+            // hides unused rows. rowGap is the vertical space between questions; increase for more air.
+            var rows = new RowRefs[MaxRows];
+            const float top = 0.86f, bottom = 0.17f;
+            const float rowGap = 0.05f;
+            float slotH = (top - bottom) / MaxRows;
+            for (int i = 0; i < MaxRows; i++)
+            {
+                float slotMax = top - i * slotH;
+                float slotMin = slotMax - slotH;
+                rows[i] = BuildMatrixRow(qPanel, slotMin + rowGap * 0.5f, slotMax - rowGap * 0.5f, colsLeft, colW, knob);
+            }
 
-            var scaleMax = CreateTMP("ScaleMaxLabel", qPanel,
-                new Vector2(0.65f, 0.28f), new Vector2(0.98f, 0.37f), 22, "Very much");
-            scaleMax.alignment = TextAlignmentOptions.MidlineRight;
-            scaleMax.color = new Color(0.8f, 0.8f, 0.8f);
-
-            // Next button
+            // Next button.
             var nextBtn = CreateButton("NextButton", qPanel, "NEXT →",
-                new Vector2(0.30f, 0.05f), new Vector2(0.70f, 0.25f), BtnGreen, 32);
+                new Vector2(0.34f, 0.05f), new Vector2(0.66f, 0.15f), BtnGreen, 30);
             nextBtn.interactable = false;
+
+            // Thin progress bar along the very bottom — the controller fills it green to page/total.
+            var barBg = CreatePanel("ProgressBarBg", qPanel, new Color(0.25f, 0.25f, 0.25f));
+            var barBgRect = barBg.GetComponent<RectTransform>();
+            barBgRect.anchorMin = new Vector2(0f, 0f);
+            barBgRect.anchorMax = new Vector2(1f, 0.012f);
+            barBgRect.offsetMin = barBgRect.offsetMax = Vector2.zero;
+
+            var fillGO = new GameObject("ProgressFill");
+            fillGO.transform.SetParent(barBg.transform, false);
+            var progressFill = fillGO.AddComponent<RectTransform>();
+            progressFill.anchorMin = new Vector2(0f, 0f);
+            progressFill.anchorMax = new Vector2(0f, 1f);   // empty; controller sets anchorMax.x to page/total
+            progressFill.offsetMin = progressFill.offsetMax = Vector2.zero;
+            fillGO.AddComponent<Image>().color = new Color(0.1f, 0.6f, 0.1f); // green
 
             qPanel.SetActive(false);
 
@@ -241,10 +257,9 @@ namespace VRT.Pilots.Trolley.Editor
                 refTimer       = refTimer,
                 doneButton     = doneBtn,
                 qPanel         = qPanel,
-                qBody          = qBody,
-                buttons        = buttons,
-                labels         = labels,
+                rows           = rows,
                 nextButton     = nextBtn,
+                progressFill   = progressFill,
                 scaleMinLabel  = scaleMin,
                 scaleMaxLabel  = scaleMax,
                 waitPanel      = waitPanel,
@@ -253,6 +268,44 @@ namespace VRT.Pilots.Trolley.Editor
                 transitionText  = transText,
                 startButton     = startBtn,
             };
+        }
+
+        // One matrix row: the question text in the left margin, then 7 Likert circles centred in the 7
+        // columns (colsLeft + i*colW) so they line up under the header words. Built as a full-width
+        // container so the controller can hide the whole row when a page uses fewer than MaxRows questions.
+        static RowRefs BuildMatrixRow(GameObject panel, float yMin, float yMax,
+                                      float colsLeft, float colW, Sprite knob)
+        {
+            var rowGO = new GameObject("QuestionRow");
+            rowGO.transform.SetParent(panel.transform, false);
+            var rect = rowGO.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, yMin);
+            rect.anchorMax = new Vector2(1f, yMax);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+            // Question text — left margin, vertically centred.
+            var text = CreateTMP("RowText", rowGO,
+                new Vector2(0.03f, 0f), new Vector2(colsLeft - 0.01f, 1f), 22, "Question");
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+
+            // 7 circles, centred in their columns. A fixed square sizeDelta keeps them truly circular
+            // (the Knob sprite) regardless of panel aspect; the controller colours empty vs selected.
+            var buttons = new Button[7];
+            for (int i = 0; i < 7; i++)
+            {
+                float cx = colsLeft + (i + 0.5f) * colW;
+                var cGO = new GameObject($"Circle_{i + 1}");
+                cGO.transform.SetParent(rowGO.transform, false);
+                var cr = cGO.AddComponent<RectTransform>();
+                cr.anchorMin = cr.anchorMax = new Vector2(cx, 0.5f);
+                cr.sizeDelta = new Vector2(40f, 40f);
+                var img = cGO.AddComponent<Image>();
+                if (knob != null) img.sprite = knob;
+                img.color = new Color(0.78f, 0.78f, 0.78f);   // empty; controller manages empty/selected
+                buttons[i] = cGO.AddComponent<Button>();
+            }
+
+            return new RowRefs { root = rowGO, text = text, buttons = buttons, labels = new TextMeshProUGUI[0] };
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

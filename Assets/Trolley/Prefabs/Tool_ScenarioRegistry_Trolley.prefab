@@ -146,7 +146,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[0].scenarioSceneName
-      value: TrolleyResearcherSetup
+      value: TrolleyAvatarSetup
       objectReference: {fileID: 0}
     - target: {fileID: 8141314486536374815, guid: cb215595e54b149439fda5e0b283e3bc, type: 3}
       propertyPath: scenarios.Array.data[1].scenarioSceneName

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -12,6 +13,18 @@ namespace VRT.Pilots.Trolley
 {
     public class QuestionnaireController : MonoBehaviour
     {
+        // One row on a question page: the question text plus its Likert buttons. A page shows several of
+        // these at once; unused rows (when a page has fewer questions than rows) are hidden via 'root'.
+        [System.Serializable]
+        public class QuestionRow
+        {
+            [Tooltip("Row container — hidden when a page uses fewer than all rows.")]
+            public GameObject root;
+            public TextMeshProUGUI text;       // question text
+            public Button[] buttons;           // up to 7 Likert buttons
+            public TextMeshProUGUI[] labels;   // numeric labels on the buttons (optional)
+        }
+
         [Header("Question Set")]
         [SerializeField] QuestionSet questionSet;
 
@@ -20,8 +33,6 @@ namespace VRT.Pilots.Trolley
                  "a generic reflection prompt, no DataLogger writes, and loads the first real scenario after.")]
         [SerializeField] bool practiceMode = false;
         [SerializeField] QuestionSet practiceQuestionSet;
-        [Tooltip("Scene to load after the practice questionnaire. Empty = the first scenario from the order.")]
-        [SerializeField] string practiceNextScene = "";
 
         [Header("Reflection — 'Done' button ends the think-aloud period")]
         [FormerlySerializedAs("stopButtonA")]
@@ -34,10 +45,9 @@ namespace VRT.Pilots.Trolley
         [SerializeField] TextMeshProUGUI reflectionPromptTextA;
         [SerializeField] TextMeshProUGUI reflectionTimerTextA;
         [SerializeField] GameObject questionPanelA;
-        [SerializeField] TextMeshProUGUI questionBodyTextA;
-        [SerializeField] Button[] likertButtonsA;
-        [SerializeField] TextMeshProUGUI[] likertLabelsA;
+        [SerializeField] QuestionRow[] questionRowsA;
         [SerializeField] Button nextButtonA;
+        [SerializeField] RectTransform progressFillA;
         [SerializeField] TextMeshProUGUI scaleMinLabelA;
         [SerializeField] TextMeshProUGUI scaleMaxLabelA;
         [SerializeField] GameObject waitingPanelA;
@@ -51,10 +61,9 @@ namespace VRT.Pilots.Trolley
         [SerializeField] TextMeshProUGUI reflectionPromptTextB;
         [SerializeField] TextMeshProUGUI reflectionTimerTextB;
         [SerializeField] GameObject questionPanelB;
-        [SerializeField] TextMeshProUGUI questionBodyTextB;
-        [SerializeField] Button[] likertButtonsB;
-        [SerializeField] TextMeshProUGUI[] likertLabelsB;
+        [SerializeField] QuestionRow[] questionRowsB;
         [SerializeField] Button nextButtonB;
+        [SerializeField] RectTransform progressFillB;
         [SerializeField] TextMeshProUGUI scaleMinLabelB;
         [SerializeField] TextMeshProUGUI scaleMaxLabelB;
         [SerializeField] GameObject waitingPanelB;
@@ -62,6 +71,11 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject transitionPanelB;
         [SerializeField] TextMeshProUGUI transitionTextB;
         [SerializeField] Button startButtonB;
+
+        [Header("Output")]
+        [Tooltip("JSON output filename. Supports {session}, {scenario}, {player}, {time} tokens. " +
+                 "Resolved via VRTConfig.ConfigFilename so the config-file folder controls output location.")]
+        [SerializeField] string outputFilename = "questionnaire_{session}_{scenario}_p{player}.json";
 
         [Header("Timing")]
         [SerializeField] float reflectionDuration = 60f;
@@ -71,18 +85,18 @@ namespace VRT.Pilots.Trolley
         [SerializeField] BarrierController transitionBarrier;
         [SerializeField] NetworkTrigger proceedTrigger;
 
-        static readonly Color DefaultBtnColor  = new Color(0.2f, 0.2f, 0.8f);
-        static readonly Color SelectedBtnColor = new Color(0.1f, 0.6f, 0.1f);
+        // Neutral, no red/green gradient: an empty (light) circle vs a filled (dark) selected circle.
+        static readonly Color DefaultBtnColor  = new Color(0.78f, 0.78f, 0.78f);
+        static readonly Color SelectedBtnColor = new Color(0.20f, 0.20f, 0.20f);
 
         // Working refs resolved at Start() based on master/non-master role.
         Button reflectionDoneButton;
         GameObject reflectionPanel;
         TextMeshProUGUI reflectionPromptText, reflectionTimerText;
         GameObject questionPanel;
-        TextMeshProUGUI questionBodyText;
-        Button[] likertButtons;
-        TextMeshProUGUI[] likertLabels;
+        QuestionRow[] questionRows;
         Button nextButton;
+        RectTransform progressFill;
         TextMeshProUGUI scaleMinLabel, scaleMaxLabel;
         GameObject waitingPanel;
         TextMeshProUGUI waitingText;
@@ -93,6 +107,7 @@ namespace VRT.Pilots.Trolley
         string _completedScenario;
         string _lastDecision;
         bool _isPaired;
+        QuestionnaireRecord _record;
 
 
         void Start()
@@ -102,6 +117,8 @@ namespace VRT.Pilots.Trolley
             if (practiceMode) { _completedScenario = "practice"; _lastDecision = "practice"; }
             Debug.Log($"[Questionnaire] Start — scenario={_completedScenario}, decision={_lastDecision}, practice={practiceMode}");
             _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
+            _record = QuestionnaireRecord.Create(_completedScenario, _lastDecision, practiceMode,
+                DataLogger.Instance?.SessionID);
 
             readyTrigger.OnTrigger.AddListener(transitionBarrier.Trigger);
             transitionBarrier.OnAllReady.AddListener(proceedTrigger.Trigger);
@@ -141,10 +158,9 @@ namespace VRT.Pilots.Trolley
             reflectionPromptText = useA ? reflectionPromptTextA  : reflectionPromptTextB;
             reflectionTimerText  = useA ? reflectionTimerTextA   : reflectionTimerTextB;
             questionPanel        = useA ? questionPanelA         : questionPanelB;
-            questionBodyText     = useA ? questionBodyTextA      : questionBodyTextB;
-            likertButtons        = useA ? likertButtonsA         : likertButtonsB;
-            likertLabels         = useA ? likertLabelsA          : likertLabelsB;
+            questionRows         = useA ? questionRowsA          : questionRowsB;
             nextButton           = useA ? nextButtonA            : nextButtonB;
+            progressFill         = useA ? progressFillA          : progressFillB;
             scaleMinLabel        = useA ? scaleMinLabelA         : scaleMinLabelB;
             scaleMaxLabel        = useA ? scaleMaxLabelA         : scaleMaxLabelB;
             waitingPanel         = useA ? waitingPanelA          : waitingPanelB;
@@ -156,16 +172,72 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunQuestionnaire()
         {
-            yield return StartCoroutine(ShowReflection());
+            bool inVR = !VRTPilotConfig.InstanceExists() || VRTPilotConfig.Instance.researcherConfig.questionnaireInVR;
 
-            QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
-            yield return StartCoroutine(ShowQuestions(set.postScenarioCommon, 0));
+            if (inVR)
+            {
+                yield return StartCoroutine(ShowReflection());
 
-            // Practice is a short rehearsal — skip the paired-only block.
-            if (!practiceMode && _isPaired)
-                yield return StartCoroutine(ShowQuestions(set.postScenarioPairedOnly, set.postScenarioCommon.Length));
+                QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
+
+                // Build the page list up front so the progress bar knows the total (solo = common pages,
+                // paired = common + partner pages — e.g. 4 or 5).
+                var commonPages = new List<PageSpec>(Paginate(set.postScenarioCommon.Length, set.commonPageSizes));
+                var pairedPages = (!practiceMode && _isPaired)
+                    ? new List<PageSpec>(Paginate(set.postScenarioPairedOnly.Length, set.pairedPageSizes))
+                    : new List<PageSpec>();
+                int totalPages = commonPages.Count + pairedPages.Count;
+                int pageNum = 0;
+
+                // Common questions, grouped into pages (e.g. 3/3/5/3) shown together on one screen each.
+                foreach (var page in commonPages)
+                {
+                    UpdateProgress(++pageNum, totalPages);
+                    yield return StartCoroutine(ShowQuestionPage(set.postScenarioCommon, page.start, page.count, 0));
+                }
+
+                // Paired-only block (practice skips it).
+                foreach (var page in pairedPages)
+                {
+                    UpdateProgress(++pageNum, totalPages);
+                    yield return StartCoroutine(ShowQuestionPage(set.postScenarioPairedOnly, page.start, page.count,
+                                                                 set.postScenarioCommon.Length));
+                }
+            }
+            else
+            {
+                yield return StartCoroutine(ShowPaperQuestionnairePrompt());
+            }
+
+            if (!practiceMode)
+                _record.Save(outputFilename);
 
             yield return StartCoroutine(ShowTransitionAndSignal());
+        }
+
+        IEnumerator ShowPaperQuestionnairePrompt()
+        {
+            if (transitionPanel != null) transitionPanel.SetActive(true);
+            if (transitionText != null)
+                transitionText.text = "You will now fill in a questionnaire (on paper).\n" +
+                                      "When you are done and return here, please press the Continue button.";
+            if (startButton != null)
+            {
+                SetButtonLabel(startButton, "Continue");
+                startButton.gameObject.SetActive(true);
+                bool clicked = false;
+                startButton.onClick.RemoveAllListeners();
+                startButton.onClick.AddListener(() => clicked = true);
+                yield return new WaitUntil(() => clicked);
+                startButton.gameObject.SetActive(false);
+            }
+            // Leave transitionPanel active — ShowTransitionAndSignal will reuse it immediately.
+        }
+
+        void SetButtonLabel(Button btn, string label)
+        {
+            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null) tmp.text = label;
         }
 
         IEnumerator ShowReflection()
@@ -186,7 +258,7 @@ namespace VRT.Pilots.Trolley
                     if (!practiceMode)
                     {
                         FindFirstObjectByType<RecordUserVoice>()?.AddMarker($"reflection_done_{_completedScenario}");
-                        DataLogger.Instance?.LogReflection(_completedScenario, _lastDecision, "");
+                        _record.MarkReflectionEnded();
                     }
                     done = true;
                 });
@@ -229,54 +301,78 @@ namespace VRT.Pilots.Trolley
                 : $"You did not press the button, and the train continued toward the five workers.\n\n{prompt}";
         }
 
-        IEnumerator ShowQuestions(QuestionSet.Question[] questions, int indexOffset,
-                                  string scenarioOverride = null)
+        struct PageSpec { public int start; public int count; }
+
+        // Split `total` questions into pages by the configured sizes, clamped to the available UI rows and
+        // the actual question count — so an exact-sum list (3/3/5/3 = 14), a shorter set (the practice set),
+        // or a size that overflows the rows all paginate safely.
+        IEnumerable<PageSpec> Paginate(int total, int[] sizes)
         {
-            string scenario = scenarioOverride ?? _completedScenario;
-            for (int i = 0; i < questions.Length; i++)
+            int maxRows = questionRows != null ? questionRows.Length : 0;
+            if (maxRows <= 0) maxRows = total;          // no rows wired: fall back to one page
+            int start = 0, p = 0;
+            while (start < total)
             {
-                string answer = null;
-                yield return StartCoroutine(ShowSingleQuestion(questions[i], i + indexOffset, a => answer = a));
-                if (!practiceMode)
-                    DataLogger.Instance?.LogQuestionnaireAnswer(
-                        scenario, i + indexOffset, questions[i].text, answer);
+                int count = (sizes != null && p < sizes.Length) ? sizes[p] : (total - start);
+                count = Mathf.Min(count, total - start);
+                count = Mathf.Min(count, maxRows);      // never exceed the rows the panel actually has
+                if (count <= 0) break;
+                yield return new PageSpec { start = start, count = count };
+                start += count;
+                p++;
             }
         }
 
-        IEnumerator ShowSingleQuestion(QuestionSet.Question q, int index, System.Action<string> onAnswer)
+        // Show one page: questions[start .. start+count], each on its own row, all visible at once. Next
+        // enables only when every shown question is answered. Records each response at its global index
+        // (baseOffset + start + r) so the JSON numbering is unchanged from the one-per-screen version.
+        IEnumerator ShowQuestionPage(QuestionSet.Question[] questions, int start, int count, int baseOffset)
         {
             questionPanel.SetActive(true);
-            questionBodyText.text = $"Q{index + 1}. {q.text}";
-            int numPoints = q.type == QuestionSet.QuestionType.Likert7 ? 7 : 5;
-            SetupLikertButtons(numPoints, q.scaleMin, q.scaleMax);
+
+            // The 7 point words are a fixed column header (built by the setup script), so there's nothing
+            // per-page to set here — every question shares the same agree/disagree scale.
+            var answers = new string[count];
+            int rows = questionRows != null ? questionRows.Length : 0;
+
+            for (int r = 0; r < rows; r++)
+            {
+                var row = questionRows[r];
+                bool used = r < count;
+                if (row != null && row.root != null) row.root.SetActive(used);
+                if (!used || row == null) continue;
+
+                var q = questions[start + r];
+                int globalIndex = baseOffset + start + r;
+                if (row.text != null) row.text.text = $"Q{globalIndex + 1}. {q.text}";
+
+                int numPoints = q.type == QuestionSet.QuestionType.Likert7 ? 7 : 5;
+                SetupRowButtons(row, numPoints);
+
+                int rr = r;
+                int np = numPoints;
+                for (int b = 0; b < row.buttons.Length; b++)
+                {
+                    if (b >= np || row.buttons[b] == null) continue;
+                    int captured = b;
+                    row.buttons[b].onClick.RemoveAllListeners();
+                    row.buttons[b].onClick.AddListener(() =>
+                    {
+                        answers[rr] = (captured + 1).ToString();
+                        for (int j = 0; j < np; j++)
+                        {
+                            var img = row.buttons[j] != null ? row.buttons[j].GetComponent<Image>() : null;
+                            if (img != null) img.color = j == captured ? SelectedBtnColor : DefaultBtnColor;
+                        }
+                        if (nextButton != null) nextButton.interactable = AllAnswered(answers);
+                    });
+                }
+            }
 
             if (nextButton != null)
             {
                 nextButton.interactable = false;
                 nextButton.gameObject.SetActive(true);
-            }
-
-            string answer = null;
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                int captured = i;
-                likertButtons[i].onClick.RemoveAllListeners();
-                likertButtons[i].onClick.AddListener(() =>
-                {
-                    answer = (captured + 1).ToString();
-                    for (int j = 0; j < numPoints; j++)
-                    {
-                        var img = likertButtons[j].GetComponent<Image>();
-                        if (img != null)
-                            img.color = j == captured ? SelectedBtnColor : DefaultBtnColor;
-                    }
-                    if (nextButton != null) nextButton.interactable = true;
-                });
-            }
-
-            if (nextButton != null)
-            {
                 bool nextClicked = false;
                 nextButton.onClick.RemoveAllListeners();
                 nextButton.onClick.AddListener(() => nextClicked = true);
@@ -285,32 +381,43 @@ namespace VRT.Pilots.Trolley
             }
             else
             {
-                yield return new WaitUntil(() => answer != null);
-            }
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                var img = likertButtons[i].GetComponent<Image>();
-                if (img != null) img.color = DefaultBtnColor;
+                yield return new WaitUntil(() => AllAnswered(answers));
             }
 
             questionPanel.SetActive(false);
-            onAnswer(answer);
+
+            if (!practiceMode)
+                for (int r = 0; r < count; r++)
+                    _record.AddResponse(baseOffset + start + r, questions[start + r].text, answers[r]);
         }
 
-        void SetupLikertButtons(int numPoints, string scaleMin, string scaleMax)
+        static bool AllAnswered(string[] answers)
         {
-            for (int i = 0; i < likertButtons.Length; i++)
+            foreach (var a in answers) if (string.IsNullOrEmpty(a)) return false;
+            return true;
+        }
+
+        // Fill the bottom progress bar to pageNum / totalPages (page 1 of 4 → 1/4 filled).
+        void UpdateProgress(int pageNum, int totalPages)
+        {
+            if (progressFill == null || totalPages <= 0) return;
+            float frac = Mathf.Clamp01((float)pageNum / totalPages);
+            progressFill.anchorMin = new Vector2(0f, 0f);
+            progressFill.anchorMax = new Vector2(frac, 1f);
+            progressFill.offsetMin = progressFill.offsetMax = Vector2.zero;
+        }
+
+        // Show `numPoints` circles on a row (reset to the empty colour) and hide the rest. The point words
+        // live in the shared column header, so the circles themselves carry no labels.
+        void SetupRowButtons(QuestionRow row, int numPoints)
+        {
+            for (int i = 0; i < row.buttons.Length; i++)
             {
-                bool show = i < numPoints;
-                likertButtons[i].gameObject.SetActive(show);
-                if (show && i < likertLabels.Length)
-                    likertLabels[i].text = (i + 1).ToString();
-                var img = likertButtons[i].GetComponent<Image>();
+                if (row.buttons[i] == null) continue;
+                row.buttons[i].gameObject.SetActive(i < numPoints);
+                var img = row.buttons[i].GetComponent<Image>();
                 if (img != null) img.color = DefaultBtnColor;
             }
-            if (scaleMinLabel != null) scaleMinLabel.text = scaleMin;
-            if (scaleMaxLabel != null) scaleMaxLabel.text = scaleMax;
         }
 
         IEnumerator ShowTransitionAndSignal()
@@ -341,6 +448,7 @@ namespace VRT.Pilots.Trolley
                             : "You have completed all scenarios.\nThank you for your participation.";
                 if (startButton != null)
                 {
+                    SetButtonLabel(startButton, "Continue");
                     startButton.gameObject.SetActive(true);
                     bool clicked = false;
                     startButton.onClick.RemoveAllListeners();
@@ -360,11 +468,7 @@ namespace VRT.Pilots.Trolley
             string next;
             if (practiceMode)
             {
-                // After the rehearsal, go to the first real scenario (NextScenarioScene does not
-                // advance the index, so the first scenario is not consumed).
-                next = !string.IsNullOrEmpty(practiceNextScene)
-                    ? practiceNextScene
-                    : TrolleyGameState.Instance?.NextScenarioScene() ?? "VRTLoginManager";
+                next = TrolleyGameState.Instance?.NextScene() ?? "VRTLoginManager";
             }
             else
             {

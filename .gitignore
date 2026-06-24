@@ -83,3 +83,6 @@ settings.local.json
 
 # Voice-recording test artifacts (RecordUserVoice output in project root)
 voicerecording-*.wav
+
+# Questionnaire JSON output in project root (dev-time test runs)
+questionnaire_*.json

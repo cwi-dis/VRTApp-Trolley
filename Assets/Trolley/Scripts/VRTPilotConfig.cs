@@ -16,6 +16,9 @@ public class TrolleyResearcherConfig
     public string[] scenarioOrder = null;
     [Tooltip("Label for logging, e.g. 'B→D→S'")]
     public string scenarioOrderLabel = "";
+    [Tooltip("When true (default), the questionnaire is presented in VR. " +
+             "When false, participants remove the HMD and fill in a paper form.")]
+    public bool questionnaireInVR = true;
 
     public bool HasConfig =>
         (condition == "Solo" || condition == "Paired") &&

@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.Splines;
 using TMPro;
 using VRT.Pilots.Common;
@@ -21,12 +20,13 @@ namespace VRT.Pilots.Trolley
     ///     to send it back" → wait for the A press. Buttons are NOT blinked — they behave like the real
     ///     scene (colour changes on click, the matching monitor rim glows green).
     ///
-    /// ROUND 2 — sorting drill:
-    ///   • A short sequence of trains approaches one at a time, each coloured RED or BLUE:
-    ///       RED  → do nothing (runs straight)   ·   BLUE → press the button (diverts right).
-    ///   • No timer: the decision commits when the train passes the switch (divertThreshold).
+    /// ROUND 2 — sorting drill (3 rounds, like the driver tutorial):
+    ///   • Before each round a fresh train resets to the approach point and an "approaching" line plays;
+    ///     each train is coloured RED or BLUE — RED → do nothing (runs straight) · BLUE → press (diverts).
+    ///   • No timer: the decision commits when the train passes the switch (divertThreshold). The train
+    ///     moves at a constant WORLD speed so the divert reads as a clean turn (not a slow sideways crawl).
     ///   • Top-right counter tracks correct decisions; a ding/buzz plays each round.
-    ///   • After the drill, the practice questionnaire scene loads.
+    ///   • After the drill, the next scene in the session flow loads.
     ///
     /// Reuses the Bystander rail spline (0 = straight, 1 = branch), train mesh, the A/B button +
     /// monitor rims (via TrolleyToggleDecision), all wired by TrolleyTutorialSetup. This script
@@ -43,6 +43,11 @@ namespace VRT.Pilots.Trolley
         [Header("Input")]
         [Tooltip("Reused A/B toggle. The drill reads IsAction (pressed = divert right) and resets it each round.")]
         [SerializeField] TrolleyToggleDecision toggle;
+
+        [Header("Pacing")]
+        [Tooltip("Optional Start button. If set, the A/B buttons go live for a free warm-up and the tutorial " +
+                 "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
+        [SerializeField] TutorialGate gate;
 
         [Header("Round 1 — monitor rims (blink in turn during the intro)")]
         [Tooltip("Order matches the narration: approaching view, switch point, current/main track, diverting track.")]
@@ -76,6 +81,10 @@ namespace VRT.Pilots.Trolley
 
         [Header("Narration — Round 1 intro (one clip per step; rim sync is automatic)")]
         [SerializeField] AudioSource narrationSource;
+        [Tooltip("Tutorial narration plays at this fraction of the source volume (0.7 = 70%). Applied in Start; " +
+                 "leaves the SFX source untouched.")]
+        [Range(0f, 1f)]
+        [SerializeField] float narrationVolume = 0.5f;
         [Tooltip("Preamble 1 — 'control room … two buttons'. No rim blinks.")]
         [SerializeField] AudioClip introClip;         // narration_tutorial_bystander_intro
         [Tooltip("Preamble 2 — 'four CCTV monitors …'. No rim blinks.")]
@@ -93,6 +102,9 @@ namespace VRT.Pilots.Trolley
 
         [Header("Narration — Round 2")]
         [SerializeField] AudioClip sortClip;          // ..._sortingtrain: 'now let's sort the trains…'
+        [Tooltip("Played before EACH sorting round — 'the next train is approaching' — as a fresh train " +
+                 "appears at the start point (mirrors the driver tutorial's per-round cue). Null-safe.")]
+        [SerializeField] AudioClip approachingClip;   // ..._approaching
 
         [Header("Round 2 — sorting drill")]
         [Tooltip("Where on the straight spline each train starts. Together with End this sets how long the " +
@@ -125,18 +137,15 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Closing line after all 5 rounds, before the next scene loads. " +
                  "e.g. 'That's the first tutorial — now let's practise the second.'")]
         [SerializeField] AudioClip closingClip;
-        [Tooltip("Scene to load when the drill ends. Bystander tutorial → the driver tutorial; the driver " +
-                 "tutorial → the practice questionnaire. Empty = skip straight to the first real scenario.")]
-        [FormerlySerializedAs("practiceQuestionnaireScene")]
-        [SerializeField] string nextSceneAfterDrill = "TrolleyPracticeQuestionnaire";
 
         // Fixed, predetermined order — identical for every participant (this is practice, not data).
         // true = BLUE (press, divert right) · false = RED (do nothing, runs straight).
-        // RED, BLUE, BLUE, RED, BLUE.
-        static readonly bool[] Sequence = { false, true, true, false, true };
+        // Three rounds, mirroring the driver tutorial's divert/stay/divert: BLUE, RED, BLUE.
+        static readonly bool[] Sequence = { true, false, true };
 
         Spline _current;
         float _t;
+        float _worldSpeed;   // units/sec — held constant across straight + branch so the divert doesn't crawl
         int _correct;
         int _total;
 
@@ -151,6 +160,7 @@ namespace VRT.Pilots.Trolley
                 Debug.LogError("[TutorialTrainDrill] rail / train / toggle not wired — tutorial cannot run.");
                 return;
             }
+            if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             SetActiveSafe(rimApproach, false);
             SetActiveSafe(rimSwitch, false);
@@ -164,7 +174,17 @@ namespace VRT.Pilots.Trolley
             // so participants can settle into the headset.
             yield return null;
             SetButtonsNeutral();
-            yield return new WaitForSeconds(startDelay);
+            // Warm-up + self-paced start: the real A/B buttons go live so the participant can freely try
+            // them (no consequence), and a Start button appears; pressing Start ends the warm-up and begins
+            // the tutorial. Falls back to a fixed settle delay if no Start button is wired.
+            if (gate != null)
+            {
+                toggle.SetInteractionEnabled(true);   // free practice on the A/B buttons
+                yield return StartCoroutine(gate.WaitForPress());
+                toggle.SetInteractionEnabled(false);
+                SetButtonsNeutral();
+            }
+            else yield return new WaitForSeconds(startDelay);
 
             // ── Round 1 — button familiarisation ──────────────────────────────
             yield return StartCoroutine(RunIntro());
@@ -174,8 +194,14 @@ namespace VRT.Pilots.Trolley
             yield return StartCoroutine(PlayAndWait(sortClip));
             if (scoreText != null) scoreText.gameObject.SetActive(true);
 
+            // Three rounds, like the driver tutorial. Before each, a fresh train resets to the approach
+            // point and a short "the next train is approaching" line plays as it appears — then it rolls.
             foreach (bool isBlue in Sequence)
+            {
+                ResetTrainToStart(isBlue);
+                yield return StartCoroutine(PlayAndWait(approachingClip));
                 yield return StartCoroutine(RunRound(isBlue));
+            }
 
             if (scoreText != null)
                 scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
@@ -296,15 +322,9 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator RunRound(bool isBlue)
         {
-            ColorTrain(isBlue ? blueColor : redColor);
-
-            // Reset to the configured start point on the straight spline (a visible approach point).
-            _current = rail.Splines[0];
-            _t = roundStartT;
-            train.position = EvaluateWorld(_current, _t);
-            OrientToTrack();
-
-            toggle.ApplyRemoteState(false);     // back to "not diverted"
+            // The caller already placed/coloured the train at the approach point (so it "appeared" during
+            // the approaching narration); re-affirm here so RunRound is also safe to enter directly.
+            ResetTrainToStart(isBlue);
             toggle.SetInteractionEnabled(true);
 
             // The participant may press any time to ARM a divert, but the train only actually switches
@@ -340,16 +360,39 @@ namespace VRT.Pilots.Trolley
             yield return new WaitForSeconds(interRoundDelay);
         }
 
+        // Colour the train for this round and place it at the approach point on the straight spline, ready
+        // to roll, with the toggle back on the main track. Also calibrates the constant world speed used by
+        // MoveStep. Leaves interaction disabled (RunRound enables it once the round actually starts).
+        void ResetTrainToStart(bool isBlue)
+        {
+            ColorTrain(isBlue ? blueColor : redColor);
+
+            _current = rail.Splines[0];
+            _t = roundStartT;
+            train.position = EvaluateWorld(_current, _t);
+            OrientToTrack();
+
+            // Constant WORLD speed from the visible straight run, applied on whichever spline the train is
+            // on. The branch's post-fork segments are short in world space but span the same t as the long
+            // pre-fork segment, so a fixed t-rate made the train crawl through the divergence.
+            float straightLen = Mathf.Max(0.01f, _current.GetLength());
+            _worldSpeed = (Mathf.Abs(roundEndT - roundStartT) * straightLen) / Mathf.Max(0.1f, roundDuration);
+
+            toggle.ApplyRemoteState(false);     // back to "not diverted"
+        }
+
         // ── Train movement (self-contained spline follow) ──────────────────────
 
         void MoveStep()
         {
             if (_current == null) return;
 
-            // Advance from roundStartT to roundEndT over roundDuration seconds. Halving the Start→End span
-            // (a shorter visible run) at the same duration makes the train move at a slower world speed.
-            float rate = Mathf.Abs(roundEndT - roundStartT) / Mathf.Max(0.1f, roundDuration);
-            _t += rate * Time.deltaTime;
+            // Advance at a constant WORLD speed (units/sec), normalising by the current spline's length —
+            // exactly like the real TrainController. A fixed t-rate made the train almost stop at the fork
+            // and slide sideways onto the branch over several seconds; this keeps the speed steady through
+            // the divert so it reads as a clean turn at the switch.
+            float len = Mathf.Max(0.01f, _current.GetLength());
+            _t += (_worldSpeed / len) * Time.deltaTime;
             if (_t > 1f) _t = 1f;
 
             train.position = EvaluateWorld(_current, _t);
@@ -422,13 +465,10 @@ namespace VRT.Pilots.Trolley
 
         void LoadAfterDrill()
         {
-            // Bystander tutorial → driver tutorial → practice questionnaire → first real scenario.
-            string next = !string.IsNullOrEmpty(nextSceneAfterDrill)
-                ? nextSceneAfterDrill
-                : TrolleyGameState.Instance?.NextScenarioScene();
+            string next = TrolleyGameState.Instance?.NextScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogWarning("[TutorialTrainDrill] Tutorial finished but no next scene set (standalone test?).");
+                Debug.LogWarning("[TutorialTrainDrill] Tutorial finished but TrolleyGameState has no next scene.");
                 return;
             }
             PilotController.Instance.LoadNewScene(next);

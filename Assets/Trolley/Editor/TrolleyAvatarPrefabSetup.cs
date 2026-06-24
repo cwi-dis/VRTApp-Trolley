@@ -468,12 +468,14 @@ namespace VRT.Pilots.Trolley.Editor
                 return;
             }
 
-            // Find existing AdjustHeight entry (idempotent on re-run) or append a new one
+            // Find existing entry for this specific SizeAdjust (idempotent on re-run for the
+            // same avatar). Match on both target AND method so each avatar gets its own slot.
             int idx = -1;
             for (int i = 0; i < calls.arraySize; i++)
             {
-                if (calls.GetArrayElementAtIndex(i)
-                         .FindPropertyRelative("m_MethodName").stringValue == "AdjustHeight")
+                var el = calls.GetArrayElementAtIndex(i);
+                if (el.FindPropertyRelative("m_MethodName").stringValue == "AdjustHeight" &&
+                    el.FindPropertyRelative("m_Target").objectReferenceValue == (Object)sizeAdjust)
                 {
                     idx = i;
                     break;

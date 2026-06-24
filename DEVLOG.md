@@ -8,6 +8,45 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 15 (2026-06-23) — Pilot fixes: tutorial flow, questionnaire matrix, narration levels
+
+**Context:** First working session after the Jun 22 pilot with Jack. Worked through issues #59 (tutorial
+issues) and #61 (driver scene design), then reworked the post-scenario questionnaire. Six commits, all
+pushed to `origin/master`.
+
+**Tutorial fixes (#59) — `2de3748`, `1af19ed`, `f149489`:**
+- **Divert bug** — in the bystander tutorial the blue train went straight, then "appeared" on the side
+  track a few seconds later. Cause: the drill advanced the train at a fixed spline-*t* rate, not constant
+  world speed; after the fork the branch's short segments crawl at that t-rate. Fixed `TutorialTrainDrill`
+  to move at constant world speed, like the real `TrainController`.
+- **Bystander drill** cut 5 → 3 rounds (BLUE/RED/BLUE), slower + shorter run, shorter gap, with a "next
+  train approaching" narration before each round (new clip).
+- **Order reversed to driver-first** (Jack's call — simpler concept first), via `TrolleyGameState.preSequence`.
+  Narration still says "first/second tutorial" + buttons only taught in bystander → flagged for a re-record.
+- **Researcher skip button** — grey `Button_Skip` prefab + `TutorialSkipButton`; editor menu
+  instantiates/adopts it and repoints the networked button's `OnTrigger → Skip()`.
+- **Start button + A/B warm-up** — green Start button (`TutorialGate` + `TrolleyTutorialStartSetup`): the
+  tutorial opens with the A/B buttons live for free practice, then waits for Start (fixes "too fast"; also
+  gives button exposure before the now-first driver drill). Null-safe fallback to `startDelay`.
+- **Ghost disabled** (Banana Man inactive), control-room ceiling enabled, monitors + workers repositioned
+  (Suzy, in-editor).
+
+**Questionnaire rework — `e784a40`:**
+- All 19 post-scenario items → **7-point** Likert.
+- **Grouped pages** by construct (3/3/5/3 common + 5 paired) instead of one question per screen.
+- Rebuilt the panel as a **Likert matrix**: a shared word-anchor column header (Strongly disagree … Strongly
+  agree) + a row of circles (built-in Knob sprite) per question, neutral colours (no red/green gradient — by
+  request), no construct titles (avoids biasing answers). Response indices unchanged. Thin **bottom progress
+  bar** fills page/total (solo 4, paired 5). `QuestionnaireController` + `TrolleyQuestionnaireSetup` +
+  `QuestionSet`; practice scene rebuilt to match.
+
+**Narration volume — `2f3a5c4`, `9d2ccde`:** all narration to **50%** — `narrationVolume` field on both
+tutorial drills and on `NarrationPlayer` (covers Bystander/Driver/Self-harm). SFX untouched.
+
+**Open for next session:** questionnaire in-headset layout check (tune `colsLeft`/`rowGap`/circle size);
+confirm the Start button is in the driver tutorial scene; #61 geometry (window, board height, train floor);
+verify #59 failure feedback + the full driver-first flow.
+
 ### Day 14 (2026-06-19) — Arrow button graphics; driver tutorial reworked to a rock-blocker drill
 
 **Context:** Picked up Day 13's two open threads — the placeholder A/B button labels and the unfinished
