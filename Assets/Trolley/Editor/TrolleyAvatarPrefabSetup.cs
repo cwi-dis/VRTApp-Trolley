@@ -518,5 +518,76 @@ namespace VRT.Pilots.Trolley.Editor
         {
             return Selection.activeGameObject != null;
         }
+
+        // ─── Wire appearance colors (Trolley-specific: Remy + Megan) ──────────────
+        //
+        // Colors must match TrolleyAvatarSetupSceneSetup.SkinTones / HairColors,
+        // which are what AvatarSelector.skinToneColors / hairColors get wired to.
+        // Swatch button colors (SkinToneSwatches / HairColorSwatches) are different
+        // and NOT used here — those are UI-only.
+
+        static readonly string[] TrolleyAvatarPrefabPaths =
+        {
+            "Assets/Trolley/Prefabs/P_Avatar_Trolley_Male.prefab",
+            "Assets/Trolley/Prefabs/P_Avatar_Trolley_Female.prefab",
+        };
+
+        static readonly Color[] TrolleySkinTones =
+        {
+            new Color(1.00f, 1.00f, 1.00f),
+            new Color(1.00f, 0.93f, 0.85f),
+            new Color(1.00f, 0.84f, 0.68f),
+            new Color(0.95f, 0.72f, 0.50f),
+            new Color(0.78f, 0.52f, 0.32f),
+            new Color(0.52f, 0.30f, 0.18f),
+        };
+
+        static readonly Color[] TrolleyHairColors =
+        {
+            new Color(0.20f, 0.20f, 0.20f),
+            new Color(0.42f, 0.30f, 0.18f),
+            new Color(0.65f, 0.48f, 0.28f),
+            new Color(0.92f, 0.78f, 0.48f),
+            new Color(0.75f, 0.35f, 0.25f),
+            new Color(0.75f, 0.75f, 0.75f),
+        };
+
+        [MenuItem("Trolley/Wire Trolley Avatar Appearance Colors")]
+        static void WireTrolleyAvatarAppearanceColors()
+        {
+            foreach (var path in TrolleyAvatarPrefabPaths)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null)
+                {
+                    Debug.LogError($"[TrolleyAvatarPrefabSetup] Prefab not found: {path}");
+                    continue;
+                }
+
+                var appearance = prefab.GetComponent<TrolleyAvatarAppearance>();
+                if (appearance == null)
+                {
+                    Debug.LogError($"[TrolleyAvatarPrefabSetup] No TrolleyAvatarAppearance on {prefab.name} — add the component first.");
+                    continue;
+                }
+
+                var so = new SerializedObject(appearance);
+
+                var skinProp = so.FindProperty("skinToneColors");
+                skinProp.arraySize = TrolleySkinTones.Length;
+                for (int i = 0; i < TrolleySkinTones.Length; i++)
+                    skinProp.GetArrayElementAtIndex(i).colorValue = TrolleySkinTones[i];
+
+                var hairProp = so.FindProperty("hairColors");
+                hairProp.arraySize = TrolleyHairColors.Length;
+                for (int i = 0; i < TrolleyHairColors.Length; i++)
+                    hairProp.GetArrayElementAtIndex(i).colorValue = TrolleyHairColors[i];
+
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(prefab);
+                PrefabUtility.SavePrefabAsset(prefab);
+                Debug.Log($"[TrolleyAvatarPrefabSetup] Wired appearance colors on {prefab.name}.");
+            }
+        }
     }
 }

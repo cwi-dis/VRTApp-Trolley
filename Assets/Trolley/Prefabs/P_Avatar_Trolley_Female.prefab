@@ -938,8 +938,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12ce4a87d17841ffb98272f97c2ba005, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.TrolleyAvatarAppearance
-  skinToneColors: []
-  hairColors: []
+  skinToneColors:
+  - {r: 1, g: 1, b: 1, a: 1}
+  - {r: 1, g: 0.93, b: 0.85, a: 1}
+  - {r: 1, g: 0.84, b: 0.68, a: 1}
+  - {r: 0.95, g: 0.72, b: 0.5, a: 1}
+  - {r: 0.78, g: 0.52, b: 0.32, a: 1}
+  - {r: 0.52, g: 0.3, b: 0.18, a: 1}
+  hairColors:
+  - {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  - {r: 0.42, g: 0.3, b: 0.18, a: 1}
+  - {r: 0.65, g: 0.48, b: 0.28, a: 1}
+  - {r: 0.92, g: 0.78, b: 0.48, a: 1}
+  - {r: 0.75, g: 0.35, b: 0.25, a: 1}
+  - {r: 0.75, g: 0.75, b: 0.75, a: 1}
 --- !u!1001 &355254222338722081
 PrefabInstance:
   m_ObjectHideFlags: 0
