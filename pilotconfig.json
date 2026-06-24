@@ -12,7 +12,7 @@
         "scenarioOrderLabel": "B→D→S"
     },
     "avatarConfigs": [
-        { "bodyType": "Feminine", "skinToneIndex": 0, "hairColorIndex": 0 },
-        { "bodyType": "Masculine", "skinToneIndex": 0, "hairColorIndex": 0 }
+        { "bodyType": "Masculine", "skinToneIndex": 3, "hairColorIndex": 4 },
+        { "bodyType": "Feminine", "skinToneIndex": 3, "hairColorIndex": 4 }
     ]
 }
