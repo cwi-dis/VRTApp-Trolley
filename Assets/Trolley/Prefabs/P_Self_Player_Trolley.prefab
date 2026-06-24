@@ -598,6 +598,9 @@ PrefabInstance:
       insertIndex: 4
       addedObject: {fileID: 6980812751138950841}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1935332283100515003, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1166544805283373132}
     - targetCorrespondingSourceObject: {fileID: 1513767612925908036, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 947606270839286345}
@@ -644,6 +647,18 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1935332283100515003, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
   m_PrefabInstance: {fileID: 9104418074712961776}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1166544805283373132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7242573755789359179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65421986ca8c43f1856661acd8c0eab7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.TrolleyAvatarLoader
 --- !u!1 &7735107868564252340 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1513767612925908036, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
