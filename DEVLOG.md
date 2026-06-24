@@ -47,6 +47,47 @@ tutorial drills and on `NarrationPlayer` (covers Bystander/Driver/Self-harm). SF
 confirm the Start button is in the driver tutorial scene; #61 geometry (window, board height, train floor);
 verify #59 failure feedback + the full driver-first flow.
 
+### Day 16 (2026-06-25) — #53 avatars: merge master, loader/appearance scripts, foot colliders off
+
+**Context:** Resumed work on branch `53-avatars`. Merged `master` (two commits ahead on
+`P_Self_Player_Trolley`), then implemented the runtime avatar selection and appearance system.
+Six commits on `53-avatars`.
+
+**Merge resolution — `67961ce`:**
+- `CLAUDE.md`: kept both sides — avatar setup rows (53-avatars) + `Wire GazeTargets` row (master).
+- `P_Self_Player_Trolley.prefab`: took `--theirs` (master) to preserve GazeTarget/movement fixes
+  from `905aa59` and `cf9pb35`, then re-ran `Wire as AltRepOne` (Male) + `Wire as AltRepTwo` (Female)
+  to restore avatar wiring.
+- **Bug fixed in `WireViewAdjusted`:** idempotency check was matching on `m_MethodName` alone, so
+  wiring a second avatar overwrote the first's `viewAdjusted` slot. Now matches on both `m_Target`
+  and `m_MethodName` — each avatar gets its own persistent call entry.
+
+**Foot colliders disabled — `3348949`:**
+- `BoxCollider` + `KeepFeetAboveGround` disabled on all four leg IK Target GOs in both avatar prefabs.
+- Feet now clip through the floor on deep crouch rather than colliding — acceptable for this
+  experience (people won't bend much; seated users will have lower body hidden behind virtual chairs).
+- Setup script default (colliders on) preserved for other use cases.
+
+**Runtime avatar loader — `494c312`:**
+- `TrolleyAvatarConfig` extracted from `VRTPilotConfig.cs` into its own file.
+- `TrolleyAvatarLoader` (new MonoBehaviour on both player prefabs): at `Start()`, determines config
+  index via `TrolleyGameState.LocalAvatarConfigIndex` / `OtherAvatarConfigIndex` (master=0,
+  non-master=1), maps `bodyType` ("Masculine"/"Feminine") to `AppDefinedRepresentationOne/Two`,
+  calls `SetRepresentation()`, then calls `TrolleyAvatarAppearance.ApplyConfig()` on the newly
+  active altRep.
+- `TrolleyAvatarAppearance` (new MonoBehaviour, attach to avatar prefabs): `MaterialPropertyBlock`
+  tinting of `Body` and `Hair` `SkinnedMeshRenderer` children. Color arrays populated in Inspector
+  to match `AvatarSelector` swatches — **pending Sueyoon**, who owns the color values.
+- `TrolleyGameState` + `VRTPilotConfig` GO added to `TrolleyAvatarSetup` scene so they persist via
+  `DontDestroyOnLoad` into all subsequent scenes (previously relied on the now-removed researcher
+  setup scene).
+- Tested in solo mode with `pilotconfig.json` — avatar selection works. Tinting no-ops until
+  color arrays are populated.
+
+**Open for next session:** populate `TrolleyAvatarAppearance` color arrays (Sueyoon); remaining
+#53 items; `xxxclaude` comment in `TrolleyGameState.LocalAvatarConfigIndex` to clean up.
+Issue #65 opened for dead researcher-setup scene/scripts (assign to Sueyoon).
+
 ### Day 14 (2026-06-19) — Arrow button graphics; driver tutorial reworked to a rock-blocker drill
 
 **Context:** Picked up Day 13's two open threads — the placeholder A/B button labels and the unfinished
