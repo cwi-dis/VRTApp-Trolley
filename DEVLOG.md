@@ -88,6 +88,20 @@ Six commits on `53-avatars`.
 #53 items; `xxxclaude` comment in `TrolleyGameState.LocalAvatarConfigIndex` to clean up.
 Issue #65 opened for dead researcher-setup scene/scripts (assign to Sueyoon).
 
+**Day 16 continued — #54 start: appearance colors, mirror layout — `2cc7b07`, `dece250`:**
+- Read `TrolleyAvatarSetupSceneSetup.cs` and extracted the two color tables (`SkinTones`,
+  `HairColors`) that `AvatarSelector` uses. Added `Trolley > Wire Trolley Avatar Appearance Colors`
+  menu item to `TrolleyAvatarPrefabSetup.cs` — loads both avatar prefabs directly via
+  `AssetDatabase.LoadAssetAtPath`, populates `TrolleyAvatarAppearance.skinToneColors` /
+  `hairColors`, saves. Kept in a clearly labelled section noting it is Trolley-specific (Remy +
+  Megan). Run and verified.
+- `TrolleyAvatarSetup` scene: added `OBJ_Mirror`, repositioned and rotated UI panels for the
+  side-by-side facing-mirror layout. Tested solo — can see own avatar in mirror.
+
+**Open for next session:** `AvatarSelector` live reload (`TrolleyAvatarLoader.Reload()`), broadcast
+on every parameter change (not just confirm), `OnAvatarReady` reload on other player. Static preview
+models to remove or hide. Full paired test.
+
 ### Day 14 (2026-06-19) — Arrow button graphics; driver tutorial reworked to a rock-blocker drill
 
 **Context:** Picked up Day 13's two open threads — the placeholder A/B button labels and the unfinished
