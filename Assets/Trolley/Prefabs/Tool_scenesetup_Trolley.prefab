@@ -76,7 +76,8 @@ PrefabInstance:
       propertyPath: NetworkId
       value: 
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2108755284289232089, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
     m_RemovedGameObjects:
     - {fileID: 8838457068629324395, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
     - {fileID: 6212221438801322493, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
@@ -87,8 +88,36 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3369804644569452180, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
       insertIndex: -1
       addedObject: {fileID: 97884611535909518}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2108755284289232093, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2364617990031054418}
   m_SourcePrefab: {fileID: 100100000, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
+--- !u!1 &5209981461798567080 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2108755284289232093, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
+  m_PrefabInstance: {fileID: 6128940918802620533}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2364617990031054418
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5209981461798567080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17eb3d14a31e4455d9af73b002af83dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.PilotTrolleyController
+  startFadedOut: 1
+  fadeOutText: 
+  allowDirectInteractionInScene: 0
+  NextSceneOnSessionEnd: VRTLoginManager
+  playableInEditor: 1
+  configurationPrefab: {fileID: 8194004708595785846, guid: e71ab000118fc4644924cc8a8d34888b, type: 3}
+  orchestratorPrefab: {fileID: 3991120480309365947, guid: 59713b3d4e69349238a95c35e9f8994b, type: 3}
+  m_directInteractionDisabled: 0
 --- !u!4 &8920975773688409825 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3369804644569452180, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
