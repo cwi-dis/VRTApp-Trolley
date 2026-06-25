@@ -170,9 +170,11 @@ namespace VRT.Pilots.Trolley.Editor
 
             // 3. Two Bone IK for each arm and leg (children of VR Constraints)
             var leftArmTarget  = CreateTwoBoneIK(vrConstraintsGO.transform, "Left Arm IK",
-                                     leftUpperArm, leftLowerArm, leftHandBone);
+                                     leftUpperArm, leftLowerArm, leftHandBone,
+                                     addRotationOffsetGO: true);
             var rightArmTarget = CreateTwoBoneIK(vrConstraintsGO.transform, "Right Arm IK",
-                                     rightUpperArm, rightLowerArm, rightHandBone);
+                                     rightUpperArm, rightLowerArm, rightHandBone,
+                                     addRotationOffsetGO: true);
 
             // Leg IK targets are physics-driven (gravity + collider) so feet rest on the floor.
             // Hint offset is forward (+Z) so knees bend naturally in front of the body.
@@ -284,20 +286,49 @@ namespace VRT.Pilots.Trolley.Editor
         /// pole-vector hint; defaults to Vector3.back * 0.2f (elbows-back for arms).
         /// For legs, pass Vector3.forward * 0.3f (knees-forward).
         /// </summary>
+        /// <param name="addRotationOffsetGO">
+        /// When true (arms), inserts a "Offset" GO between the IK container and the IK Target.
+        /// SyncSkeletonToVRRig drives the Offset GO (world rotation = controller rotation).
+        /// The IK Target is a child of Offset; its localRotation is the hand-angle correction
+        /// and can be dialled in manually in the prefab Inspector during Play Mode.
+        /// </param>
         static Transform CreateTwoBoneIK(Transform parent, string label,
             Transform root, Transform mid, Transform tip,
-            Vector3? hintOffset = null)
+            Vector3? hintOffset = null, bool addRotationOffsetGO = false)
         {
             var ikGO = new GameObject(label);
             Undo.RegisterCreatedObjectUndo(ikGO, $"Create {label}");
             ikGO.transform.SetParent(parent, false);
             var ik = ikGO.AddComponent<TwoBoneIKConstraint>();
 
-            // Target: starts at the tip (wrist/foot) world position/rotation
+            // For arms: add an Offset GO driven by SyncSkeletonToVRRig (controller rotation).
+            // The IK Target is a child; its localRotation bakes the hand-angle correction.
+            // For legs: Target sits directly under the IK GO (rotation weight = 0, so no offset needed).
+            Transform targetParent;
+            Transform rigTarget; // what SyncSkeletonToVRRig.rigTarget will point to
+            if (addRotationOffsetGO)
+            {
+                var offsetGO = new GameObject($"{label} Offset");
+                Undo.RegisterCreatedObjectUndo(offsetGO, $"Create {label} Offset");
+                offsetGO.transform.SetParent(ikGO.transform, false);
+                offsetGO.transform.SetPositionAndRotation(tip.position, tip.rotation);
+                targetParent = offsetGO.transform;
+                rigTarget    = offsetGO.transform;
+            }
+            else
+            {
+                targetParent = ikGO.transform;
+                rigTarget    = null; // filled below after targetGO is created
+            }
+
             var targetGO = new GameObject($"{label} Target");
             Undo.RegisterCreatedObjectUndo(targetGO, $"Create {label} Target");
-            targetGO.transform.SetParent(ikGO.transform, false);
-            targetGO.transform.SetPositionAndRotation(tip.position, tip.rotation);
+            targetGO.transform.SetParent(targetParent, false);
+            if (!addRotationOffsetGO)
+                targetGO.transform.SetPositionAndRotation(tip.position, tip.rotation);
+            // addRotationOffsetGO case: targetGO inherits world pose from Offset (localPos=0, localRot=identity)
+
+            if (rigTarget == null) rigTarget = targetGO.transform;
 
             var hintGO = new GameObject($"{label} Hint");
             Undo.RegisterCreatedObjectUndo(hintGO, $"Create {label} Hint");
@@ -319,7 +350,7 @@ namespace VRT.Pilots.Trolley.Editor
             ik.data = data;
             EditorUtility.SetDirty(ik);
 
-            return targetGO.transform;
+            return rigTarget;
         }
 
         /// <summary>
