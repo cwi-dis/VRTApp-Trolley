@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using VRT.Orchestrator;
+using VRT.OrchestratorComm;
 using VRT.Pilots.Common;
 
 namespace VRT.Pilots.Trolley
@@ -31,6 +33,7 @@ namespace VRT.Pilots.Trolley
 
         Color[] _skinToneBaseColors;
         Color[] _hairColorBaseColors;
+        bool _initialized;
 
         TrolleyAvatarLoader _localLoader;
 
@@ -73,6 +76,7 @@ namespace VRT.Pilots.Trolley
                 }
 
             InitializeFromConfig();
+            _initialized = true;
         }
 
         void InitializeFromConfig()
@@ -103,6 +107,7 @@ namespace VRT.Pilots.Trolley
             SetHighlight(masculineButton, isMasc);
             SetHighlight(feminineButton,  !isMasc);
             LocalLoader?.Reload();
+            SendUpdate();
         }
 
         public void SelectSkinTone(int index)
@@ -111,6 +116,7 @@ namespace VRT.Pilots.Trolley
             if (cfg != null) cfg.skinToneIndex = index;
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
             LocalLoader?.Reload();
+            SendUpdate();
         }
 
         public void SelectHairColor(int index)
@@ -119,6 +125,23 @@ namespace VRT.Pilots.Trolley
             if (cfg != null) cfg.hairColorIndex = index;
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
             LocalLoader?.Reload();
+            SendUpdate();
+        }
+
+        void SendUpdate()
+        {
+            if (!_initialized || VRTOrchestratorSingleton.Comm == null) return;
+            var cfg = GetConfig();
+            var msg = new TrolleyAvatarUpdateMessage
+            {
+                bodyType       = cfg?.bodyType == "Feminine" ? 1 : 0,
+                skinToneIndex  = cfg?.skinToneIndex ?? 0,
+                hairColorIndex = cfg?.hairColorIndex ?? 0,
+            };
+            if (VRTOrchestratorSingleton.Comm.UserIsMaster)
+                VRTOrchestratorSingleton.Comm.SendTypeEventToAll(msg);
+            else
+                VRTOrchestratorSingleton.Comm.SendTypeEventToMaster(msg);
         }
 
         static void HighlightSwatchGroup(Button[] buttons, Color[] baseColors, int selectedIndex)

@@ -14,10 +14,11 @@ namespace VRT.Pilots.Trolley
 
     public class TrolleyTimerStartMessage : BaseMessage { }
 
-    public class TrolleyAvatarReadyMessage : BaseMessage
+    public class TrolleyAvatarUpdateMessage : BaseMessage
     {
         public int bodyType;       // TrolleyAvatarConfig.AvatarBodyType cast to int
         public int skinToneIndex;
         public int hairColorIndex;
+        public bool isDone;        // true = Confirm pressed; false = live selection change
     }
 }

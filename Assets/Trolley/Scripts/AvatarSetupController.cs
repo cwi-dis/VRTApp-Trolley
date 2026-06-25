@@ -40,17 +40,17 @@ namespace VRT.Pilots.Trolley
         {
             if (VRTOrchestratorSingleton.Comm != null)
                 VRTOrchestratorSingleton.Comm.RegisterEventType(
-                    (MessageTypeID)TrolleyMsgID.AvatarReady, typeof(TrolleyAvatarReadyMessage));
+                    (MessageTypeID)TrolleyMsgID.AvatarReady, typeof(TrolleyAvatarUpdateMessage));
         }
 
         void OnEnable()
         {
-            VRTOrchestratorSingleton.Comm?.Subscribe<TrolleyAvatarReadyMessage>(OnAvatarReady);
+            VRTOrchestratorSingleton.Comm?.Subscribe<TrolleyAvatarUpdateMessage>(OnAvatarUpdate);
         }
 
         void OnDisable()
         {
-            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyAvatarReadyMessage>(OnAvatarReady);
+            VRTOrchestratorSingleton.Comm?.Unsubscribe<TrolleyAvatarUpdateMessage>(OnAvatarUpdate);
         }
 
         void Start()
@@ -94,11 +94,12 @@ namespace VRT.Pilots.Trolley
                 SetStatus(statusTextB, "Waiting for partner…");
 
                 var myConfig = GetMyAvatarConfig();
-                var msg = new TrolleyAvatarReadyMessage
+                var msg = new TrolleyAvatarUpdateMessage
                 {
                     bodyType       = (int)ParseBodyType(myConfig?.bodyType),
                     skinToneIndex  = myConfig?.skinToneIndex ?? 0,
                     hairColorIndex = myConfig?.hairColorIndex ?? 0,
+                    isDone         = true,
                 };
 
                 if (VRTOrchestratorSingleton.Comm.UserIsMaster)
@@ -127,7 +128,7 @@ namespace VRT.Pilots.Trolley
             PilotController.Instance.LoadNewScene(next);
         }
 
-        void OnAvatarReady(TrolleyAvatarReadyMessage msg)
+        void OnAvatarUpdate(TrolleyAvatarUpdateMessage msg)
         {
             if (VRTOrchestratorSingleton.Comm == null) return;
             if (VRTOrchestratorSingleton.Comm.UserIsMaster)
@@ -143,6 +144,13 @@ namespace VRT.Pilots.Trolley
             cfg.bodyType       = ((TrolleyAvatarConfig.AvatarBodyType)msg.bodyType).ToString();
             cfg.skinToneIndex  = msg.skinToneIndex;
             cfg.hairColorIndex = msg.hairColorIndex;
+
+            foreach (var loader in FindObjectsOfType<TrolleyAvatarLoader>())
+                if (loader.GetComponent<PlayerControllerSelf>() == null)
+                    loader.Reload();
+
+            if (msg.isDone)
+                readyTrigger.Trigger();
         }
 
         static void SetStatus(TextMeshProUGUI label, string text)
