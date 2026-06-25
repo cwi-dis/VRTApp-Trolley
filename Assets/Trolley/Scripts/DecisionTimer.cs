@@ -27,7 +27,7 @@ namespace VRT.Pilots.Trolley
             // The decision window is the pilot's independent variable — pull it from the shared config so
             // changing one asset retimes every scene. Falls back to the serialized value if no config asset.
             var cfg = TrolleyTimingConfig.Load();
-            if (cfg != null) duration = cfg.decisionWindow;
+            if (cfg != null) duration = cfg.EffectiveWindow;
             SetVisible(false);
         }
 

@@ -19,6 +19,9 @@ public class TrolleyResearcherConfig
     [Tooltip("When true (default), the questionnaire is presented in VR. " +
              "When false, participants remove the HMD and fill in a paper form.")]
     public bool questionnaireInVR = true;
+    [Tooltip("Decision window in seconds for the scenarios. 0 = use the TrolleyTimingConfig asset default. " +
+             "Set per session in pilotconfig.json — train speed and worker-hide timing scale to it.")]
+    public float decisionWindow = 0f;
 
     public bool HasConfig =>
         (condition == "Solo" || condition == "Paired") &&

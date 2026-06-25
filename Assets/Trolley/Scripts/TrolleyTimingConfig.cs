@@ -34,11 +34,28 @@ namespace VRT.Pilots.Trolley
         [Range(0.25f, 2f)]
         public float speedScale = 1f;
 
-        /// <summary>Scales a speed tuned at referenceWindow to the current window (and global speedScale).</summary>
-        public float SpeedFactor => (referenceWindow / Mathf.Max(decisionWindow, 0.01f)) * speedScale;
+        /// <summary>The window actually in effect: the researcher's value from the pilot config
+        /// (pilotconfig.json → VRTPilotConfig.researcherConfig.decisionWindow) if set (>0), otherwise this
+        /// asset's baked default. Sourcing it from the config file is what lets the window change on-device
+        /// without a rebuild.</summary>
+        public float EffectiveWindow
+        {
+            get
+            {
+                if (VRTPilotConfig.InstanceExists())
+                {
+                    float w = VRTPilotConfig.Instance.researcherConfig.decisionWindow;
+                    if (w > 0f) return w;
+                }
+                return decisionWindow;
+            }
+        }
+
+        /// <summary>Scales a speed tuned at referenceWindow to the effective window (and global speedScale).</summary>
+        public float SpeedFactor => (referenceWindow / Mathf.Max(EffectiveWindow, 0.01f)) * speedScale;
 
         /// <summary>Scales a "time to cover a fixed distance" value (e.g. hitDelay) — the inverse of speed.</summary>
-        public float TimeFactor => (decisionWindow / Mathf.Max(referenceWindow, 0.01f)) / Mathf.Max(speedScale, 0.01f);
+        public float TimeFactor => (EffectiveWindow / Mathf.Max(referenceWindow, 0.01f)) / Mathf.Max(speedScale, 0.01f);
 
         /// <summary>Loads the shared config from Resources. Returns null if none exists (callers fall back
         /// to their own serialized values, so nothing breaks).</summary>
