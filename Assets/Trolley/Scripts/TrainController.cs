@@ -27,6 +27,13 @@ namespace VRT.Pilots.Trolley
         float _t;
         bool _moving;
 
+        TrolleyTimingConfig _cfg;
+        // Spline speed tuned at the reference window, scaled to the active decision window (and global
+        // speedScale). Falls back to the raw serialized value when no config asset exists.
+        float TrainSpeed => trainSpeed * (_cfg != null ? _cfg.SpeedFactor : 1f);
+
+        void Awake() => _cfg = TrolleyTimingConfig.Load();
+
         public override void StartApproach()
         {
             if (rail == null || rail.Splines.Count == 0) return;
@@ -61,7 +68,7 @@ namespace VRT.Pilots.Trolley
             float len = _current.GetLength();
             if (len < 0.01f) return;
 
-            _t += (trainSpeed / len) * Time.deltaTime;
+            _t += (TrainSpeed / len) * Time.deltaTime;
 
             if (_t >= 1f)
             {

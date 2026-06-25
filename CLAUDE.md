@@ -35,6 +35,8 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Setup Humanoid Avatar Prefab` (step 1 of 2 — operates on selected wrapper GO in scene; adds RigBuilder + Two Bone IK for arms and legs + foot colliders + SyncSkeletonToVRRig + SizeAdjust + PlayerRepresentationWirer; see below for full workflow) | `TrolleyAvatarPrefabSetup.cs` |
 | `Trolley > Save and Wire Avatar into Players` (step 2 of 2 — saves the wrapper GO as a prefab asset, adds it as `altRepOne` in both `P_Self_Player_Trolley` and `P_Player_Trolley`, wires SizeAdjust SourceTop/SourceBottom and localScale) | `TrolleyAvatarPrefabSetup.cs` |
 | `Trolley > Wire GazeTargets` (non-destructive; adds PFB_GazeTarget to ActionTrackWorkers/InactionTrackWorkers/Rock in the open scene; skips already-present; does NOT save) | `TrolleyGazeTargetSetup.cs` |
+| `Trolley > Create or Select Timing Config` (creates/selects the shared `TrolleyTimingConfig` asset in `Assets/Trolley/Resources`; one decision-window knob that scales train speed + worker-hide delay across all scenes) | `TrolleyTimingConfigSetup.cs` |
+| `Trolley > Copy DriverCab: Driver → Selfharm + TutorialDriver` (places the `DriverCab` prefab at Driver's world transform in both scenes; re-runnable; NON-destructive — leaves the old DriverCabShell for you to remove by hand) | `TrolleyDriverCabCopy.cs` |
 
 Self-harm and Tutorial are built by **duplicating** a known-good scene (Driver / Bystander) and applying targeted edits — they preserve all hand-tuned geometry. Re-running overwrites the target scene, so make manual tweaks only after the final run.
 

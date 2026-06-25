@@ -7,18 +7,20 @@ using UnityEngine.SceneManagement;
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Copies the player spawn markers from the (correct) Driver scene into the Self-harm and Driver-
-    /// tutorial scenes, so all three start the player(s) in the same seat.
+    /// Copies the seat markers AND the two track buttons from the (correct) Driver scene into the
+    /// Self-harm and Driver-tutorial scenes, so all three start the player(s) in the same seat and put
+    /// the A/B buttons in the same reachable spot.
     ///
-    ///   Trolley > Copy Player Locations: Driver → Selfharm + TutorialDriver
+    ///   Trolley > Copy Seat + Buttons: Driver → Selfharm + TutorialDriver
     ///
-    /// Source path (Driver): Tool_scenesetup_Trolley/Player Initial Locations/Player1 (and Player2).
-    /// Those markers live inside the Tool_scenesetup_Trolley prefab instance, so this works on the loaded
-    /// hierarchy (prefab children are reachable by name) rather than touching scene/prefab YAML by hand.
+    /// Objects copied (by name, on the loaded hierarchy so prefab-instance children work):
+    ///   • Player Initial Locations/Player1, Player2  (seat markers, matched under their parent)
+    ///   • Button_TrackA, Button_TrackB               (matched by name anywhere)
     ///
-    /// Copies WORLD position + WORLD rotation (lands exactly where Driver has them regardless of any
-    /// parent differences) and LOCAL scale. Reads from Driver, writes to both targets, saves both.
-    /// Prompts to save the currently open scene first. Re-runnable; undoable per-object.
+    /// Copies WORLD position + WORLD rotation (lands exactly where Driver has them regardless of parent
+    /// differences) and LOCAL scale. Transform only — button wiring (OnTrigger / ToggleDecision) is
+    /// untouched. Reads from Driver, writes to both targets, saves both. Prompts to save the open scene
+    /// first. Re-runnable; undoable per-object.
     /// </summary>
     public static class TrolleyPlayerLocationCopy
     {
@@ -26,29 +28,36 @@ namespace VRT.Pilots.Trolley.Editor
         const string SelfharmScene = "Assets/Trolley/Scenes/TrolleySelfharm.unity";
         const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorialDriver.unity";
 
-        const string LocationsParent = "Player Initial Locations";
-        static readonly string[] PlayerNames = { "Player1", "Player2" };
+        // name = object to copy; parent = required parent name to disambiguate (null = match by name anywhere).
+        struct Target { public string name; public string parent; }
+        static readonly Target[] Targets =
+        {
+            new Target { name = "Player1",       parent = "Player Initial Locations" },
+            new Target { name = "Player2",       parent = "Player Initial Locations" },
+            new Target { name = "Button_TrackA", parent = null },
+            new Target { name = "Button_TrackB", parent = null },
+        };
 
         struct Placement { public Vector3 worldPos; public Quaternion worldRot; public Vector3 localScale; }
 
-        [MenuItem("Trolley/Copy Player Locations: Driver → Selfharm + TutorialDriver")]
-        public static void CopyPlayerLocations()
+        [MenuItem("Trolley/Copy Seat + Buttons: Driver → Selfharm + TutorialDriver")]
+        public static void CopySeatAndButtons()
         {
             // Don't lose any unsaved work in the currently open scene.
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
-            // ── Read the markers from the Driver scene ──
+            // ── Read the markers/buttons from the Driver scene ──
             var captured = new Dictionary<string, Placement>();
             var src = EditorSceneManager.OpenScene(DriverScene, OpenSceneMode.Single);
-            if (!src.IsValid()) { Debug.LogError($"Copy Player Locations: could not open {DriverScene}."); return; }
-            foreach (var n in PlayerNames)
+            if (!src.IsValid()) { Debug.LogError($"Copy Seat + Buttons: could not open {DriverScene}."); return; }
+            foreach (var tgt in Targets)
             {
-                var go = FindPlayerMarker(src, n);
-                if (go == null) { Debug.LogWarning($"Copy Player Locations: '{LocationsParent}/{n}' not found in Driver — skipped."); continue; }
+                var go = Find(src, tgt);
+                if (go == null) { Debug.LogWarning($"Copy Seat + Buttons: '{Label(tgt)}' not found in Driver — skipped."); continue; }
                 var t = go.transform;
-                captured[n] = new Placement { worldPos = t.position, worldRot = t.rotation, localScale = t.localScale };
+                captured[tgt.name] = new Placement { worldPos = t.position, worldRot = t.rotation, localScale = t.localScale };
             }
-            if (captured.Count == 0) { Debug.LogError("Copy Player Locations: no player markers found in Driver — nothing to copy."); return; }
+            if (captured.Count == 0) { Debug.LogError("Copy Seat + Buttons: nothing found in Driver — nothing to copy."); return; }
 
             // ── Apply them to each target scene ──
             ApplyTo(SelfharmScene, captured);
@@ -58,16 +67,16 @@ namespace VRT.Pilots.Trolley.Editor
         static void ApplyTo(string scenePath, Dictionary<string, Placement> captured)
         {
             var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            if (!scene.IsValid()) { Debug.LogError($"Copy Player Locations: could not open {scenePath}."); return; }
+            if (!scene.IsValid()) { Debug.LogError($"Copy Seat + Buttons: could not open {scenePath}."); return; }
 
             int applied = 0;
             var missing = new List<string>();
-            foreach (var n in PlayerNames)
+            foreach (var tgt in Targets)
             {
-                if (!captured.TryGetValue(n, out var p)) continue;
-                var go = FindPlayerMarker(scene, n);
-                if (go == null) { missing.Add(n); continue; }
-                Undo.RecordObject(go.transform, "Copy Player Locations");
+                if (!captured.TryGetValue(tgt.name, out var p)) continue;
+                var go = Find(scene, tgt);
+                if (go == null) { missing.Add(tgt.name); continue; }
+                Undo.RecordObject(go.transform, "Copy Seat + Buttons");
                 go.transform.position   = p.worldPos;
                 go.transform.rotation   = p.worldRot;
                 go.transform.localScale = p.localScale;
@@ -77,23 +86,25 @@ namespace VRT.Pilots.Trolley.Editor
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            var msg = $"Copy Player Locations: applied {applied}/{captured.Count} markers to {Path(scenePath)} and saved.";
+            var msg = $"Copy Seat + Buttons: applied {applied}/{captured.Count} to {Path(scenePath)} and saved.";
             if (missing.Count > 0)
                 msg += $"\nNot found there: {string.Join(", ", missing)}.";
             Debug.Log(msg);
         }
 
-        // Find the marker named e.g. "Player1" that sits under a "Player Initial Locations" parent, so we
-        // don't accidentally grab an unrelated object that happens to share the name.
-        static GameObject FindPlayerMarker(Scene scene, string playerName)
+        // Find by name. When a parent is given, require it (so we don't grab an unrelated same-named object);
+        // otherwise take the first match anywhere in the scene.
+        static GameObject Find(Scene scene, Target tgt)
         {
             foreach (var root in scene.GetRootGameObjects())
                 foreach (var t in root.GetComponentsInChildren<Transform>(true))
-                    if (t.name == playerName && t.parent != null && t.parent.name == LocationsParent)
+                    if (t.name == tgt.name &&
+                        (tgt.parent == null || (t.parent != null && t.parent.name == tgt.parent)))
                         return t.gameObject;
             return null;
         }
 
+        static string Label(Target t) => t.parent == null ? t.name : $"{t.parent}/{t.name}";
         static string Path(string assetPath) => System.IO.Path.GetFileNameWithoutExtension(assetPath);
     }
 }
