@@ -57,6 +57,16 @@ namespace VRT.Pilots.Trolley
         bool _diverting;
         float _turnedSoFar;   // degrees accumulated during the divert
 
+        TrolleyTimingConfig _cfg;
+
+        // Speed/delay tuned at the reference window, scaled to the active decision window so a longer
+        // window slows the approach (and pushes the impact later) — keeps the cab from overrunning the
+        // still-visible workers. Falls back to the raw serialized values when no config asset exists.
+        float ApproachSpeed => approachSpeed * (_cfg != null ? _cfg.SpeedFactor : 1f);
+        float HitDelay      => hitDelay      * (_cfg != null ? _cfg.TimeFactor  : 1f);
+
+        void Awake() => _cfg = TrolleyTimingConfig.Load();
+
         public override void StartApproach() => _approaching = true;
 
         public override void ExecuteAction()
@@ -81,7 +91,7 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator ImpactRoutine()
         {
-            yield return new WaitForSeconds(hitDelay);
+            yield return new WaitForSeconds(HitDelay);
             actionImpactEffect.SetActive(true);
             var ps = actionImpactEffect.GetComponent<ParticleSystem>();
             if (ps != null) ps.Play();
@@ -94,7 +104,7 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator HideRoutine(GameObject workers)
         {
-            yield return new WaitForSeconds(hitDelay);
+            yield return new WaitForSeconds(HitDelay);
             workers.SetActive(false);
         }
 
@@ -103,13 +113,13 @@ namespace VRT.Pilots.Trolley
             float dt = Time.deltaTime;
 
             if (_approaching)
-                transform.Translate(approachDirection.normalized * (approachSpeed * dt), Space.World);
+                transform.Translate(approachDirection.normalized * (ApproachSpeed * dt), Space.World);
 
             if (_diverting)
             {
                 // Heading changes by (distance / radius) radians as we travel the arc,
                 // so the tilt rate stays locked to the forward speed and rail curvature.
-                float distance = approachSpeed * dt;
+                float distance = ApproachSpeed * dt;
                 float stepDeg = (distance / Mathf.Max(branchRadius, 0.01f)) * Mathf.Rad2Deg;
 
                 float remaining = Mathf.Abs(branchTurnAngle) - _turnedSoFar;

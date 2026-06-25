@@ -33,6 +33,8 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Add Tutorial Start Button (open scene)` (participant-facing green Start button; wires the drill's `gate` field; opens with an A/B button warm-up then waits for Start; run once per tutorial scene) | `TrolleyTutorialStartSetup.cs` |
 | `Trolley > Copy Room Layout: Tutorial → Bystander` (copies world transforms of MonitorGroup/MonitorLabelGroup/ControlRoomShell/Button_TrackA/B/GazeTarget_Buttons; saves Bystander) | `TrolleyRoomLayoutCopy.cs` |
 | `Trolley > Wire GazeTargets` (non-destructive; adds PFB_GazeTarget to ActionTrackWorkers/InactionTrackWorkers/Rock in the open scene; skips already-present; does NOT save) | `TrolleyGazeTargetSetup.cs` |
+| `Trolley > Create or Select Timing Config` (creates/selects the shared `TrolleyTimingConfig` asset in `Assets/Trolley/Resources`; one decision-window knob that scales train speed + worker-hide delay across all scenes) | `TrolleyTimingConfigSetup.cs` |
+| `Trolley > Copy DriverCab: Driver → Selfharm + TutorialDriver` (places the `DriverCab` prefab at Driver's world transform in both scenes; re-runnable; NON-destructive — leaves the old DriverCabShell for you to remove by hand) | `TrolleyDriverCabCopy.cs` |
 
 Self-harm and Tutorial are built by **duplicating** a known-good scene (Driver / Bystander) and applying targeted edits — they preserve all hand-tuned geometry. Re-running overwrites the target scene, so make manual tweaks only after the final run.
 
