@@ -149,8 +149,11 @@ namespace VRT.Pilots.Trolley
         int _correct;
         int _total;
 
+        TrolleyTimingConfig _cfg;
+
         void Start()
         {
+            _cfg = TrolleyTimingConfig.Load();
             _total = Sequence.Length;
             UpdateScore();
             if (scoreText != null) scoreText.gameObject.SetActive(false); // counter is for Round 2 only
@@ -377,6 +380,9 @@ namespace VRT.Pilots.Trolley
             // pre-fork segment, so a fixed t-rate made the train crawl through the divergence.
             float straightLen = Mathf.Max(0.01f, _current.GetLength());
             _worldSpeed = (Mathf.Abs(roundEndT - roundStartT) * straightLen) / Mathf.Max(0.1f, roundDuration);
+            // Scale to the active decision window so the tutorial train matches the real scene's pace
+            // (longer window → slower train). Speed only; the narration/round delays stay fixed.
+            if (_cfg != null) _worldSpeed *= _cfg.SpeedFactor;
 
             toggle.ApplyRemoteState(false);     // back to "not diverted"
         }
