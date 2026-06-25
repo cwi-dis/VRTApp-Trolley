@@ -38,17 +38,6 @@ namespace VRT.Pilots.Trolley.Editor
             new Color(0.23f, 0.12f, 0.10f),
         };
 
-        // Tint colors — applied to avatar via MaterialPropertyBlock, lighter to preserve texture
-        static readonly Color[] SkinTones =
-        {
-            new Color(1.00f, 1.00f, 1.00f),
-            new Color(1.00f, 0.93f, 0.85f),
-            new Color(1.00f, 0.84f, 0.68f),
-            new Color(0.95f, 0.72f, 0.50f),
-            new Color(0.78f, 0.52f, 0.32f),
-            new Color(0.52f, 0.30f, 0.18f),
-        };
-
         // Swatch button colors — shown on the UI
         static readonly Color[] HairColorSwatches =
         {
@@ -58,17 +47,6 @@ namespace VRT.Pilots.Trolley.Editor
             new Color(0.77f, 0.64f, 0.35f),
             new Color(0.55f, 0.23f, 0.17f),
             new Color(0.63f, 0.63f, 0.63f),
-        };
-
-        // Tint colors — applied to avatar via MaterialPropertyBlock
-        static readonly Color[] HairColors =
-        {
-            new Color(0.20f, 0.20f, 0.20f),
-            new Color(0.42f, 0.30f, 0.18f),
-            new Color(0.65f, 0.48f, 0.28f),
-            new Color(0.92f, 0.78f, 0.48f),
-            new Color(0.75f, 0.35f, 0.25f),
-            new Color(0.75f, 0.75f, 0.75f),
         };
 
         [MenuItem(MenuItem)]
@@ -125,14 +103,15 @@ namespace VRT.Pilots.Trolley.Editor
             canvasGO.AddComponent<GraphicRaycaster>();
             canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
             var cRect = canvasGO.GetComponent<RectTransform>();
-            cRect.sizeDelta = new Vector2(1440f, 680f);
-            canvasGO.transform.position   = new Vector3(0f, 1.6f, 2f);
+            cRect.sizeDelta = new Vector2(2000f, 680f);
+            canvasGO.transform.position   = new Vector3(0f, 0f, 2f);
             canvasGO.transform.rotation   = Quaternion.Euler(0f, 180f, 0f);
             canvasGO.transform.localScale = Vector3.one * 0.003f;
 
             // ── Build Station A (left half) ──────────────────────────────────
             var stationARoot = MakeSubPanel("StationA", canvasGO,
                 new Vector2(0.01f, 0f), new Vector2(0.49f, 1f), PanelBg);
+            stationARoot.transform.localRotation = Quaternion.Euler(0f, -20f, 0f);
 
             Button mascBtnA, femBtnA, confirmBtnA;
             Button[] skinBtnsA, hairBtnsA;
@@ -144,6 +123,7 @@ namespace VRT.Pilots.Trolley.Editor
             // ── Build Station B (right half) ─────────────────────────────────
             var stationBRoot = MakeSubPanel("StationB", canvasGO,
                 new Vector2(0.51f, 0f), new Vector2(0.99f, 1f), PanelBg);
+            stationBRoot.transform.localRotation = Quaternion.Euler(0f, 20f, 0f);
 
             Button mascBtnB, femBtnB, confirmBtnB;
             Button[] skinBtnsB, hairBtnsB;
@@ -151,22 +131,6 @@ namespace VRT.Pilots.Trolley.Editor
             BuildStationPanel(stationBRoot, "P2", P2Color,
                 out mascBtnB, out femBtnB, out skinBtnsB, out hairBtnsB,
                 out statusB, out confirmBtnB);
-
-            // ── Avatar preview placeholder parents ────────────────────────────
-            // Place them in front of each station (facing toward participants).
-            // Add your FBX models as children after running this script.
-            var previewsRoot = new GameObject("AvatarPreviews");
-            previewsRoot.AddComponent<ManagedBySetupScript>().menuItem = MenuItem;
-
-            var previewA = new GameObject("AvatarPreview_A");
-            previewA.transform.SetParent(previewsRoot.transform, false);
-            previewA.transform.position = new Vector3(-1.1f, 0f, 3.2f);
-            previewA.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // facing participant
-
-            var previewB = new GameObject("AvatarPreview_B");
-            previewB.transform.SetParent(previewsRoot.transform, false);
-            previewB.transform.position = new Vector3(1.1f, 0f, 3.2f);
-            previewB.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
             // ── AvatarSelector A ──────────────────────────────────────────────
             var selAGO = new GameObject("AvatarSelector_A");
@@ -288,16 +252,6 @@ namespace VRT.Pilots.Trolley.Editor
             hairBtnProp.arraySize = 6;
             for (int i = 0; i < 6; i++)
                 hairBtnProp.GetArrayElementAtIndex(i).objectReferenceValue = hairBtns[i];
-
-            var skinColorProp = so.FindProperty("skinToneColors");
-            skinColorProp.arraySize = SkinTones.Length;
-            for (int i = 0; i < SkinTones.Length; i++)
-                skinColorProp.GetArrayElementAtIndex(i).colorValue = SkinTones[i];
-
-            var hairColorProp = so.FindProperty("hairColors");
-            hairColorProp.arraySize = HairColors.Length;
-            for (int i = 0; i < HairColors.Length; i++)
-                hairColorProp.GetArrayElementAtIndex(i).colorValue = HairColors[i];
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(selector);

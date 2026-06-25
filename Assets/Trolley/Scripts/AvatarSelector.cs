@@ -6,10 +6,8 @@ namespace VRT.Pilots.Trolley
 {
     /// <summary>
     /// Avatar customisation for one participant station.
-    /// Body type swaps the visible preview model and the VR2Gather SelfPlayerPrefab.
-    /// Skin tone and hair colour swap sharedMaterial on the assigned renderers in real time.
-    /// Assign skinToneMaterials[6] and hairColorMaterials[6] in the Inspector.
-    /// Assign bodyRenderers and hairRenderers after inspecting the FBX hierarchy.
+    /// Writes body type / skin tone / hair colour to VRTPilotConfig.avatarConfigs[playerIndex]
+    /// and calls TrolleyAvatarLoader.Reload() on the local player to update the live avatar.
     /// </summary>
     public class AvatarSelector : MonoBehaviour
     {
@@ -21,42 +19,18 @@ namespace VRT.Pilots.Trolley
         [SerializeField] Button masculineButton;
         [SerializeField] Button feminineButton;
 
-        [Header("VR2Gather Prefabs (body type swap on confirm)")]
-        [SerializeField] GameObject masculineSelfPrefab;
-        [SerializeField] GameObject feminineSelfPrefab;
-        [SerializeField] SessionPlayersManager playersManager;
-
-        [Header("Preview Avatar (3D models facing participant)")]
-        [SerializeField] GameObject masculinePreview;
-        [SerializeField] GameObject femininePreview;
-
-        [Header("Preview Child Names — Body and Hair mesh object names under each prefab")]
-        [SerializeField] string masculineBodyChild = "Body";
-        [SerializeField] string masculineHairChild = "Hair";
-        [SerializeField] string feminineBodyChild  = "Body";
-        [SerializeField] string feminineHairChild  = "Hair";
-
-        [Header("Skin Tone Colors (index 0–5, lightest to darkest)")]
-        [SerializeField] Color[] skinToneColors;
-
-        [Header("Hair Colors (index 0–5)")]
-        [SerializeField] Color[] hairColors;
-
         [Header("Skin Tone Swatch Buttons (6 — left to right)")]
         [SerializeField] Button[] skinToneButtons;
 
         [Header("Hair Colour Swatch Buttons (6 — left to right)")]
         [SerializeField] Button[] hairColorButtons;
 
-        static readonly Color Selected      = new Color(0.1f, 0.6f, 0.1f);
-        static readonly Color Unselected    = new Color(0.2f, 0.2f, 0.5f);
+        static readonly Color Selected   = new Color(0.1f, 0.6f, 0.1f);
+        static readonly Color Unselected = new Color(0.2f, 0.2f, 0.5f);
         const float SwatchDimFactor = 0.4f;
 
         Color[] _skinToneBaseColors;
         Color[] _hairColorBaseColors;
-
-        static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
-        static readonly int ColorID     = Shader.PropertyToID("_Color");
 
         TrolleyAvatarLoader _localLoader;
 
@@ -126,12 +100,6 @@ namespace VRT.Pilots.Trolley
             if (cfg != null) cfg.bodyType = bodyType.ToString();
 
             bool isMasc = bodyType == TrolleyAvatarConfig.AvatarBodyType.Masculine;
-            if (masculinePreview != null) masculinePreview.SetActive(isMasc);
-            if (femininePreview  != null) femininePreview.SetActive(!isMasc);
-
-            if (playersManager != null)
-                playersManager.SelfPlayerPrefab = isMasc ? masculineSelfPrefab : feminineSelfPrefab;
-
             SetHighlight(masculineButton, isMasc);
             SetHighlight(feminineButton,  !isMasc);
             LocalLoader?.Reload();
@@ -142,8 +110,6 @@ namespace VRT.Pilots.Trolley
             var cfg = GetConfig();
             if (cfg != null) cfg.skinToneIndex = index;
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
-            if (index < skinToneColors.Length)
-                TintPreviewChild("Body", skinToneColors[index]);
             LocalLoader?.Reload();
         }
 
@@ -152,47 +118,7 @@ namespace VRT.Pilots.Trolley
             var cfg = GetConfig();
             if (cfg != null) cfg.hairColorIndex = index;
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
-            if (index < hairColors.Length)
-                TintPreviewChild("Hair", hairColors[index]);
             LocalLoader?.Reload();
-        }
-
-        [ContextMenu("Debug: Log Wiring")]
-        void DebugLogWiring()
-        {
-            Debug.Log($"[AvatarSelector] skinToneButtons: {skinToneButtons?.Length}, hairColorButtons: {hairColorButtons?.Length}");
-            Debug.Log($"[AvatarSelector] skinToneColors: {skinToneColors?.Length}, hairColors: {hairColors?.Length}");
-            Debug.Log($"[AvatarSelector] masculinePreview: {masculinePreview?.name}, femininePreview: {femininePreview?.name}");
-        }
-
-        void TintPreviewChild(string meshType, Color color)
-        {
-            bool isBody = meshType == "Body";
-            TintChild(masculinePreview, isBody ? masculineBodyChild : masculineHairChild, color);
-            TintChild(femininePreview,  isBody ? feminineBodyChild  : feminineHairChild,  color);
-        }
-
-        void TintChild(GameObject root, string childName, Color color)
-        {
-            if (root == null) return;
-            var smr = FindSkinnedMeshRenderer(root, childName);
-            if (smr == null) { Debug.LogWarning($"[AvatarSelector] '{childName}' not found under {root.name}"); return; }
-            var mpb = new MaterialPropertyBlock();
-            smr.GetPropertyBlock(mpb);
-            int propID = smr.sharedMaterial != null && smr.sharedMaterial.HasProperty(BaseColorID)
-                ? BaseColorID : ColorID;
-            mpb.SetColor(propID, color);
-            smr.SetPropertyBlock(mpb);
-        }
-
-        static SkinnedMeshRenderer FindSkinnedMeshRenderer(GameObject root, string childName)
-        {
-            var all = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-            foreach (var smr in all)
-                if (smr.gameObject.name == childName) return smr;
-            var names = string.Join(", ", System.Array.ConvertAll(all, s => s.gameObject.name));
-            Debug.LogWarning($"[AvatarSelector] '{childName}' not found under {root.name}. Available: {names}");
-            return null;
         }
 
         static void HighlightSwatchGroup(Button[] buttons, Color[] baseColors, int selectedIndex)
