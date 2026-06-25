@@ -526,10 +526,10 @@ namespace VRT.Pilots.Trolley.Editor
         // Swatch button colors (SkinToneSwatches / HairColorSwatches) are different
         // and NOT used here — those are UI-only.
 
-        static readonly string[] TrolleyAvatarPrefabPaths =
+        static readonly (string path, string bodyChild, string hairChild)[] TrolleyAvatarPrefabs =
         {
-            "Assets/Trolley/Prefabs/P_Avatar_Trolley_Male.prefab",
-            "Assets/Trolley/Prefabs/P_Avatar_Trolley_Female.prefab",
+            ("Assets/Trolley/Prefabs/P_Avatar_Trolley_Male.prefab",   "Body",     "Hair"),
+            ("Assets/Trolley/Prefabs/P_Avatar_Trolley_Female.prefab", "Ch22_Body","Ch22_Hair"),
         };
 
         static readonly Color[] TrolleySkinTones =
@@ -555,7 +555,7 @@ namespace VRT.Pilots.Trolley.Editor
         [MenuItem("Trolley/Wire Trolley Avatar Appearance Colors")]
         static void WireTrolleyAvatarAppearanceColors()
         {
-            foreach (var path in TrolleyAvatarPrefabPaths)
+            foreach (var (path, bodyChild, hairChild) in TrolleyAvatarPrefabs)
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null)
@@ -573,6 +573,18 @@ namespace VRT.Pilots.Trolley.Editor
 
                 var so = new SerializedObject(appearance);
 
+                // Wire renderer references by child name
+                SkinnedMeshRenderer bodySmr = null, hairSmr = null;
+                foreach (var smr in prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    if (smr.gameObject.name == bodyChild) bodySmr = smr;
+                    if (smr.gameObject.name == hairChild) hairSmr = smr;
+                }
+                if (bodySmr == null) Debug.LogWarning($"[TrolleyAvatarPrefabSetup] '{bodyChild}' SMR not found on {prefab.name}.");
+                if (hairSmr == null) Debug.LogWarning($"[TrolleyAvatarPrefabSetup] '{hairChild}' SMR not found on {prefab.name}.");
+                so.FindProperty("bodyRenderer").objectReferenceValue = bodySmr;
+                so.FindProperty("hairRenderer").objectReferenceValue = hairSmr;
+
                 var skinProp = so.FindProperty("skinToneColors");
                 skinProp.arraySize = TrolleySkinTones.Length;
                 for (int i = 0; i < TrolleySkinTones.Length; i++)
@@ -586,7 +598,7 @@ namespace VRT.Pilots.Trolley.Editor
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(prefab);
                 PrefabUtility.SavePrefabAsset(prefab);
-                Debug.Log($"[TrolleyAvatarPrefabSetup] Wired appearance colors on {prefab.name}.");
+                Debug.Log($"[TrolleyAvatarPrefabSetup] Wired appearance on {prefab.name} (body={bodySmr?.name}, hair={hairSmr?.name}).");
             }
         }
     }

@@ -12,7 +12,9 @@ namespace VRT.Pilots.Trolley
     /// </summary>
     public class TrolleyAvatarLoader : MonoBehaviour
     {
-        void Start()
+        void Start() => Reload();
+
+        public void Reload()
         {
             if (!VRTPilotConfig.InstanceExists())
             {

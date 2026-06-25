@@ -938,6 +938,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12ce4a87d17841ffb98272f97c2ba005, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.TrolleyAvatarAppearance
+  bodyRenderer: {fileID: 7851552158122803316}
+  hairRenderer: {fileID: 831027560481863694}
   skinToneColors:
   - {r: 1, g: 1, b: 1, a: 1}
   - {r: 1, g: 0.93, b: 0.85, a: 1}
@@ -1045,6 +1047,11 @@ MonoBehaviour:
   - m_Rig: {fileID: 5261809806332011096}
     m_Active: 1
   m_Effectors: []
+--- !u!137 &831027560481863694 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8113662451844533969, guid: ed0760d09a69d41f1a765e497880b7ef, type: 3}
+  m_PrefabInstance: {fileID: 355254222338722081}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &851626570653293681 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8124625601955375792, guid: ed0760d09a69d41f1a765e497880b7ef, type: 3}
@@ -1113,6 +1120,11 @@ Transform:
 --- !u!4 &7664080824413122779 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7976531564915063290, guid: ed0760d09a69d41f1a765e497880b7ef, type: 3}
+  m_PrefabInstance: {fileID: 355254222338722081}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &7851552158122803316 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7500829582323976533, guid: ed0760d09a69d41f1a765e497880b7ef, type: 3}
   m_PrefabInstance: {fileID: 355254222338722081}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8621111764403655140 stripped

@@ -9,6 +9,10 @@ namespace VRT.Pilots.Trolley
     /// </summary>
     public class TrolleyAvatarAppearance : MonoBehaviour
     {
+        [Header("Renderers — assign in Inspector")]
+        [SerializeField] SkinnedMeshRenderer bodyRenderer;
+        [SerializeField] SkinnedMeshRenderer hairRenderer;
+
         [Header("Skin Tone Colors (0=lightest, 5=darkest) — must match AvatarSelector")]
         [SerializeField] Color[] skinToneColors;
         [Header("Hair Colors (0=black … 5=grey) — must match AvatarSelector")]
@@ -19,18 +23,13 @@ namespace VRT.Pilots.Trolley
 
         public void ApplyConfig(TrolleyAvatarConfig cfg)
         {
-            TintChild("Body", skinToneColors, cfg.skinToneIndex);
-            TintChild("Hair", hairColors,     cfg.hairColorIndex);
+            Tint(bodyRenderer, skinToneColors, cfg.skinToneIndex);
+            Tint(hairRenderer, hairColors,     cfg.hairColorIndex);
         }
 
-        void TintChild(string childName, Color[] colors, int index)
+        void Tint(SkinnedMeshRenderer smr, Color[] colors, int index)
         {
-            if (colors == null || index >= colors.Length) return;
-            SkinnedMeshRenderer smr = null;
-            foreach (var r in GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                if (r.gameObject.name == childName) { smr = r; break; }
-            if (smr == null) return;
-
+            if (smr == null || colors == null || index >= colors.Length) return;
             var mpb = new MaterialPropertyBlock();
             smr.GetPropertyBlock(mpb);
             int propID = smr.sharedMaterial != null && smr.sharedMaterial.HasProperty(BaseColorID)

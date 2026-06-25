@@ -58,6 +58,20 @@ namespace VRT.Pilots.Trolley
         static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
         static readonly int ColorID     = Shader.PropertyToID("_Color");
 
+        TrolleyAvatarLoader _localLoader;
+
+        TrolleyAvatarLoader LocalLoader
+        {
+            get
+            {
+                if (_localLoader != null) return _localLoader;
+                if (playerIndex != TrolleyGameState.LocalAvatarConfigIndex) return null;
+                var self = FindObjectOfType<PlayerControllerSelf>();
+                _localLoader = self != null ? self.GetComponent<TrolleyAvatarLoader>() : null;
+                return _localLoader;
+            }
+        }
+
         void Start()
         {
             _skinToneBaseColors  = CaptureColors(skinToneButtons);
@@ -120,6 +134,7 @@ namespace VRT.Pilots.Trolley
 
             SetHighlight(masculineButton, isMasc);
             SetHighlight(feminineButton,  !isMasc);
+            LocalLoader?.Reload();
         }
 
         public void SelectSkinTone(int index)
@@ -129,6 +144,7 @@ namespace VRT.Pilots.Trolley
             HighlightSwatchGroup(skinToneButtons, _skinToneBaseColors, index);
             if (index < skinToneColors.Length)
                 TintPreviewChild("Body", skinToneColors[index]);
+            LocalLoader?.Reload();
         }
 
         public void SelectHairColor(int index)
@@ -138,6 +154,7 @@ namespace VRT.Pilots.Trolley
             HighlightSwatchGroup(hairColorButtons, _hairColorBaseColors, index);
             if (index < hairColors.Length)
                 TintPreviewChild("Hair", hairColors[index]);
+            LocalLoader?.Reload();
         }
 
         [ContextMenu("Debug: Log Wiring")]
