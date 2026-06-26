@@ -223,6 +223,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: SourceTop
+      value: 
+      objectReference: {fileID: 1357882038131043509}
+    - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: SourceBottom
+      value: 
+      objectReference: {fileID: 5334556276695526315}
+    - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
       propertyPath: m_hmdTrackingAction.m_Reference
       value: 
       objectReference: {fileID: -6847045601807617242, guid: c348712bda248c246b8c49b3db54643f, type: 3}
@@ -307,15 +315,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4586527751369899132, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.00002
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4586527751369899132, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.52526
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4586527751369899132, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4586527751369899132, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_LocalRotation.w
@@ -345,6 +353,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
+      propertyPath: SourceTop
+      value: 
+      objectReference: {fileID: 1357882038131043509}
+    - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
+      propertyPath: SourceBottom
+      value: 
+      objectReference: {fileID: 5334556276695526315}
     - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_hmdTrackingAction.m_UseReference
       value: 1
