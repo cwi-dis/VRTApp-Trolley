@@ -116,6 +116,25 @@ namespace VRT.Pilots.Trolley.Editor
             Undo.SetCurrentGroupName("Setup Humanoid Avatar Prefab");
             int undoGroup = Undo.GetCurrentGroup();
 
+            // 0. If a previous setup run exists, tear it down so this script is re-runnable.
+            //    Removes: SyncSkeletonToVRRig GO, VR Constraints GO, RigBuilder on modelGO.
+            //    SizeAdjust and PlayerRepresentationWirer on wrapperGO are left — their fields
+            //    will be updated below. The Animator's applyRootMotion stays false (harmless).
+            var existingSync = wrapperGO.GetComponentInChildren<SyncSkeletonToVRRig>(true);
+            if (existingSync != null)
+            {
+                Debug.Log("[TrolleyAvatarPrefabSetup] Existing setup found — removing before re-running.");
+                Undo.DestroyObjectImmediate(existingSync.gameObject);
+
+                var vrConstraintsTransform = modelGO.transform.Find("VR Constraints");
+                if (vrConstraintsTransform != null)
+                    Undo.DestroyObjectImmediate(vrConstraintsTransform.gameObject);
+
+                var existingRigBuilder = modelGO.GetComponent<RigBuilder>();
+                if (existingRigBuilder != null)
+                    Undo.DestroyObjectImmediate(existingRigBuilder);
+            }
+
             // 1. RigBuilder on the model GO (where the Animator is)
             var rigBuilder = modelGO.GetComponent<RigBuilder>();
             if (rigBuilder == null)
@@ -195,16 +214,6 @@ namespace VRT.Pilots.Trolley.Editor
             //    matching P_Mannequin's layout).
             //    rigTargets → skeleton bones / IK targets.
             //    vrTargets left null — PlayerRepresentationWirer fills them at runtime.
-            var existingSync = wrapperGO.GetComponentInChildren<SyncSkeletonToVRRig>();
-            if (existingSync != null)
-            {
-                Debug.LogError("[TrolleyAvatarPrefabSetup] A SyncSkeletonToVRRig already exists under this GO. " +
-                               "Revert to the pre-setup prefab before re-running.");
-                Undo.CollapseUndoOperations(undoGroup);
-                Undo.RevertAllInCurrentGroup();
-                return;
-            }
-
             var syncGO = new GameObject("SyncSkeletonToVRRig");
             Undo.RegisterCreatedObjectUndo(syncGO, "Create SyncSkeletonToVRRig");
             syncGO.transform.SetParent(wrapperGO.transform, false);
@@ -281,16 +290,17 @@ namespace VRT.Pilots.Trolley.Editor
 
         /// <summary>
         /// Creates a Two Bone IK solver child under <paramref name="parent"/>.
-        /// Returns the IK Target transform, which SyncSkeletonToVRRig will drive at runtime.
+        /// Always returns the IK Target transform — SyncSkeletonToVRRig MUST drive the same
+        /// transform that TwoBoneIK reads, or the animation stream won't see position updates.
         /// <paramref name="hintOffset"/> is added to the mid-bone world position to place the
         /// pole-vector hint; defaults to Vector3.back * 0.2f (elbows-back for arms).
         /// For legs, pass Vector3.forward * 0.3f (knees-forward).
         /// </summary>
         /// <param name="addRotationOffsetGO">
-        /// When true (arms), inserts a "Offset" GO between the IK container and the IK Target.
-        /// SyncSkeletonToVRRig drives the Offset GO (world rotation = controller rotation).
-        /// The IK Target is a child of Offset; its localRotation is the hand-angle correction
-        /// and can be dialled in manually in the prefab Inspector during Play Mode.
+        /// When true (arms), inserts an "Offset" GO between the IK container and the IK Target.
+        /// The Offset GO is NOT driven by SyncSkeletonToVRRig — its localRotation can be used
+        /// as a hand-angle correction baked into the prefab, applied by a separate post-Map script.
+        /// SyncSkeletonToVRRig drives the IK Target directly (returned value).
         /// </param>
         static Transform CreateTwoBoneIK(Transform parent, string label,
             Transform root, Transform mid, Transform tip,
@@ -301,11 +311,13 @@ namespace VRT.Pilots.Trolley.Editor
             ikGO.transform.SetParent(parent, false);
             var ik = ikGO.AddComponent<TwoBoneIKConstraint>();
 
-            // For arms: add an Offset GO driven by SyncSkeletonToVRRig (controller rotation).
-            // The IK Target is a child; its localRotation bakes the hand-angle correction.
-            // For legs: Target sits directly under the IK GO (rotation weight = 0, so no offset needed).
+            // For arms: add an Offset GO as a parent of the IK Target.
+            // Its localRotation can hold a hand-angle correction (for future use).
+            // IMPORTANT: SyncSkeletonToVRRig drives the TARGET directly (not the Offset), because
+            // the animation stream only syncs transforms directly referenced by constraints.
+            // Moving the Offset GO never reaches the stream; the Target must be moved itself.
+            // For legs: Target sits directly under the IK GO (no Offset, rotation weight = 0).
             Transform targetParent;
-            Transform rigTarget; // what SyncSkeletonToVRRig.rigTarget will point to
             if (addRotationOffsetGO)
             {
                 var offsetGO = new GameObject($"{label} Offset");
@@ -313,12 +325,10 @@ namespace VRT.Pilots.Trolley.Editor
                 offsetGO.transform.SetParent(ikGO.transform, false);
                 offsetGO.transform.SetPositionAndRotation(tip.position, tip.rotation);
                 targetParent = offsetGO.transform;
-                rigTarget    = offsetGO.transform;
             }
             else
             {
                 targetParent = ikGO.transform;
-                rigTarget    = null; // filled below after targetGO is created
             }
 
             var targetGO = new GameObject($"{label} Target");
@@ -327,8 +337,6 @@ namespace VRT.Pilots.Trolley.Editor
             if (!addRotationOffsetGO)
                 targetGO.transform.SetPositionAndRotation(tip.position, tip.rotation);
             // addRotationOffsetGO case: targetGO inherits world pose from Offset (localPos=0, localRot=identity)
-
-            if (rigTarget == null) rigTarget = targetGO.transform;
 
             var hintGO = new GameObject($"{label} Hint");
             Undo.RegisterCreatedObjectUndo(hintGO, $"Create {label} Hint");
@@ -350,7 +358,11 @@ namespace VRT.Pilots.Trolley.Editor
             ik.data = data;
             EditorUtility.SetDirty(ik);
 
-            return rigTarget;
+            // Always return the IK Target (targetGO), not the Offset GO.
+            // SyncSkeletonToVRRig.rigTarget MUST be the same GO that TwoBoneIK reads
+            // (data.target = targetGO). Moving a parent of the target doesn't propagate
+            // to the animation stream — only directly-referenced transforms are synced.
+            return targetGO.transform;
         }
 
         /// <summary>
