@@ -148,9 +148,6 @@ namespace VRT.Pilots.Trolley
             foreach (var loader in FindObjectsOfType<TrolleyAvatarLoader>())
                 if (loader.GetComponent<PlayerControllerSelf>() == null)
                     loader.Reload();
-
-            if (msg.isDone)
-                readyTrigger.Trigger();
         }
 
         static void SetStatus(TextMeshProUGUI label, string text)
