@@ -280,10 +280,10 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3497855808629622140}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a582194c44ffa164ebf10df6c8c3985c, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: VRT.Pilots.Common::SyncSkeletonToVRRig
   head:
     vrTarget: {fileID: 0}
