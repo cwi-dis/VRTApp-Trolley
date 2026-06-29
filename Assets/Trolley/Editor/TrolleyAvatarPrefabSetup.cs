@@ -174,6 +174,7 @@ namespace VRT.Pilots.Trolley.Editor
 
             var bodyConstraint = bodyConstraintGO.AddComponent<MultiPositionConstraint>();
             bodyConstraint.weight = 1f;
+            bodyConstraint.enabled = true; // guard: Play Mode baking can leave this disabled
             // Wire via SerializedObject — WeightedTransformArray (m_SourceObjects) is a
             // fixed-size struct (m_Length + m_Item0..7); direct .Add() is unreliable.
             var bodySO = new SerializedObject(bodyConstraint);
