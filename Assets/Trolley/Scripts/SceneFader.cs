@@ -15,6 +15,8 @@ namespace VRT.Pilots.Trolley
     {
         public static SceneFader Instance { get; private set; }
 
+        [Tooltip("When true, no canvas is created and no visual effect is shown; only the timing and callbacks are active.")]
+        [SerializeField] bool invisible = true;
         [SerializeField] float fadeDuration = 0.8f;
         [SerializeField] float canvasDistance = 0.3f;
         [Tooltip("Seconds to hold black before fading in on scene load.")]
@@ -31,7 +33,7 @@ namespace VRT.Pilots.Trolley
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            CreateOverlay();
+            if (!invisible) CreateOverlay();
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -88,9 +90,12 @@ namespace VRT.Pilots.Trolley
 
         IEnumerator IntroFadeIn()
         {
-            Color c = _overlay.color;
-            c.a = 1f;
-            _overlay.color = c;
+            if (_overlay != null)
+            {
+                Color c = _overlay.color;
+                c.a = 1f;
+                _overlay.color = c;
+            }
             yield return new WaitForSeconds(introHoldDuration);
             yield return DoFade(1f, 0f, null);
             OnFadeInComplete?.Invoke();
@@ -100,16 +105,23 @@ namespace VRT.Pilots.Trolley
         {
             _fading = true;
             float t = 0f;
-            Color c = _overlay.color;
             while (t < fadeDuration)
             {
                 t += Time.deltaTime;
-                c.a = Mathf.Lerp(from, to, t / fadeDuration);
-                _overlay.color = c;
+                if (_overlay != null)
+                {
+                    Color c = _overlay.color;
+                    c.a = Mathf.Lerp(from, to, t / fadeDuration);
+                    _overlay.color = c;
+                }
                 yield return null;
             }
-            c.a = to;
-            _overlay.color = c;
+            if (_overlay != null)
+            {
+                Color c = _overlay.color;
+                c.a = to;
+                _overlay.color = c;
+            }
             _fading = false;
             onComplete?.Invoke();
         }
