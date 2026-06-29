@@ -3039,7 +3039,7 @@ PrefabInstance:
       objectReference: {fileID: 1547119119}
     - target: {fileID: 5125812228732580533, guid: 70947f27b9ca243229f654361ec311db, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5263243349346785365, guid: 70947f27b9ca243229f654361ec311db, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

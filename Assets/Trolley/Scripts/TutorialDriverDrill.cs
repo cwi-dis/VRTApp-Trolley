@@ -106,8 +106,14 @@ namespace VRT.Pilots.Trolley
         int _correct;
         int _total;
 
+        TrolleyTimingConfig _cfg;
+        // Approach speed scaled to the active decision window, so the tutorial drives at the same pace as
+        // the real Driver scene (a longer window → slower drive). Falls back to the raw value with no config.
+        float EffectiveApproachSpeed => approachSpeed * (_cfg != null ? _cfg.SpeedFactor : 1f);
+
         void Start()
         {
+            _cfg = TrolleyTimingConfig.Load();
             _total = Sequence.Length;
             UpdateScore();
             if (scoreText != null) scoreText.gameObject.SetActive(false); // counter shown only during the reps
@@ -238,7 +244,7 @@ namespace VRT.Pilots.Trolley
         // since the last reset (≈ its displacement from the start pose, so the fork fires at the right place).
         float DriveStep()
         {
-            float dist = approachSpeed * Time.deltaTime;
+            float dist = EffectiveApproachSpeed * Time.deltaTime;
             environment.Translate(approachDirection.normalized * dist, Space.World);
             _traveled += dist;
             return dist;
