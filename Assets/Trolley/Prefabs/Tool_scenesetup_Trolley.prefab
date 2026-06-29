@@ -1,5 +1,58 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4408765956082665018
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8644310923046033676}
+  - component: {fileID: 2671461739910178171}
+  m_Layer: 0
+  m_Name: Invisible floor for users
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8644310923046033676
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4408765956082665018}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3, y: 0.5, z: -1.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7559923164493534906}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2671461739910178171
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4408765956082665018}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 0.1, z: 3}
+  m_Center: {x: 0, y: -0.1, z: 0}
 --- !u!1001 &6128940918802620533
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -88,6 +141,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3369804644569452180, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
       insertIndex: -1
       addedObject: {fileID: 97884611535909518}
+    - targetCorrespondingSourceObject: {fileID: 4459796575924025039, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8644310923046033676}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2108755284289232093, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
       insertIndex: -1
@@ -118,6 +174,11 @@ MonoBehaviour:
   configurationPrefab: {fileID: 8194004708595785846, guid: e71ab000118fc4644924cc8a8d34888b, type: 3}
   orchestratorPrefab: {fileID: 3991120480309365947, guid: 59713b3d4e69349238a95c35e9f8994b, type: 3}
   m_directInteractionDisabled: 0
+--- !u!4 &7559923164493534906 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4459796575924025039, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}
+  m_PrefabInstance: {fileID: 6128940918802620533}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8920975773688409825 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3369804644569452180, guid: 9908dcf284aef0e4a8ba245dc5f0f080, type: 3}

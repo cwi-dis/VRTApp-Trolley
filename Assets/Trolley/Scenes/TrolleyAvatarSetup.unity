@@ -2694,6 +2694,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
+    - target: {fileID: 7559923164493534906, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7862545325109821087, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -3982,6 +3986,7 @@ MonoBehaviour:
     scenarioOrder: []
     scenarioOrderLabel: 
     questionnaireInVR: 1
+    decisionWindow: 0
   avatarConfigs:
   - bodyType: 
     skinToneIndex: 0
