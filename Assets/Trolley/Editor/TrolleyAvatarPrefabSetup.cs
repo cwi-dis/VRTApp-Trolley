@@ -189,12 +189,15 @@ namespace VRT.Pilots.Trolley.Editor
             EditorUtility.SetDirty(bodyConstraint);
 
             // 3. Two Bone IK for each arm and leg (children of VR Constraints)
+            // Hint offset is back and down so elbows bend naturally behind and below the shoulder.
+            // Only world position matters for the pole vector — rotation of the hint GO is ignored.
+            var armHintOffset = Vector3.back * 0.7f + Vector3.down * 0.4f;
             var leftArmTarget  = CreateTwoBoneIK(vrConstraintsGO.transform, "Left Arm IK",
                                      leftUpperArm, leftLowerArm, leftHandBone,
-                                     addRotationOffsetGO: true);
+                                     hintOffset: armHintOffset, addRotationOffsetGO: true);
             var rightArmTarget = CreateTwoBoneIK(vrConstraintsGO.transform, "Right Arm IK",
                                      rightUpperArm, rightLowerArm, rightHandBone,
-                                     addRotationOffsetGO: true);
+                                     hintOffset: armHintOffset, addRotationOffsetGO: true);
 
             // Leg IK targets are physics-driven (gravity + collider) so feet rest on the floor.
             // Hint offset is forward (+Z) so knees bend naturally in front of the body.
@@ -294,8 +297,8 @@ namespace VRT.Pilots.Trolley.Editor
         /// Always returns the IK Target transform — SyncSkeletonToVRRig MUST drive the same
         /// transform that TwoBoneIK reads, or the animation stream won't see position updates.
         /// <paramref name="hintOffset"/> is added to the mid-bone world position to place the
-        /// pole-vector hint; defaults to Vector3.back * 0.2f (elbows-back for arms).
-        /// For legs, pass Vector3.forward * 0.3f (knees-forward).
+        /// pole-vector hint; only position matters, hint rotation is ignored by the solver.
+        /// For arms pass Vector3.back * 0.7f + Vector3.down * 0.4f; for legs Vector3.forward * 0.3f.
         /// </summary>
         /// <param name="addRotationOffsetGO">
         /// When true (arms), inserts an "Offset" GO between the IK container and the IK Target.
