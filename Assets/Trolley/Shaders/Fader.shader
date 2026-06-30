@@ -1,6 +1,6 @@
 // Full-screen fade overlay. Works in both URP and BIRP.
 // CameraFader.cs drives _Color.a (0=transparent, 1=opaque black).
-// Migrated from the package's built-in-only Fader.shader; see VR2Gather issue #NNN.
+// Migrated from the package's built-in-only Fader.shader; see VR2Gather issue #333.
 Shader "VRT/Fader"
 {
     Properties
