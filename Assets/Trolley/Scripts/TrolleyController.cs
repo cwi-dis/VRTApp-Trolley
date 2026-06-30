@@ -130,7 +130,6 @@ namespace VRT.Pilots.Trolley
         void OnNarrationComplete()
         {
             _narrationEndTime = DateTime.Now;
-            _windowStartTime  = DateTime.Now;
             _attempts.Clear();
             _state = State.Decision;
             trainController?.StartApproach();
@@ -141,9 +140,22 @@ namespace VRT.Pilots.Trolley
             {
                 // Solo (no session) or network master: own the timer
                 if (hasSession) comm.SendTypeEventToAll(new TrolleyTimerStartMessage());
-                decisionTimer.StartCountdown();
+                StartDecisionWindow();
             }
             // non-master starts timer on receipt of TrolleyTimerStartMessage
+        }
+
+        /// <summary>
+        /// Opens the decision window on this client. _windowStartTime is bound to the
+        /// actual countdown start (the zero point of the logged reaction time), not to
+        /// narration end — so on the non-master it correctly reflects the network-delayed
+        /// timer start. On solo/master the two coincide, since the timer starts the instant
+        /// narration ends.
+        /// </summary>
+        void StartDecisionWindow()
+        {
+            _windowStartTime = DateTime.Now;
+            decisionTimer.StartCountdown();
         }
 
         // ── Timer expired — read final toggle state or default to inaction ──
@@ -248,7 +260,7 @@ namespace VRT.Pilots.Trolley
         void OnTimerStart(TrolleyTimerStartMessage msg)
         {
             if (msg.SenderId == VRTOrchestratorSingleton.Comm.SelfUser?.userId) return;
-            decisionTimer.StartCountdown();
+            StartDecisionWindow();
         }
 
     }

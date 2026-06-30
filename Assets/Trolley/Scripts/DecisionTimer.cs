@@ -5,11 +5,17 @@ using TMPro;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// World-space countdown timer. Shown during the decision window.
-    /// Fires OnTimerExpired when time runs out (inaction outcome).
+    /// Decision-window countdown. Drives the window timing only: fires OnTimerExpired
+    /// when time runs out (inaction outcome) and exposes GetElapsedTime() for reaction-time
+    /// logging. The visible HUD readout is hidden by default — the approaching train is the
+    /// participant's time-pressure cue (see protocol). Set showHud to re-enable the numeric
+    /// readout for debugging or piloting.
     /// </summary>
     public class DecisionTimer : MonoBehaviour
     {
+        [Tooltip("Show the numeric countdown HUD to the participant. Off by default — the " +
+                 "approaching train is the intended time-pressure cue. Enable only for debugging/piloting.")]
+        [SerializeField] bool showHud = false;
         [SerializeField] TextMeshProUGUI timerText;
         [SerializeField] float duration = 8f;
         [SerializeField] Color normalColor = Color.white;
@@ -53,7 +59,7 @@ namespace VRT.Pilots.Trolley
             if (!_running) return;
             _elapsed += Time.deltaTime;
             float remaining = Mathf.Max(0f, duration - _elapsed);
-            if (timerText != null)
+            if (showHud && timerText != null)
             {
                 timerText.text = remaining.ToString("F1");
                 timerText.color = remaining <= urgentThreshold ? urgentColor : normalColor;
@@ -68,6 +74,7 @@ namespace VRT.Pilots.Trolley
 
         void SetVisible(bool visible)
         {
+            visible = visible && showHud;
             if (timerText != null) timerText.gameObject.SetActive(visible);
             if (visible) PositionInFrontOfCamera();
         }
