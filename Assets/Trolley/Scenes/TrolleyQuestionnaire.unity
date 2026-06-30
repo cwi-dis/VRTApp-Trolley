@@ -17963,8 +17963,8 @@ PrefabInstance:
       value: c8a41bf0-dcd6-42e4-92ce-5a7c7b3c986c
       objectReference: {fileID: 0}
     - target: {fileID: 2955238660468023955, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
-      propertyPath: Mute
-      value: 1
+      propertyPath: m_Volume
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5209981462475131422, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_Name
