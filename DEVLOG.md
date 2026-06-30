@@ -8,6 +8,26 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 19 (2026-06-30) — Data pipeline hardening, questionnaire logic fix, arm IK fix (#58, #75, #76)
+
+**Context:** Post-first-experiment session focused on data logging reliability and two bug fixes surfaced by the experiment run.
+
+**Questionnaire logic fix — `2cafeb1` (#75):**
+- Practice questionnaire was incorrectly skipping the think-aloud reflection when `questionnaireInVR` was false. Full behaviour matrix: inVR+practice → reflection→Likert→done; inVR+real → reflection→many Likert→done; !inVR+practice → reflection→done; !inVR+real → reflection→paper-form prompt→done. Restructured `RunQuestionnaire()` so `ShowReflection()` is always called first.
+
+**Stats mirroring and DataLogger hardening — `cd77b70`, `38b3670`, `f0f0b7d`, `1d05f7d`, `039d1e9` (#58):**
+- Decision data and avatar selection now mirrored to the VR2Gather `stats:` output via `Cwipc.Statistics.Output()`, guarded by `#if VRT_WITH_STATS`.
+- `DataLogger` made always-on (removed `SetExportEnabled`, `StartSession` now private and called from `Awake()`). Moved from ResearcherSetup scene (no longer in flow) to `TrolleyAvatarSetup` scene as a DontDestroyOnLoad object.
+- `ResearcherSetupController` retired from session flow; `Awake()` logs error and disables the component if ever activated.
+- `TrolleyGameState.Awake()` detects duplicate instances (second session without quit) and sets `StaleSession = true`; `AvatarSetupController.Start()` shows an error message in that case.
+- Stats output file renamed from `stats-from-develop.json` to `stats.log`.
+- Issue #77 filed: `narrationEndTimestamp` and `windowStartTimestamp` are identical in all decisions — `_narrationEndTime` in `TrolleyController` is not recorded separately. Assigned to Suzy.
+
+**Arm IK elbow fix — `96a872f` (#76):**
+- Both avatar prefabs had elbows bending upward. Root cause: the Two Bone IK pole-vector hint was placed almost at the elbow (Vector3.back * 0.2f in world space), giving a near-degenerate pole vector. Fixed manually in both prefabs, and `TrolleyAvatarPrefabSetup.cs` updated to use `Vector3.back * 0.7f + Vector3.down * 0.4f` for future re-runs.
+
+---
+
 ### Day 18 (2026-06-29–30) — Experiment prep: avatar constraint fixes, position adjustments, questionnaire mute (#71)
 
 **Context:** Branch `53-avatars` was merged and tagged `exp-20260629.1` — the first experiment run. The day started with final avatar constraint fixes, then in-editor position adjustments for sitting players, and closed with a quick fix to mute cross-participant audio in the questionnaire scene.
