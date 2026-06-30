@@ -8,6 +8,29 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 20 (2026-06-30) — Decision-window data fix, timer/narration UI removal, seat–button layout (#77, #18)
+
+**Context:** Post-first-experiment iteration. Committed to `master` as `42e10ce`.
+
+**`windowStartTimestamp` fix — `42e10ce` (#77):**
+- `TrolleyController.OnNarrationComplete()` set `_narrationEndTime` and `_windowStartTime` to `DateTime.Now` on consecutive lines, so the two were identical by construction in every decision log. Moved `_windowStartTime` into a new `StartDecisionWindow()` helper that sets it immediately before `decisionTimer.StartCountdown()`, and routed both the master/solo path (`OnNarrationComplete`) and non-master path (`OnTimerStart`) through it. `windowStartTimestamp` now marks the actual countdown start on each client — the zero point `responseTimeMs` is measured from. Solo/master: still ~identical to narration end (correct by design — window + train both start then); non-master: now reflects the network-delayed timer start instead of being mislogged.
+- Posted a follow-up on #77 flagging two related data issues for Jack: `responseTimeMs` is effectively constant (~window duration) because the decision only commits at timer expiry, and press timestamps (UTC Unix ms) vs window timestamps (local string) are in different time bases. Left for Jack to review before changing the stats format.
+
+**Decision-timer HUD removed — `42e10ce` (#18):**
+- Added a `showHud` flag to `DecisionTimer` (default off) gating the numeric countdown text. Countdown, `OnTimerExpired`, and reaction-time logging are unchanged — the approaching train is now the only time-pressure cue (matches the moral-dilemma VR literature, which uses environmental pressure, not a visible counter).
+
+**"Narration playing…" label — `42e10ce`:**
+- The static `StatusText` TMP label (cosmetic, not referenced by any script, not synced to narration) was still showing in Driver/Selfharm/TutorialDriver. Deactivated the GameObject in those three scenes, matching the two Bystander scenes where it was already off.
+
+**Seat–button centering and layout — `42e10ce`:**
+- Found the Driver track buttons sat ~10 cm left of the seat midpoint (favouring Player1: 0.40 m vs 0.60 m horizontal reach). Centred Button_TrackA/B on the seat midpoint (x=0.059) in Driver/Selfharm/TutorialDriver (shift +0.10175 in world x, spacing and −20° tilt preserved).
+- Decided to leave both players where they are: solo player stays at the left seat so solo is physically identical to a paired Player1 (only the partner's presence differs — the IV). No runtime reposition.
+- Added `TrolleyBystanderLayoutAdapt.cs` (`Trolley > Adapt Driver Layout`): reads the Driver seat↔button geometry from the live hierarchy and reproduces it in Bystander + TutorialBystander (seats 1.0 m apart, symmetric around the console buttons), keeping Player1's height. Ran it — bystander seats now 1.0 m apart (−3.59437 / −2.59437). Vertical reach in bystander is ~10 cm shorter than driver (lower seat + lower console); left as-is since the environments differ and the seat height is monitor-tuned.
+
+**Position analysis note:** Player/button transforms live in nested prefab instances (package `Tool_scenesetup` → `Tool_scenesetup_Trolley` variant → scene instance) with fileID remapping, so static scene-file parsing is unreliable for seats — use the live-hierarchy editor tools instead.
+
+---
+
 ### Day 19 (2026-06-30) — Data pipeline hardening, questionnaire logic fix, arm IK fix (#58, #75, #76)
 
 **Context:** Post-first-experiment session focused on data logging reliability and two bug fixes surfaced by the experiment run.
