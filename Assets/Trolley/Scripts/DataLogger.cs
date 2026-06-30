@@ -35,17 +35,22 @@ namespace VRT.Pilots.Trolley
         {
             _sessionID = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             _sessionStarted = true;
-            if (!_exportEnabled) return;
+            if (_exportEnabled)
+            {
+                string dir = Application.persistentDataPath;
+                _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
 
-            string dir = Application.persistentDataPath;
-            _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
+                WriteHeader(_decisionPath,
+                    "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
+                    "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
+                    "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
 
-            WriteHeader(_decisionPath,
-                "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
-                "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
-                "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
-
-            Debug.Log($"DataLogger: export ON — writing to {dir}");
+                Debug.Log($"DataLogger: export ON — writing to {dir}");
+            }
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyDataLogger",
+                $"event=session_start, sessionID={_sessionID}, csvPath={_decisionPath ?? "disabled"}");
+#endif
         }
 
         public void LogDecision(
@@ -66,6 +71,18 @@ namespace VRT.Pilots.Trolley
             Debug.Log($"[Decision] {line}");
             if (_exportEnabled && _sessionStarted)
                 AppendLine(_decisionPath, line);
+
+#if VRT_WITH_STATS
+            string buttonPressChoice    = attempts != null && attempts.Count > 0
+                ? string.Join("|", attempts.ConvertAll(a => a.choice)) : "none";
+            string buttonPressTimestamp = attempts != null && attempts.Count > 0
+                ? string.Join("|", attempts.ConvertAll(a => a.unixMs.ToString())) : "none";
+            Cwipc.Statistics.Output("TrolleyDataLogger",
+                $"event=decision, sessionID={_sessionID}, scenario={scenario}, decision={decision}, " +
+                $"narrationEndTimestamp={StampISO(narrationEndTime)}, " +
+                $"windowStartTimestamp={StampISO(windowStartTime)}, " +
+                $"buttonPressChoice={buttonPressChoice}, buttonPressTimestamp={buttonPressTimestamp}");
+#endif
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -99,6 +116,7 @@ namespace VRT.Pilots.Trolley
 
         string Now()   => DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         string Stamp(DateTime dt) => dt.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        string StampISO(DateTime dt) => dt.ToString("yyyy-MM-ddTHH:mm:ss.fff");
         string CSV(string s) => $"\"{s?.Replace("\"", "\"\"") ?? ""}\"";
     }
 }

@@ -124,6 +124,18 @@ namespace VRT.Pilots.Trolley
 
         void ExecuteLoad()
         {
+#if VRT_WITH_STATS
+            if (VRTPilotConfig.InstanceExists())
+            {
+                int idx = TrolleyGameState.LocalAvatarConfigIndex;
+                var configs = VRTPilotConfig.Instance.avatarConfigs;
+                var ac = configs != null && idx < configs.Length ? configs[idx] : null;
+                if (ac != null)
+                    Cwipc.Statistics.Output("TrolleyAvatarSetup",
+                        $"event=avatar_confirmed, playerIndex={(idx == 0 ? 1 : 2)}, " +
+                        $"bodyType={ac.bodyType}, skinToneIndex={ac.skinToneIndex}, hairColorIndex={ac.hairColorIndex}");
+            }
+#endif
             string next = TrolleyGameState.Instance?.NextScene() ?? "TrolleyTutorialDriver";
             PilotController.Instance.LoadNewScene(next);
         }
