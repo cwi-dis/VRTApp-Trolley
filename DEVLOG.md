@@ -8,6 +8,48 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 18 (2026-06-29–30) — Experiment prep: avatar constraint fixes, position adjustments, questionnaire mute (#71)
+
+**Context:** Branch `53-avatars` was merged and tagged `exp-20260629.1` — the first experiment run. The day started with final avatar constraint fixes, then in-editor position adjustments for sitting players, and closed with a quick fix to mute cross-participant audio in the questionnaire scene.
+
+**Avatar constraint fixes — `5142296`, `56429f3` (53-avatars):**
+- **Body Constraint disabled** (`MultiPositionConstraint`) on both avatar prefabs — without it, the Humanoid Animator resets hips to T-pose every frame and `SyncSkeletonToVRRig.neck.Map()` accumulates a delta each frame, sending hips to ~y=42.5 m after ~10 seconds in VR. Enabled `MultiPositionConstraint` on both prefabs.
+- **Female TwoBoneIK all disabled** — all four `TwoBoneIKConstraint`s on `P_Avatar_Trolley_Female` were also disabled, leaving it with no IK at all. Enabled all four.
+- Setup script now explicitly sets `MultiPositionConstraint.enabled = true` after `AddComponent` to prevent Play Mode baking from leaving it disabled in the prefab again.
+
+**Position adjustments for sitting players — `e24c31c`, `fe9c89c`, `ca44cfd`, `9461fa6` (master):**
+- Player spawn heights in `Tool_scenesetup_Trolley.prefab` adjusted for seated participants — now correct for Driver, Driver Tutorial, and Self-harm scenes.
+- Additional position tweaks to `TrolleyBystander` and `TrolleyDriver` scenes.
+- "Banana Man" placeholder asset disabled in `TrolleyDriver`.
+- Bystander tutorial player positions fixed.
+
+**Experiment run:** `53-avatars` merged into `master`, tagged `exp-20260629.1`.
+
+**Questionnaire audio mute — `007b9d5` (#71, 2026-06-30):**
+- Participants should not hear each other during the questionnaire, but microphones must stay on for local `RecordUserVoice` recording.
+- Fix: set `AudioSource.mute = true` on the `Voice` child of the `P_Player_Trolley` instance embedded in `Tool_scenesetup_Trolley` within the questionnaire scene. `SessionPlayersManager.PlayerPrefab` points to this in-scene instance, so every `Instantiate(PlayerPrefab)` copies the mute flag. `VoicePipelineOther.Init()` only sets `audioSource.enabled = true`, never clears `mute` — flag survives initialisation. Confirmed working.
+
+---
+
+### Day 17 (2026-06-28) — Avatar debugging: female tracking dead, hand pose, barrier double-fire, SizeAdjust workaround
+
+**Context:** Pre-experiment debugging session on `53-avatars`. Four fixes, all on the avatar prefabs and `AvatarSetupController`.
+
+**Female avatar completely unresponsive to VR tracking — `10a549f`:**
+- `SyncSkeletonToVRRig` had been left disabled on `P_Avatar_Trolley_Female` after an IK sanity check (the check requires temporarily disabling it). The component was never re-enabled before applying prefab overrides.
+- Fix: re-enabled in the prefab. Added a warning to `CLAUDE.md` avatar workflow: after a sanity check, re-enable all three components (`SyncSkeletonToVRRig`, `SizeAdjust`, `PlayerRepresentationWirer`) before applying overrides — a disabled `SyncSkeletonToVRRig` in the saved prefab makes the avatar completely unresponsive.
+
+**Hand pose fix — `46fa59a`:**
+- `P_Self_Player_Trolley` had `leftHand`/`rightHand` tracking targets pointing to the raw `Left/Right Controller` transforms. Switched to `RiggingAttachPointLeftHand`/`RiggingAttachPointRightHand`, which are calibrated to the actual wrist position and orientation. Fixes hand pose on both avatars. Ref: VR2Gather#332.
+
+**Avatar selection barrier firing on first Confirm — `b7c4ad9`:**
+- The barrier that waits for both players to confirm their avatar was firing after only one player confirmed. Root cause: `OnAvatarUpdate` was calling `readyTrigger.Trigger()` when it received the partner's `isDone` message, so the local barrier received two triggers (one from local `OnLocalConfirm`, one echoed back via the partner). Fix: removed the `readyTrigger.Trigger()` call from `OnAvatarUpdate` — the barrier is now driven solely by each player's own `OnLocalConfirm()`.
+
+**SizeAdjust disabled as visibility workaround — `d4513a4`:**
+- Avatars were not visible on the other player's machine (or on a non-VR desktop). Disabled `SizeAdjust` on both `P_Avatar_Trolley_Male` and `P_Avatar_Trolley_Female` as a temporary diagnostic step to isolate the cause.
+
+---
+
 ### Day 15 (2026-06-23) — Pilot fixes: tutorial flow, questionnaire matrix, narration levels
 
 **Context:** First working session after the Jun 22 pilot with Jack. Worked through issues #59 (tutorial
