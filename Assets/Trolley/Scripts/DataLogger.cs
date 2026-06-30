@@ -7,9 +7,9 @@ using UnityEngine;
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Singleton that writes decision data to CSV.
-    /// Call StartSession() from ResearcherSetupController when Begin Study is pressed.
-    /// If exportEnabled is false, data is only logged to the console.
+    /// Singleton that writes decision data to CSV and to the stats: output.
+    /// Created in the ResearcherSetup scene; survives scene loads via DontDestroyOnLoad.
+    /// Session starts automatically on Awake.
     /// </summary>
     public class DataLogger : MonoBehaviour
     {
@@ -17,8 +17,6 @@ namespace VRT.Pilots.Trolley
 
         public string SessionID => _sessionID;
 
-        bool _exportEnabled = false;
-        bool _sessionStarted = false;
         string _sessionID;
         string _decisionPath;
 
@@ -27,29 +25,25 @@ namespace VRT.Pilots.Trolley
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            StartSession();
         }
 
-        public void SetExportEnabled(bool enabled) => _exportEnabled = enabled;
-
-        public void StartSession()
+        void StartSession()
         {
             _sessionID = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            _sessionStarted = true;
-            if (_exportEnabled)
-            {
-                string dir = Application.persistentDataPath;
-                _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
 
-                WriteHeader(_decisionPath,
-                    "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
-                    "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
-                    "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
+            string dir = Application.persistentDataPath;
+            _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
 
-                Debug.Log($"DataLogger: export ON — writing to {dir}");
-            }
+            WriteHeader(_decisionPath,
+                "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
+                "scenarioOrder,avatarConfig,scenario,decision,responseTimeMs," +
+                "narrationEndTimestamp,windowStartTimestamp,windowEndTimestamp,buttonPresses");
+
+            Debug.Log($"DataLogger: writing to {_decisionPath}");
 #if VRT_WITH_STATS
             Cwipc.Statistics.Output("TrolleyDataLogger",
-                $"event=session_start, sessionID={_sessionID}, csvPath={_decisionPath ?? "disabled"}");
+                $"event=session_start, sessionID={_sessionID}, csvPath={_decisionPath}");
 #endif
         }
 
@@ -69,8 +63,7 @@ namespace VRT.Pilots.Trolley
                 $"{CSV(pressesStr)}";
 
             Debug.Log($"[Decision] {line}");
-            if (_exportEnabled && _sessionStarted)
-                AppendLine(_decisionPath, line);
+            AppendLine(_decisionPath, line);
 
 #if VRT_WITH_STATS
             string buttonPressChoice    = attempts != null && attempts.Count > 0

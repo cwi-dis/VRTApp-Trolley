@@ -165,7 +165,6 @@ namespace VRT.Pilots.Trolley
         void ToggleExport()
         {
             _exportEnabled = !_exportEnabled;
-            DataLogger.Instance?.SetExportEnabled(_exportEnabled);
             UpdateExportButton();
         }
 
@@ -192,7 +191,6 @@ namespace VRT.Pilots.Trolley
 
         void BeginStudy()
         {
-            DataLogger.Instance?.StartSession();
             researcherPanel.SetActive(false);
             beginStudyButton.interactable = false;
             beginStudyNetworkTrigger.Trigger();
