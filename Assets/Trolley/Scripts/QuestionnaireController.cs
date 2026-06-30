@@ -174,10 +174,11 @@ namespace VRT.Pilots.Trolley
         {
             bool inVR = !VRTPilotConfig.InstanceExists() || VRTPilotConfig.Instance.researcherConfig.questionnaireInVR;
 
+            // Reflection (think-aloud) always runs — in VR and paper-form sessions alike.
+            yield return StartCoroutine(ShowReflection());
+
             if (inVR)
             {
-                yield return StartCoroutine(ShowReflection());
-
                 QuestionSet set = practiceMode && practiceQuestionSet != null ? practiceQuestionSet : questionSet;
 
                 // Build the page list up front so the progress bar knows the total (solo = common pages,
@@ -204,10 +205,12 @@ namespace VRT.Pilots.Trolley
                                                                  set.postScenarioCommon.Length));
                 }
             }
-            else
+            else if (!practiceMode)
             {
+                // Paper form: ask participant to remove HMD and fill in the form, then continue.
                 yield return StartCoroutine(ShowPaperQuestionnairePrompt());
             }
+            // else: !inVR + practiceMode → reflection is the only exercise; no Likert, no paper prompt.
 
             if (!practiceMode)
                 _record.Save(outputFilename);
