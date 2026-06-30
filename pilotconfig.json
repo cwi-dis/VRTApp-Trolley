@@ -9,10 +9,20 @@
             "TrolleyDriver",
             "TrolleySelfharm"
         ],
-        "scenarioOrderLabel": "B→D→S"
+        "scenarioOrderLabel": "B→D→S",
+        "questionnaireInVR": false,
+        "decisionWindow": 0.0
     },
     "avatarConfigs": [
-        { "bodyType": "Masculine", "skinToneIndex": 3, "hairColorIndex": 4 },
-        { "bodyType": "Feminine", "skinToneIndex": 3, "hairColorIndex": 4 }
+        {
+            "bodyType": "Masculine",
+            "skinToneIndex": 0,
+            "hairColorIndex": 0
+        },
+        {
+            "bodyType": "Feminine",
+            "skinToneIndex": 0,
+            "hairColorIndex": 0
+        }
     ]
 }
