@@ -39,9 +39,17 @@ namespace VRT.Pilots.Trolley
         public string lastCompletedScenarioID = "";
         public string lastDecision = "";    // "action" or "inaction"
 
+        public static bool StaleSession { get; private set; }
+
         void Awake()
         {
-            if (Instance != null) { Destroy(gameObject); return; }
+            if (Instance != null)
+            {
+                Debug.LogError("[TrolleyGameState] A session is already active from a previous run. Please quit and relaunch the app to start a new session.");
+                StaleSession = true;
+                Destroy(gameObject);
+                return;
+            }
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
