@@ -94,7 +94,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.SizeAdjust
 --- !u!1 &2450538916529167779 stripped
 GameObject:
@@ -200,7 +200,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.SizeAdjust
 --- !u!4 &1303515139327603140 stripped
 Transform:
@@ -392,6 +392,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -23
       objectReference: {fileID: 0}
+    - target: {fileID: 4784694693146679587, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: 5fa9c994ab00f4c34a275c0017e6337d, type: 2}
     - target: {fileID: 5310506761917632293, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: leftHand
       value: 
@@ -675,6 +679,14 @@ PrefabInstance:
     - target: {fileID: 8547041187382052565, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -23
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652530868428180237, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: FadeDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8652530868428180237, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: startFadedOut
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
