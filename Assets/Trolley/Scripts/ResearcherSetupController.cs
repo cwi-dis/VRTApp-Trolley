@@ -46,6 +46,12 @@ namespace VRT.Pilots.Trolley
         bool _orderSelected     = false;
         bool _exportEnabled     = false;
 
+        void Awake()
+        {
+            Debug.LogError("[ResearcherSetupController] This component is no longer used and should not be active in any scene. Disabling.");
+            enabled = false;
+        }
+
         void Start()
         {
             if (!VRTPilotConfig.InstanceExists())

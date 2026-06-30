@@ -55,11 +55,20 @@ namespace VRT.Pilots.Trolley
 
         void Start()
         {
-            if (TrolleyGameState.Instance == null)
+            if (TrolleyGameState.Instance != null)
             {
-                new GameObject("TrolleyGameState").AddComponent<TrolleyGameState>();
-                Debug.LogWarning("[AvatarSetupController] TrolleyGameState not found — created with defaults.");
+                // A second session was started without quitting the app. The game state indices
+                // are stale and cannot be safely reused — refuse to proceed.
+                Debug.LogError("[AvatarSetupController] TrolleyGameState already exists from a previous session. Please quit and relaunch the app to run another session.");
+                const string msg = "ERROR: a session is already in progress.\nPlease quit and relaunch the app.";
+                SetStatus(statusTextA, msg);
+                SetStatus(statusTextB, msg);
+                if (confirmButtonA != null) confirmButtonA.interactable = false;
+                if (confirmButtonB != null) confirmButtonB.interactable = false;
+                return;
             }
+
+            new GameObject("TrolleyGameState").AddComponent<TrolleyGameState>();
 
             _isPaired = VRTPilotConfig.InstanceExists() && VRTPilotConfig.Instance.researcherConfig.IsPaired;
 
