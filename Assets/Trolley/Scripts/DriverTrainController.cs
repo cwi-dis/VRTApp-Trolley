@@ -67,7 +67,7 @@ namespace VRT.Pilots.Trolley
 
         void Awake() => _cfg = TrolleyTimingConfig.Load();
 
-        public override void StartApproach() => _approaching = true;
+        public override void DoStartApproach() => _approaching = true;
 
         public override void ExecuteAction()
         {

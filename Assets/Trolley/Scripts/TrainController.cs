@@ -34,7 +34,7 @@ namespace VRT.Pilots.Trolley
 
         void Awake() => _cfg = TrolleyTimingConfig.Load();
 
-        public override void StartApproach()
+        public override void DoStartApproach()
         {
             if (rail == null || rail.Splines.Count == 0) return;
             _current = rail.Splines[0];

@@ -153,6 +153,11 @@ namespace VRT.Pilots.Trolley
             }
             else yield return new WaitForSeconds(startDelay);
 
+            yield return StartCoroutine(ReadyToStartTutorial());
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyTutorialDriverDrill", "event=tutorial_start");
+#endif
+
             // ── Intro (buttons were already taught in the bystander tutorial) ──
             yield return StartCoroutine(PlayAndWait(introClip));
             yield return StartCoroutine(PlayAndWait(windowClip));
@@ -164,7 +169,7 @@ namespace VRT.Pilots.Trolley
             ResetEnvironment();   // start the first approach from the seat's start pose
             for (int i = 0; i < Sequence.Length; i++)
             {
-                yield return StartCoroutine(RunRound(Sequence[i]));
+                yield return StartCoroutine(RunRound(Sequence[i], i + 1));
                 // Between reps: keep the train rolling while we fade out, snap the world back under
                 // black, then fade in — so the train never visibly stops.
                 if (i < Sequence.Length - 1)
@@ -181,7 +186,7 @@ namespace VRT.Pilots.Trolley
 
         // ── Rock-blocker reps ──────────────────────────────────────────────────
 
-        IEnumerator RunRound(bool rocksOnMain)
+        IEnumerator RunRound(bool rocksOnMain, int roundNumber = 0)
         {
             // The environment is at its start pose (reset by the caller). Block one track with rocks:
             // main blocked → the answer is to divert.
@@ -191,6 +196,10 @@ namespace VRT.Pilots.Trolley
             // exactly as the real scenes do when their decision window opens.
             toggle.ApplyRemoteState(false);
             toggle.SetInteractionEnabled(true);
+            yield return StartCoroutine(ReadyToStartRound());
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyTutorialDriverDrill", $"event=round_start, round={roundNumber}");
+#endif
 
             float turned = 0f;
             bool resolved = false;
@@ -249,6 +258,12 @@ namespace VRT.Pilots.Trolley
             _traveled += dist;
             return dist;
         }
+
+        /// <summary>Called after the gate/settle and before the first instruction clip. Override to insert a sync barrier. Default: no-op.</summary>
+        protected virtual IEnumerator ReadyToStartTutorial() { yield break; }
+
+        /// <summary>Called just before each round's movement loop starts. Override to insert a sync barrier. Default: no-op.</summary>
+        protected virtual IEnumerator ReadyToStartRound() { yield break; }
 
         // Keep the train rolling forward while the screen fades out, snap the world back to its start pose
         // under full black (invisible), then fade in — still rolling. No visible stop, no teleport.

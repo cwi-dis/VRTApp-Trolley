@@ -122,8 +122,20 @@ namespace VRT.Pilots.Trolley
         {
             if (SceneFader.Instance != null)
                 SceneFader.Instance.OnFadeInComplete -= BeginNarration;
+            StartCoroutine(ReadyThenBeginNarration());
+        }
+
+        IEnumerator ReadyThenBeginNarration()
+        {
+            yield return StartCoroutine(ReadyToBeginNarration());
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyController", $"event=narration_start, scenario={scenarioID}");
+#endif
             narrationPlayer.Play();
         }
+
+        /// <summary>Called after the fade-in and before narration starts. Override to insert a sync barrier. Default: no-op.</summary>
+        protected virtual IEnumerator ReadyToBeginNarration() { yield break; }
 
         // ── Narration complete ─────────────────────────────────────────────
 
@@ -132,7 +144,7 @@ namespace VRT.Pilots.Trolley
             _narrationEndTime = DateTime.Now;
             _attempts.Clear();
             _state = State.Decision;
-            trainController?.StartApproach();
+            trainController?.ReadyToStartApproach();
             toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;
             bool hasSession = comm != null && comm.SelfUser != null;

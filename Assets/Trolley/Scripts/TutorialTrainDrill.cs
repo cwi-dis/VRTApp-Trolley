@@ -189,6 +189,11 @@ namespace VRT.Pilots.Trolley
             }
             else yield return new WaitForSeconds(startDelay);
 
+            yield return StartCoroutine(ReadyToStartTutorial());
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyTutorialTrainDrill", "event=tutorial_start");
+#endif
+
             // ── Round 1 — button familiarisation ──────────────────────────────
             yield return StartCoroutine(RunIntro());
             yield return StartCoroutine(RunButtonPractice());
@@ -199,11 +204,12 @@ namespace VRT.Pilots.Trolley
 
             // Three rounds, like the driver tutorial. Before each, a fresh train resets to the approach
             // point and a short "the next train is approaching" line plays as it appears — then it rolls.
-            foreach (bool isBlue in Sequence)
+            for (int i = 0; i < Sequence.Length; i++)
             {
+                bool isBlue = Sequence[i];
                 ResetTrainToStart(isBlue);
                 yield return StartCoroutine(PlayAndWait(approachingClip));
-                yield return StartCoroutine(RunRound(isBlue));
+                yield return StartCoroutine(RunRound(isBlue, i + 1));
             }
 
             if (scoreText != null)
@@ -323,12 +329,16 @@ namespace VRT.Pilots.Trolley
 
         // ── Round 2 ───────────────────────────────────────────────────────────
 
-        IEnumerator RunRound(bool isBlue)
+        IEnumerator RunRound(bool isBlue, int roundNumber = 0)
         {
             // The caller already placed/coloured the train at the approach point (so it "appeared" during
             // the approaching narration); re-affirm here so RunRound is also safe to enter directly.
             ResetTrainToStart(isBlue);
             toggle.SetInteractionEnabled(true);
+            yield return StartCoroutine(ReadyToStartRound());
+#if VRT_WITH_STATS
+            Cwipc.Statistics.Output("TrolleyTutorialTrainDrill", $"event=round_start, round={roundNumber}");
+#endif
 
             // The participant may press any time to ARM a divert, but the train only actually switches
             // tracks AT the diverting point (like a real rail switch) — and the correct/wrong sound plays
@@ -362,6 +372,12 @@ namespace VRT.Pilots.Trolley
 
             yield return new WaitForSeconds(interRoundDelay);
         }
+
+        /// <summary>Called after the gate/settle and before the first instruction clip. Override to insert a sync barrier. Default: no-op.</summary>
+        protected virtual IEnumerator ReadyToStartTutorial() { yield break; }
+
+        /// <summary>Called just before each round's movement loop starts. Override to insert a sync barrier. Default: no-op.</summary>
+        protected virtual IEnumerator ReadyToStartRound() { yield break; }
 
         // Colour the train for this round and place it at the approach point on the straight spline, ready
         // to roll, with the toggle back on the main track. Also calibrates the constant world speed used by
