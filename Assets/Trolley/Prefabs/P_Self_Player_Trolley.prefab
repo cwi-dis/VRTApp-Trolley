@@ -91,10 +91,10 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 6865256623237509829}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2450538916529167779}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.SizeAdjust
 --- !u!1 &2450538916529167779 stripped
 GameObject:
@@ -197,10 +197,10 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 7364077145387005540}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5275469266684992496}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.SizeAdjust
 --- !u!4 &1303515139327603140 stripped
 Transform:
@@ -536,6 +536,10 @@ PrefabInstance:
       propertyPath: movement.Array.size
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 6825110016853729052, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
+      propertyPath: m_hmdTrackingAction.m_Reference
+      value: 
+      objectReference: {fileID: -6847045601807617242, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     - target: {fileID: 6825110016853729052, guid: fceec8934b5ae4fdaa36454e0b30346f, type: 3}
       propertyPath: viewAdjusted.m_PersistentCalls.m_Calls.Array.size
       value: 7
