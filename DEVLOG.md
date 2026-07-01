@@ -8,6 +8,27 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 21 (2026-07-01) — Synchronised train start across clients (#68)
+
+**Context:** All scenario scenes and both tutorial scenes now wait for all clients to be ready before starting narration or train movement. Verified on two machines.
+
+**Approach — `23b669c`, `1372313`, `5157f14`:**
+
+Split `StartApproach()` on `TrainControllerBase` into `ReadyToStartApproach()` (the signal) and `DoStartApproach()` (the action), so a sync barrier can be inserted between them. Added equivalent coroutine hooks in `TrolleyController` (`ReadyToBeginNarration`) and both tutorial drills (`ReadyToStartTutorial`, `ReadyToStartRound`). All hooks were initially no-ops; a `Cwipc.Statistics.Output` call was added at each "actual start" moment for verification.
+
+**Barrier mechanism:**
+- Created `PFB_Barrier` prefab: root `NetworkTrigger` + `BarrierController`, child `Proceed NetworkTrigger`. Internal wiring (`OnTrigger → Trigger`, `OnAllReady → Proceed.Trigger`) is baked into the prefab. Two instances per scene — one per sync point.
+- `BarrierController` gained a `resetWhenDone` flag for the tutorial round barrier, which needs to fire 3× per scene.
+- `BarrierController.WaitFor(ready, proceed)` static coroutine: signals the ready trigger, yields until the proceed trigger fires. Null-safe — unset fields skip the barrier (solo behaviour unchanged).
+
+**Sync points per scene type:**
+- Real scenarios (Bystander, Driver, Self-harm): `NarrationBarrier` gates narration start; `ApproachBarrier` gates train movement start.
+- Tutorial scenes (Driver, Bystander): `TutorialBarrier` gates instruction start; `RoundBarrier` (`resetWhenDone=true`) gates each of the 3 drill rounds.
+
+Tested solo (barriers wired but null-safe path irrelevant) and on two machines. Stats log confirms `event=narration_start`, `event=approach_start`, `event=tutorial_start`, `event=round_start` fire at the correct moments.
+
+---
+
 ### Day 20 (2026-06-30) — Decision-window data fix, timer/narration UI removal, seat–button layout (#77, #18)
 
 **Context:** Post-first-experiment iteration. Committed to `master` as `42e10ce`.
