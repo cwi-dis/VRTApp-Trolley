@@ -32,8 +32,8 @@ namespace VRT.Pilots.Trolley
         {
             _sessionID = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
-            string dir = Application.persistentDataPath;
-            _decisionPath = Path.Combine(dir, $"decisions_{_sessionID}.csv");
+            _decisionPath = VRT.Core.VRTConfig.ConfigFilename(
+                $"decisions_{_sessionID}.csv", force: true, label: "DataLogger");
 
             WriteHeader(_decisionPath,
                 "timestamp,sessionID,playerIndex,bodyType,condition,relationshipType," +
