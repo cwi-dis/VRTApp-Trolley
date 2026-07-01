@@ -57,6 +57,14 @@ namespace VRT.Pilots.Trolley
                  "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
         [SerializeField] TutorialGate gate;
 
+        [Header("Sync Barriers")]
+        [Tooltip("PFB_Barrier instance: gates tutorial start (before instructions). Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger tutorialBarrierReady;
+        [SerializeField] NetworkTrigger tutorialBarrierProceed;
+        [Tooltip("PFB_Barrier instance (resetWhenDone=true): gates each round start. Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger roundBarrierReady;
+        [SerializeField] NetworkTrigger roundBarrierProceed;
+
         [Header("Rock blockers — one per track; the BLOCKED track is the one to avoid")]
         [Tooltip("Rocky barrier on the MAIN track. Shown when this round's answer is to divert.")]
         [SerializeField] GameObject mainTrackBlocker;
@@ -259,11 +267,15 @@ namespace VRT.Pilots.Trolley
             return dist;
         }
 
-        /// <summary>Called after the gate/settle and before the first instruction clip. Override to insert a sync barrier. Default: no-op.</summary>
-        protected virtual IEnumerator ReadyToStartTutorial() { yield break; }
+        protected virtual IEnumerator ReadyToStartTutorial()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(tutorialBarrierReady, tutorialBarrierProceed));
+        }
 
-        /// <summary>Called just before each round's movement loop starts. Override to insert a sync barrier. Default: no-op.</summary>
-        protected virtual IEnumerator ReadyToStartRound() { yield break; }
+        protected virtual IEnumerator ReadyToStartRound()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(roundBarrierReady, roundBarrierProceed));
+        }
 
         // Keep the train rolling forward while the screen fades out, snap the world back to its start pose
         // under full black (invisible), then fade in — still rolling. No visible stop, no teleport.

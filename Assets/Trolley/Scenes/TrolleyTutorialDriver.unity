@@ -984,6 +984,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c90179ac5981b4cbcac9a92fe826f3aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VRT.Pilots.Trolley.DecisionTimer
+  showHud: 0
   timerText: {fileID: 29091037}
   duration: 8
   normalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1106,6 +1107,97 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 2.8}
   m_SizeDelta: {x: 400, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1001 &290963218
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1368002221032570546, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: NetworkId
+      value: db472e4c-9008-477a-9fba-43c81bf519ba
+      objectReference: {fileID: 0}
+    - target: {fileID: 2105315302721874140, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: resetWhenDone
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5632880915238950663, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_Name
+      value: TutorialBarrier
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.68833
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8754965758834938333, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: NetworkId
+      value: 61d63f7a-1588-4290-8dd1-7596f39ff0d8
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+--- !u!114 &290963219 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8754965758834938333, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+  m_PrefabInstance: {fileID: 290963218}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a95615ea91f4334e865a3c5ff2b3a0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.NetworkTrigger
+--- !u!114 &290963220 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1368002221032570546, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+  m_PrefabInstance: {fileID: 290963218}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a95615ea91f4334e865a3c5ff2b3a0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.NetworkTrigger
 --- !u!21 &309182013
 Material:
   serializedVersion: 8
@@ -1622,6 +1714,7 @@ MonoBehaviour:
   OnAllReady:
     m_PersistentCalls:
       m_Calls: []
+  resetWhenDone: 0
 --- !u!114 &485046874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2159,6 +2252,10 @@ MonoBehaviour:
   branchRadius: 95
   toggle: {fileID: 706517640}
   gate: {fileID: 0}
+  tutorialBarrierReady: {fileID: 290963220}
+  tutorialBarrierProceed: {fileID: 290963219}
+  roundBarrierReady: {fileID: 1748331836}
+  roundBarrierProceed: {fileID: 1748331835}
   mainTrackBlocker: {fileID: 748407023}
   sideTrackBlocker: {fileID: 1697147978}
   narrationSource: {fileID: 1187929397}
@@ -4325,6 +4422,97 @@ Transform:
   - {fileID: 352243570}
   m_Father: {fileID: 2003322555}
   m_LocalEulerAnglesHint: {x: 0, y: 19.19, z: 0}
+--- !u!1001 &1748331834
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1368002221032570546, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: NetworkId
+      value: ac15e4f3-f069-4639-a55c-e3f51d9041d3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2105315302721874140, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: resetWhenDone
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5632880915238950663, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_Name
+      value: RoundBarrier
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.68833
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7236086527521256651, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8754965758834938333, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+      propertyPath: NetworkId
+      value: 9bcba960-65d4-4487-9b68-065150cfbf4e
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+--- !u!114 &1748331835 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8754965758834938333, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+  m_PrefabInstance: {fileID: 1748331834}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a95615ea91f4334e865a3c5ff2b3a0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.NetworkTrigger
+--- !u!114 &1748331836 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1368002221032570546, guid: f1463d6299f344422baeb451ec537b67, type: 3}
+  m_PrefabInstance: {fileID: 1748331834}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a95615ea91f4334e865a3c5ff2b3a0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: VRT.Pilots.Common::VRT.Pilots.Common.NetworkTrigger
 --- !u!1001 &1864812579
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5478,6 +5666,8 @@ SceneRoots:
   - {fileID: 172543174}
   - {fileID: 485046875}
   - {fileID: 472857380}
+  - {fileID: 290963218}
+  - {fileID: 1748331834}
   - {fileID: 706517641}
   - {fileID: 491504022}
   - {fileID: 1321851446}

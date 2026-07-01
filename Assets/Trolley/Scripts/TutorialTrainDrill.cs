@@ -49,6 +49,14 @@ namespace VRT.Pilots.Trolley
                  "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
         [SerializeField] TutorialGate gate;
 
+        [Header("Sync Barriers")]
+        [Tooltip("PFB_Barrier instance: gates tutorial start (before instructions). Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger tutorialBarrierReady;
+        [SerializeField] NetworkTrigger tutorialBarrierProceed;
+        [Tooltip("PFB_Barrier instance (resetWhenDone=true): gates each round start. Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger roundBarrierReady;
+        [SerializeField] NetworkTrigger roundBarrierProceed;
+
         [Header("Round 1 — monitor rims (blink in turn during the intro)")]
         [Tooltip("Order matches the narration: approaching view, switch point, current/main track, diverting track.")]
         [SerializeField] GameObject rimApproach;   // top-left  — Monitor_WestView
@@ -373,11 +381,15 @@ namespace VRT.Pilots.Trolley
             yield return new WaitForSeconds(interRoundDelay);
         }
 
-        /// <summary>Called after the gate/settle and before the first instruction clip. Override to insert a sync barrier. Default: no-op.</summary>
-        protected virtual IEnumerator ReadyToStartTutorial() { yield break; }
+        protected virtual IEnumerator ReadyToStartTutorial()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(tutorialBarrierReady, tutorialBarrierProceed));
+        }
 
-        /// <summary>Called just before each round's movement loop starts. Override to insert a sync barrier. Default: no-op.</summary>
-        protected virtual IEnumerator ReadyToStartRound() { yield break; }
+        protected virtual IEnumerator ReadyToStartRound()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(roundBarrierReady, roundBarrierProceed));
+        }
 
         // Colour the train for this round and place it at the approach point on the straight spline, ready
         // to roll, with the toggle back on the main track. Also calibrates the constant world speed used by

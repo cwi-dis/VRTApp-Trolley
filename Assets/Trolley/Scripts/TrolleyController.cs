@@ -41,6 +41,14 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Seconds after decision window closes before CCTV blackout triggers.")]
         [SerializeField] float blackoutDelay = 2f;
 
+        [Header("Sync Barriers")]
+        [Tooltip("PFB_Barrier instance: gates narration start. Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger narrationBarrierReady;
+        [SerializeField] NetworkTrigger narrationBarrierProceed;
+        [Tooltip("PFB_Barrier instance: gates train approach start. Leave unset to skip sync.")]
+        [SerializeField] NetworkTrigger approachBarrierReady;
+        [SerializeField] NetworkTrigger approachBarrierProceed;
+
         [Header("Scene Transition")]
         [SerializeField] NetworkTrigger readyTrigger;
         [SerializeField] BarrierController transitionBarrier;
@@ -134,8 +142,10 @@ namespace VRT.Pilots.Trolley
             narrationPlayer.Play();
         }
 
-        /// <summary>Called after the fade-in and before narration starts. Override to insert a sync barrier. Default: no-op.</summary>
-        protected virtual IEnumerator ReadyToBeginNarration() { yield break; }
+        protected virtual IEnumerator ReadyToBeginNarration()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(narrationBarrierReady, narrationBarrierProceed));
+        }
 
         // ── Narration complete ─────────────────────────────────────────────
 
@@ -144,6 +154,12 @@ namespace VRT.Pilots.Trolley
             _narrationEndTime = DateTime.Now;
             _attempts.Clear();
             _state = State.Decision;
+            StartCoroutine(ApproachBarrierThenStart());
+        }
+
+        IEnumerator ApproachBarrierThenStart()
+        {
+            yield return StartCoroutine(BarrierController.WaitFor(approachBarrierReady, approachBarrierProceed));
             trainController?.ReadyToStartApproach();
             toggleDecision?.SetInteractionEnabled(true);
             var comm = VRTOrchestratorSingleton.Comm;

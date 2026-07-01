@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using VRT.Orchestrator;
@@ -28,6 +29,9 @@ namespace VRT.Pilots.Common
         [Tooltip("Fired on the session master when all required triggers have arrived.")]
         public UnityEvent OnAllReady;
 
+        [Tooltip("If true, the barrier resets itself after firing OnAllReady so it can be reused (e.g. for repeated rounds in a tutorial).")]
+        public bool resetWhenDone = false;
+
         int _count;
         bool _released;
 
@@ -45,6 +49,7 @@ namespace VRT.Pilots.Common
             {
                 _released = true;
                 OnAllReady.Invoke();
+                if (resetWhenDone) ResetBarrier();
             }
         }
 
@@ -59,6 +64,22 @@ namespace VRT.Pilots.Common
             if (requiredCount > 0) return requiredCount;
             int n = VRTOrchestratorSingleton.Comm?.CurrentSession?.sessionUsers?.Length ?? 1;
             return Mathf.Max(n, 1);
+        }
+
+        /// <summary>
+        /// Coroutine helper: signals the ready trigger then yields until the proceed trigger fires on
+        /// this client. Null-safe — if either reference is unset the coroutine returns immediately,
+        /// so unwired scenes behave as before.
+        /// </summary>
+        public static IEnumerator WaitFor(NetworkTrigger ready, NetworkTrigger proceed)
+        {
+            if (ready == null || proceed == null) yield break;
+            bool released = false;
+            UnityAction onProceed = () => released = true;
+            proceed.OnTrigger.AddListener(onProceed);
+            ready.Trigger();
+            yield return new WaitUntil(() => released);
+            proceed.OnTrigger.RemoveListener(onProceed);
         }
     }
 }
