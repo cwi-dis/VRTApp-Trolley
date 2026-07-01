@@ -53,13 +53,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 4346754681122291541}
     - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: SourceBottom
       value: 
       objectReference: {fileID: 7242573755789359179}
     - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
+      propertyPath: setHeightOnHMDTracking
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_hmdTrackingAction.m_Reference
       value: 
-      objectReference: {fileID: -6847045601807617242, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5267955362220605337, guid: 0732d8169d43048ff83a028bab372eec, type: 3}
       propertyPath: m_hmdTrackingAction.m_UseReference
       value: 1
@@ -91,7 +99,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 6865256623237509829}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2450538916529167779}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
   m_Name: 
@@ -135,13 +143,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 4346754681122291541}
     - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
       propertyPath: SourceBottom
       value: 
       objectReference: {fileID: 7242573755789359179}
     - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
+      propertyPath: setHeightOnHMDTracking
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
       propertyPath: m_hmdTrackingAction.m_Reference
       value: 
-      objectReference: {fileID: -6847045601807617242, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 7568230183244092881, guid: 670e78ebada95483a880547d731f8130, type: 3}
       propertyPath: m_hmdTrackingAction.m_UseReference
       value: 1
@@ -197,7 +213,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 7364077145387005540}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5275469266684992496}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: befb0b6b9bfc3bc4c97f3beef8d12f5f, type: 3}
   m_Name: 
