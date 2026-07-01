@@ -8,6 +8,20 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 22 (2026-07-02) — Fixed VRT/Fader shader warning (#80)
+
+**Context:** Issue #80 reported two errors during a run: a missing-microphone message (expected, no mic configured for that test) and a shader error logged on every scene fade in/out:
+
+```
+Material 'CameraFader(Clone)' with Shader 'VRT/Fader' doesn't have a texture property '_MainTex'
+```
+
+**Diagnosis:** Used a rescued run directory (`../TrolleyExperiment/experiments/jack-test01-home/run-20260702-0004`) to inspect `unity.log` from a built Mac player — confirmed 21 occurrences, one per `Fading out for transition to...` and one per scene load. `Assets/Trolley/Shaders/Fader.shader` is a URP-compatible rewrite of the VR2Gather package's `Unlit/Fader` shader (see VR2Gather#333). The package original declares an unused `_MainTex("Base (RGB)", 2D) = "white" {}` property purely because `CameraFader.cs` assigns the material to a UI `Image`, and Unity's UI/CanvasRenderer system always tries to bind a main texture to any `Graphic` material — logging this warning if the shader has no such slot. The property was dropped when the shader was rewritten for URP, reintroducing the warning. `CameraFader.mat`'s serialized properties still carried a stray (unused) `_MainTex` entry from before the migration, confirming the history.
+
+**Fix:** Re-added the no-op `_MainTex` property declaration to `Fader.shader`'s `Properties` block. No material asset changes needed. Verified by Jack: built a player, ran it, confirmed the warning no longer appears.
+
+---
+
 ### Day 21 (2026-07-01) — Synchronised train start across clients (#68)
 
 **Context:** All scenario scenes and both tutorial scenes now wait for all clients to be ready before starting narration or train movement. Verified on two machines.

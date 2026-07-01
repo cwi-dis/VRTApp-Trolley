@@ -6,6 +6,10 @@ Shader "VRT/Fader"
     Properties
     {
         _Color ("Color", Color) = (0,0,0,1)
+        // Unused by the shader body, but required so Unity's UI system (Image/CanvasRenderer)
+        // has a texture property to bind to; without it every fade logs "doesn't have a texture
+        // property '_MainTex'" in built players. See VRTApp-Trolley#80.
+        _MainTex ("Texture", 2D) = "white" {}
     }
 
     // ── URP ──────────────────────────────────────────────────────────────────
