@@ -2,30 +2,33 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using UnityEngine.XR.Interaction.Toolkit.UI;
+using TMPro;
 
 namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
-    /// Adds a participant-facing "Start" button to the CURRENTLY OPEN tutorial scene and wires it into
-    /// that scene's drill (TutorialBystanderDrill or TutorialDriverDrill).
+    /// Adds a participant-facing world-space "Start Tutorial" panel to the CURRENTLY OPEN tutorial scene
+    /// and wires it into that scene's drill (TutorialBystanderDrill or TutorialDriverDrill).
     ///
     ///   Trolley > Add Tutorial Start Button (open scene)
     ///
-    /// Run once in each tutorial scene. It instantiates the Button_Skip prefab (recoloured GREEN via
-    /// M_Button_Active so it reads as a participant control, unlike the grey skip button), adds a
-    /// TutorialGate, repoints the button's OnTrigger event to TutorialGate.Press(), and assigns the gate
-    /// to the drill's 'gate' field. With a Start button wired, the drill opens with a free button warm-up
-    /// (the A/B buttons go live so the participant can try them) and waits for a Start press before
-    /// beginning — the fix for "tutorials are too fast" / cold-start.
+    /// Builds a dark rounded card with a title ("Driver Tutorial" / "Bystander Tutorial") and a green
+    /// "Start" button (XR-raycastable, same pattern as the questionnaire panels), a TutorialGate to drive
+    /// it, and assigns the gate to the drill's 'gate' field. With a Start button wired, the drill opens
+    /// with a free A/B warm-up and waits for the press before beginning. Rebuilds cleanly on re-run.
     ///
-    /// Placement is manual: position it within the participant's reach in front of the seat. Re-running is
-    /// safe — if it already exists, placement is preserved and only the wiring is verified.
+    /// Placement: centred in front of the seat by default — reposition OBJ_TutorialStart per scene so it
+    /// sits in the participant's view. Run once in each tutorial scene.
     /// </summary>
     public static class TrolleyTutorialStartSetup
     {
-        const string StartName     = "OBJ_TutorialStart";
-        const string SkipPrefab    = "Assets/Trolley/Prefabs/Button_Skip.prefab";
-        const string ActiveMatGuid = "048704c7724cb4395bb12436363dd36a"; // M_Button_Active (green)
+        const string HostName = "OBJ_TutorialStart";
+        static readonly Color CardBg     = new Color(0.05f, 0.05f, 0.06f);
+        static readonly Color TextPrimary= new Color(0.96f, 0.96f, 0.97f);
+        static readonly Color TextMuted  = new Color(0.60f, 0.62f, 0.66f);
+        static readonly Color BtnGreen   = new Color(0.25f, 0.61f, 0.21f);
 
         [MenuItem("Trolley/Add Tutorial Start Button (open scene)")]
         public static void AddStartButton()
@@ -37,73 +40,90 @@ namespace VRT.Pilots.Trolley.Editor
                 return;
             }
 
-            var go = GameObject.Find(StartName);
-            // Adopt a button placed by the earlier "Continue" version of this menu, if present, so we don't
-            // create a duplicate — keeps its placement, green colour, and existing wiring.
-            if (go == null)
+            // Preserve placement across re-runs: keep the host's transform if it already exists, then
+            // rebuild fresh (also handles switching from the old physical button to this UI panel).
+            Vector3 pos = new Vector3(0f, 1.4f, 1.2f);   // centred in front of the seat — reposition per scene
+            Quaternion rot = Quaternion.Euler(0f, 180f, 0f);
+            var existing = GameObject.Find(HostName);
+            if (existing != null)
             {
-                var legacy = GameObject.Find("OBJ_TutorialContinue");
-                if (legacy != null) { legacy.name = StartName; go = legacy; }
-            }
-            if (go == null)
-            {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SkipPrefab);
-                if (prefab == null) { Debug.LogError($"Add Start Button: prefab not found at {SkipPrefab}."); return; }
-
-                go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-                go.name = StartName;
-                go.transform.position = new Vector3(0f, 1.2f, 0.6f); // in front of the seat — reposition to reach
-                ApplyActiveMaterial(go);
+                pos = existing.transform.position;
+                rot = existing.transform.rotation;
+                Object.DestroyImmediate(existing);
             }
 
-            var gate = go.GetComponent<TutorialGate>();
-            if (gate == null) gate = go.AddComponent<TutorialGate>();
+            // Host holds the gate and stays active; the canvas child is what the gate shows/hides.
+            var host = new GameObject(HostName);
+            host.transform.SetPositionAndRotation(pos, rot);
+            var gate = host.AddComponent<TutorialGate>();
 
-            bool wiredEvent = RewireOnTrigger(go, gate);
+            // World-space canvas + XR raycaster (same pattern as the questionnaire panels).
+            var canvasGO = new GameObject("StartCanvas");
+            canvasGO.transform.SetParent(host.transform, false);
+            var canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+            canvasGO.AddComponent<TrackedDeviceGraphicRaycaster>();
+            canvasGO.GetComponent<RectTransform>().sizeDelta = new Vector2(600f, 380f);
+            canvasGO.transform.localScale = Vector3.one * 0.003f;
+
+            // Card background — dark, rounded (matches the reflection panel aesthetic).
+            AddRoundedImage(canvasGO, CardBg);
+
+            // Title — names the tutorial so it doesn't read as a random floating button.
+            var title = CreateTMP("Title", canvasGO, new Vector2(0.08f, 0.62f), new Vector2(0.92f, 0.9f),
+                44, SceneTitle());
+            title.alignment = TextAlignmentOptions.Center;
+            title.color = TextPrimary;
+            title.fontStyle = FontStyles.Bold;
+
+            // Subtitle — a short cue.
+            var sub = CreateTMP("Subtitle", canvasGO, new Vector2(0.08f, 0.48f), new Vector2(0.92f, 0.6f),
+                24, "Press Start when you're ready.");
+            sub.alignment = TextAlignmentOptions.Center;
+            sub.color = TextMuted;
+
+            // Start button — centred, green.
+            var btnGO = new GameObject("StartButton");
+            btnGO.transform.SetParent(canvasGO.transform, false);
+            var brect = btnGO.AddComponent<RectTransform>();
+            brect.anchorMin = new Vector2(0.34f, 0.12f);
+            brect.anchorMax = new Vector2(0.66f, 0.34f);
+            brect.offsetMin = brect.offsetMax = Vector2.zero;
+            AddRoundedImage(btnGO, BtnGreen);
+            var button = btnGO.AddComponent<Button>();
+
+            var label = CreateTMP("Label", btnGO, Vector2.zero, Vector2.one, 34, "Start");
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = Color.white;
+
+            // Wire the gate (uiButton + visualRoot = canvas) and the drill's 'gate' field.
+            var gSO = new SerializedObject(gate);
+            gSO.FindProperty("uiButton").objectReferenceValue = button;
+            gSO.FindProperty("visualRoot").objectReferenceValue = canvasGO;
+            gSO.ApplyModifiedProperties();
+
             bool wiredDrill = WireDrillGate(gate);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            Debug.Log($"Add Start Button: '{StartName}' ready in {scene.name} — OnTrigger→Press {(wiredEvent ? "✓" : "✗ (selectEntered fallback)")}, " +
+            Debug.Log($"Add Start Button: world-space '{SceneTitle()}' start panel ready in {scene.name} — " +
                       $"drill.gate {(wiredDrill ? "✓" : "✗ — wire it manually on the drill")}.\n" +
-                      "MANUAL: position it within the participant's reach in front of the seat. Run once per tutorial scene.");
+                      "MANUAL: reposition OBJ_TutorialStart so the panel sits centred in the participant's view. " +
+                      "Needs an EventSystem with an XR UI input module in the scene (the VR2Gather rig provides one).");
         }
 
-        static void ApplyActiveMaterial(GameObject go)
+        // Title from whichever drill is in the scene.
+        static string SceneTitle()
         {
-            var path = AssetDatabase.GUIDToAssetPath(ActiveMatGuid);
-            var mat = string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat == null) { Debug.LogWarning("Add Start Button: M_Button_Active not found — button stays grey."); return; }
-            foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.sharedMaterial = mat;
+            if (Object.FindFirstObjectByType<TutorialDriverDrill>() != null) return "Driver Tutorial";
+            if (Object.FindFirstObjectByType<TutorialBystanderDrill>() != null) return "Bystander Tutorial";
+            return "Tutorial";
         }
 
-        // Point the networked button's OnTrigger event at TutorialGate.Press() (same mechanism as the
-        // A/B buttons and the skip button), via SerializedProperty so no compile-time package ref is needed.
-        static bool RewireOnTrigger(GameObject go, TutorialGate gate)
-        {
-            foreach (var comp in go.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                if (comp == null) continue;
-                var so = new SerializedObject(comp);
-                var calls = so.FindProperty("OnTrigger.m_PersistentCalls.m_Calls");
-                if (calls == null) continue;
-
-                calls.arraySize = 1;
-                var call = calls.GetArrayElementAtIndex(0);
-                call.FindPropertyRelative("m_Target").objectReferenceValue = gate;
-                call.FindPropertyRelative("m_TargetAssemblyTypeName").stringValue = "VRT.Pilots.Trolley.TutorialGate, Assembly-CSharp";
-                call.FindPropertyRelative("m_MethodName").stringValue = "Press";
-                call.FindPropertyRelative("m_Mode").enumValueIndex = 1;      // PersistentListenerMode.Void
-                call.FindPropertyRelative("m_CallState").enumValueIndex = 2; // UnityEventCallState.RuntimeOnly
-                so.ApplyModifiedProperties();
-                return true;
-            }
-            return false;
-        }
-
-        // Assign the gate to whichever drill is in the scene (bystander = TutorialBystanderDrill,
-        // driver = TutorialDriverDrill). Both expose a serialized 'gate' field.
+        // Assign the gate to whichever drill is in the scene (bystander or driver). Both expose 'gate'.
         static bool WireDrillGate(TutorialGate gate)
         {
             foreach (var drill in new MonoBehaviour[] {
@@ -119,6 +139,31 @@ namespace VRT.Pilots.Trolley.Editor
                 return true;
             }
             return false;
+        }
+
+        // ── UI helpers ──────────────────────────────────────────────────────────
+
+        static void AddRoundedImage(GameObject go, Color color)
+        {
+            var img = go.GetComponent<Image>();
+            if (img == null) img = go.AddComponent<Image>();
+            var spr = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            if (spr != null) { img.sprite = spr; img.type = Image.Type.Sliced; }
+            img.color = color;
+        }
+
+        static TextMeshProUGUI CreateTMP(string name, GameObject parent, Vector2 min, Vector2 max,
+            float fontSize, string text)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent.transform, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = min; rect.anchorMax = max;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = text; tmp.fontSize = fontSize;
+            tmp.color = Color.white; tmp.textWrappingMode = TextWrappingModes.Normal;
+            return tmp;
         }
     }
 }

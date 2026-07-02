@@ -33,6 +33,9 @@ namespace VRT.Pilots.Trolley.Editor
         const string AudioDir = "Assets/Trolley/Audio/";
         const string IntroPath   = AudioDir + "narration_tutorial_driver_intro.mp3";
         const string WindowPath  = AudioDir + "narration_tutorial_driver_window.mp3";
+        const string Try1Path    = AudioDir + "narration_tutorial_driver_button_try1.mp3";
+        const string Try2Path    = AudioDir + "narration_tutorial_driver_button_try2.mp3";
+        const string Try3Path    = AudioDir + "narration_tutorial_driver_button_try3.mp3";
         const string SortPath    = AudioDir + "narration_tutorial_driver_sortingtrain.mp3";
         const string ClosingPath = AudioDir + "narration_tutorial_driver_closing.mp3";
         const string CorrectPath = AudioDir + "sfx_correct.wav";
@@ -193,12 +196,15 @@ namespace VRT.Pilots.Trolley.Editor
             void Set(string field, string path, string label) =>
                 dSO.FindProperty(field).objectReferenceValue = LoadClip(path, label);
 
-            Set("introClip",   IntroPath,   "driver_intro");
-            Set("windowClip",  WindowPath,  "driver_window");
-            Set("sortClip",    SortPath,    "driver_sortingtrain");
-            Set("closingClip", ClosingPath, "driver_closing");
-            Set("correctClip", CorrectPath, "sfx_correct");
-            Set("wrongClip",   WrongPath,   "sfx_wrong");
+            Set("introClip",     IntroPath,   "driver_intro");
+            Set("windowClip",    WindowPath,  "driver_window");
+            Set("buttonTry1Clip",Try1Path,    "driver_button_try1");
+            Set("buttonTry2Clip",Try2Path,    "driver_button_try2");
+            Set("buttonTry3Clip",Try3Path,    "driver_button_try3");
+            Set("sortClip",      SortPath,    "driver_sortingtrain");
+            Set("closingClip",   ClosingPath, "driver_closing");
+            Set("correctClip",   CorrectPath, "sfx_correct");
+            Set("wrongClip",     WrongPath,   "sfx_wrong");
         }
 
         // A rocky-mountain barrier (same look as the self-harm scene). Parented to the track so it rides

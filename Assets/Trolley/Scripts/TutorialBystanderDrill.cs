@@ -38,7 +38,7 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Bystander rail: spline 0 = straight (left/inaction), spline 1 = branch (right/action).")]
         [SerializeField] SplineContainer rail;
         [SerializeField] Transform train;
-        [SerializeField] float modelForwardYaw = 180f;
+        [SerializeField] float modelForwardYaw = 0f;   // matches the real Bystander TrainController
 
         [Header("Input")]
         [Tooltip("Reused A/B toggle. The drill reads IsAction (pressed = divert right) and resets it each round.")]
@@ -48,6 +48,12 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Optional Start button. If set, the A/B buttons go live for a free warm-up and the tutorial " +
                  "waits for a Start press before beginning, instead of a fixed startDelay. Null-safe.")]
         [SerializeField] TutorialGate gate;
+
+        [Header("Dev / testing (Editor only — never affects a build)")]
+        [Tooltip("RESEARCHER ONLY — jumps straight to the sorting rounds, skipping the intro narration and " +
+                 "button practice, so you can test the divert without sitting through everything. Ignored in a " +
+                 "player build, so it can't accidentally affect a real session.")]
+        [SerializeField] bool devSkipToSorting = false;
 
         [Header("Sync Barriers")]
         [Tooltip("PFB_Barrier instance: gates tutorial start (before instructions). Leave unset to skip sync.")]
@@ -115,23 +121,27 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip approachingClip;   // ..._approaching
 
         [Header("Round 2 — sorting drill")]
-        [Tooltip("Where on the straight spline each train starts. Together with End this sets how long the " +
-                 "visible run is; the train travels Start → End over 'roundDuration' seconds.")]
+        [Tooltip("Where on the straight spline each train starts (0 = far end, higher = closer to the switch). " +
+                 "Defaults baked to the tuned scene values so a rebuild doesn't reset them.")]
         [Range(0f, 0.9f)]
-        [SerializeField] float roundStartT = 0.25f;
-        [Tooltip("Where each train's run ends. A shorter Start→End span = a shorter, slower-looking run.")]
+        [SerializeField] float roundStartT = 0.35f;
+        [Tooltip("Where each train's straight run ends.")]
         [Range(0.1f, 1f)]
-        [SerializeField] float roundEndT = 0.75f;
-        [Tooltip("Seconds for one train to travel Start → End. With a shorter span this is the same time " +
-                 "at a slower world speed.")]
+        [SerializeField] float roundEndT = 0.6f;
+        [Tooltip("Unused — the train now follows the constant trainSpeed below (kept only so old scene " +
+                 "wiring doesn't error).")]
         [SerializeField] float roundDuration = 12f;
+        [Tooltip("Constant world speed (units/sec) matching the real Bystander TrainController (scene value 40), " +
+                 "scaled by the decision-window factor. This is what makes the tutorial train's pace identical " +
+                 "to the real scene — replaces the old roundDuration-derived speed that ran too fast.")]
+        [SerializeField] float trainSpeed = 40f;
         [Tooltip("Fraction along the straight track where the switch is (between Start and End). Input stays " +
                  "open until the train passes this point, then the decision commits and the sound plays. " +
                  "Set it just before the visual fork.")]
         [Range(0.1f, 0.95f)]
         [SerializeField] float divertThreshold = 0.5f;
         [Tooltip("Gap between trains, in seconds: the train finishes its run, then this pause before the next.")]
-        [SerializeField] float interRoundDelay = 10f;
+        [SerializeField] float interRoundDelay = 1.5f;
         [SerializeField] Color redColor  = new Color(0.85f, 0.15f, 0.15f);
         [SerializeField] Color blueColor = new Color(0.15f, 0.30f, 0.90f);
 
@@ -142,8 +152,8 @@ namespace VRT.Pilots.Trolley
         [SerializeField] AudioClip wrongClip;
 
         [Header("After the drill")]
-        [Tooltip("Closing line after all 5 rounds, before the next scene loads. " +
-                 "e.g. 'That's the first tutorial — now let's practise the second.'")]
+        [Tooltip("Closing line after the sorting rounds, before the next scene loads. " +
+                 "e.g. 'This is the end of the tutorials. Next, the real scenarios will begin.'")]
         [SerializeField] AudioClip closingClip;
 
         // Fixed, predetermined order — identical for every participant (this is practice, not data).
@@ -153,6 +163,10 @@ namespace VRT.Pilots.Trolley
 
         Spline _current;
         float _t;
+        float _startT;       // straight-spline t of the tram's placed position — matches the real scene start
+        float _forkT;        // straight-spline t where the branch splits off — divert commits here (no jump)
+        bool _inSorting;     // true once the sorting rounds have begun — staged skip uses this
+        float _lastSkipTime = -1f;
         float _worldSpeed;   // units/sec — held constant across straight + branch so the divert doesn't crawl
         int _correct;
         int _total;
@@ -171,6 +185,13 @@ namespace VRT.Pilots.Trolley
                 Debug.LogError("[TutorialBystanderDrill] rail / train / toggle not wired — tutorial cannot run.");
                 return;
             }
+            // Match the real Bystander scene: start each train from the tram's placed position projected
+            // onto the straight spline (exactly like TrainController.DoStartApproach), not a fixed fraction.
+            float3 localStart = rail.transform.InverseTransformPoint(train.position);
+            SplineUtility.GetNearestPoint(rail.Splines[0], localStart, out _, out _startT);
+            // Find where the branch actually splits from the straight, so the divert commits AT the fork
+            // (seamless turn) instead of at a fixed fraction that snaps the train sideways.
+            _forkT = ComputeForkT();
             if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             SetActiveSafe(rimApproach, false);
@@ -202,14 +223,29 @@ namespace VRT.Pilots.Trolley
             Cwipc.Statistics.Output("TrolleyTutorialBystanderDrill", "event=tutorial_start");
 #endif
 
-            // ── Round 1 — button familiarisation ──────────────────────────────
-            yield return StartCoroutine(RunIntro());
-            yield return StartCoroutine(RunButtonPractice());
+            // Researcher dev shortcut (Editor only): jump straight to the sorting rounds to test the divert.
+            bool skipToSorting = false;
+#if UNITY_EDITOR
+            skipToSorting = devSkipToSorting;
+#endif
+            if (!skipToSorting)
+            {
+                // ── Round 1 — button familiarisation ──────────────────────────
+                yield return StartCoroutine(RunIntro());
+                yield return StartCoroutine(RunButtonPractice());
 
-            // ── Round 2 — sorting drill ───────────────────────────────────────
-            yield return StartCoroutine(PlayAndWait(sortClip));
-            if (scoreText != null) scoreText.gameObject.SetActive(true);
+                // ── Round 2 — sorting drill intro ─────────────────────────────
+                yield return StartCoroutine(PlayAndWait(sortClip));
+            }
 
+            yield return StartCoroutine(RunSortingRounds());
+        }
+
+        // The 3 sorting rounds + closing line, then the next scene. Extracted so the researcher skip button
+        // (and devSkipToSorting) can jump straight here from the intro.
+        IEnumerator RunSortingRounds()
+        {
+            _inSorting = true;
             // Three rounds, like the driver tutorial. Before each, a fresh train resets to the approach
             // point and a short "the next train is approaching" line plays as it appears — then it rolls.
             for (int i = 0; i < Sequence.Length; i++)
@@ -220,12 +256,32 @@ namespace VRT.Pilots.Trolley
                 yield return StartCoroutine(RunRound(isBlue, i + 1));
             }
 
-            if (scoreText != null)
-                scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
-
-            // Closing line, e.g. "That's the first tutorial — now let's practise the second."
+            // Closing line, e.g. "This is the end of the tutorials. Next, the real scenarios will begin."
             yield return StartCoroutine(PlayAndWait(closingClip));
             LoadAfterDrill();
+        }
+
+        // Researcher skip button (staged): first press jumps to the sorting rounds, second press loads the
+        // next scene. De-bounced so one physical press (which may fire OnTrigger + selectEntered) counts once.
+        [ContextMenu("Skip (staged: sorting → next scene)")]
+        public void Skip()
+        {
+            if (Time.unscaledTime - _lastSkipTime < 0.4f) return;
+            _lastSkipTime = Time.unscaledTime;
+
+            if (_inSorting) LoadAfterDrill();
+            else SkipToSorting();
+        }
+
+        void SkipToSorting()
+        {
+            StopAllCoroutines();
+            if (narrationSource != null) narrationSource.Stop();
+            SetButtonsNeutral();
+            SetActiveSafe(rimApproach, false);
+            SetActiveSafe(rimSwitch, false);
+            if (toggle != null) toggle.SetInteractionEnabled(false);
+            StartCoroutine(RunSortingRounds());
         }
 
         // ── Round 1 ───────────────────────────────────────────────────────────
@@ -358,7 +414,7 @@ namespace VRT.Pilots.Trolley
             {
                 // The participant can press (or change their mind) until the train reaches the fork; the
                 // toggle's state AT the fork is the decision. The train switches there and the sound plays.
-                if (!resolved && _t >= divertThreshold)
+                if (!resolved && _t >= _forkT)
                 {
                     if (toggle.IsAction) { Divert(); diverted = true; } // switch onto the branch at the fork
                     toggle.SetInteractionEnabled(false);
@@ -399,17 +455,14 @@ namespace VRT.Pilots.Trolley
             ColorTrain(isBlue ? blueColor : redColor);
 
             _current = rail.Splines[0];
-            _t = roundStartT;
+            _t = _startT;   // the tram's placed position on the straight spline (matches the real scene)
             train.position = EvaluateWorld(_current, _t);
             OrientToTrack();
 
-            // Constant WORLD speed from the visible straight run, applied on whichever spline the train is
-            // on. The branch's post-fork segments are short in world space but span the same t as the long
-            // pre-fork segment, so a fixed t-rate made the train crawl through the divergence.
-            float straightLen = Mathf.Max(0.01f, _current.GetLength());
-            _worldSpeed = (Mathf.Abs(roundEndT - roundStartT) * straightLen) / Mathf.Max(0.1f, roundDuration);
-            // Scale to the active decision window so the tutorial train matches the real scene's pace
-            // (longer window → slower train). Speed only; the narration/round delays stay fixed.
+            // Constant WORLD speed matching the real Bystander scene: TrainController moves at trainSpeed ×
+            // the decision-window factor, so we use the same value here. (The old roundDuration-derived
+            // speed ran faster than the real train and made it overshoot the fork instead of turning cleanly.)
+            _worldSpeed = trainSpeed;
             if (_cfg != null) _worldSpeed *= _cfg.SpeedFactor;
 
             toggle.ApplyRemoteState(false);     // back to "not diverted"
@@ -440,6 +493,31 @@ namespace VRT.Pilots.Trolley
             float3 localPos = rail.transform.InverseTransformPoint(train.position);
             SplineUtility.GetNearestPoint(branch, localPos, out _, out _t);
             _current = branch;
+        }
+
+        // Walk the straight spline; the fork is the last point that still coincides with the branch spline
+        // (in world space). Before the fork the two tracks overlap, so committing the divert there curves
+        // smoothly onto the branch instead of snapping sideways. Falls back to divertThreshold if the two
+        // splines never coincide (e.g. a fully separate branch track).
+        float ComputeForkT()
+        {
+            if (rail.Splines.Count < 2) return divertThreshold;
+            var s0 = rail.Splines[0];
+            var s1 = rail.Splines[1];
+            const int steps = 300;
+            const float epsSqr = 0.25f;   // 0.5 m tolerance for "still on the shared track"
+            float fork = -1f;
+            for (int i = 0; i <= steps; i++)
+            {
+                float t = i / (float)steps;
+                Vector3 world0 = EvaluateWorld(s0, t);
+                float3 query = rail.transform.InverseTransformPoint(world0);
+                SplineUtility.GetNearestPoint(s1, query, out float3 nearLocal, out _);
+                Vector3 nearWorld = rail.transform.TransformPoint(nearLocal);
+                if ((world0 - nearWorld).sqrMagnitude < epsSqr) fork = t;
+                else if (fork >= 0f) break;   // was coincident, now diverged → fork found
+            }
+            return fork >= 0f ? fork : divertThreshold;
         }
 
         void OrientToTrack()

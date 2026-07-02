@@ -13,8 +13,8 @@ namespace VRT.Pilots.Trolley
     /// The player sits in the cab; the whole environment (TrackEnvironment) slides toward them, exactly
     /// like the real Driver scene. A divert yaws the environment about the player's seat (DivertMarker).
     ///
-    /// Buttons are NOT re-taught here — the participant already practised them in the bystander tutorial.
-    /// Flow: intro → "watch the window" → the rules → 3 rock-blocker reps → closing.
+    /// The driver tutorial runs FIRST, so it teaches the A/B buttons here (a short guided press drill).
+    /// Flow: intro → "watch the window" → button practice → the rules → 3 rock-blocker reps → closing.
     ///
     /// Rock-blocker reps:
     ///   • Each round one track ahead is blocked by a rocky mountain barrier; the other is clear. The
@@ -71,19 +71,25 @@ namespace VRT.Pilots.Trolley
         [Tooltip("Rocky barrier on the SIDE track. Shown when this round's answer is to stay.")]
         [SerializeField] GameObject sideTrackBlocker;
 
-        [Header("Narration — four clips; buttons were already taught in the bystander tutorial")]
+        [Header("Narration — the driver tutorial runs first and teaches the buttons")]
         [SerializeField] AudioSource narrationSource;
         [Tooltip("Tutorial narration plays at this fraction of the source volume (0.7 = 70%). Applied in Start; " +
                  "leaves the SFX source untouched.")]
         [Range(0f, 1f)]
         [SerializeField] float narrationVolume = 0.5f;
-        [Tooltip("'second tutorial — you're driving now, divert with the two buttons'.")]
+        [Tooltip("'first tutorial — you're driving now, divert with the two buttons'.")]
         [SerializeField] AudioClip introClip;            // narration_tutorial_driver_intro
         [Tooltip("'watch for obstacles ahead through the front window'.")]
         [SerializeField] AudioClip windowClip;           // narration_tutorial_driver_window
+        [Tooltip("Button practice 1 — 'press the right button to steer to the other side'. Waits for the real right (B) press.")]
+        [SerializeField] AudioClip buttonTry1Clip;       // narration_tutorial_driver_button_try1
+        [Tooltip("Button practice 2 — 'now press the left button to steer back'. Waits for the real left (A) press.")]
+        [SerializeField] AudioClip buttonTry2Clip;       // narration_tutorial_driver_button_try2
+        [Tooltip("Button practice 3 — 'the button you select is highlighted in green'.")]
+        [SerializeField] AudioClip buttonTry3Clip;       // narration_tutorial_driver_button_try3
         [Tooltip("The rules: 'one side is blocked with rocks — drive to the other side. Three rounds.'")]
         [SerializeField] AudioClip sortClip;             // narration_tutorial_driver_sortingtrain
-        [Tooltip("'this is the end of the second tutorial'.")]
+        [Tooltip("'this is the end of the first tutorial'.")]
         [SerializeField] AudioClip closingClip;          // narration_tutorial_driver_closing
 
         [Header("Timing")]
@@ -161,13 +167,18 @@ namespace VRT.Pilots.Trolley
             Cwipc.Statistics.Output("TrolleyTutorialDriverDrill", "event=tutorial_start");
 #endif
 
-            // ── Intro (buttons were already taught in the bystander tutorial) ──
+            // ── Intro ─────────────────────────────────────────────────────────
             yield return StartCoroutine(PlayAndWait(introClip));
+            // Show an example obstacle ahead so "watch for obstacles" has something to look at from the
+            // start — it stays visible through the button practice; the reps then re-place it per round.
+            ShowBlocker(true);
             yield return StartCoroutine(PlayAndWait(windowClip));
+
+            // ── Button practice (driver tutorial is first, so it teaches the buttons) ──
+            yield return StartCoroutine(RunButtonPractice());
 
             // ── Rock-blocker drill — the rules, then 3 reps ───────────────────
             yield return StartCoroutine(PlayAndWait(sortClip));
-            if (scoreText != null) scoreText.gameObject.SetActive(true);
 
             ResetEnvironment();   // start the first approach from the seat's start pose
             for (int i = 0; i < Sequence.Length; i++)
@@ -180,11 +191,32 @@ namespace VRT.Pilots.Trolley
             }
             HideBlockers();
 
-            if (scoreText != null)
-                scoreText.text = $"Practice complete!\n{_correct} / {_total} correct";
-
             yield return StartCoroutine(PlayAndWait(closingClip));
             LoadAfterDrill();
+        }
+
+        // ── Button practice ─────────────────────────────────────────────────────
+
+        // The driver tutorial runs first, so it teaches the A/B buttons here. No world movement; the
+        // toggle behaves like the real scene (colour + highlight on press). The narration says what to
+        // press and we wait for each real press.
+        IEnumerator RunButtonPractice()
+        {
+            toggle.ApplyRemoteState(false);   // start on the main track (left selected)
+            toggle.SetInteractionEnabled(true);
+
+            // "Press the right button to steer it to the other side." → wait for the real right (B) press.
+            yield return StartCoroutine(PlayAndWait(buttonTry1Clip));
+            yield return new WaitUntil(() => toggle.IsAction);
+
+            // "Now press the left button to steer back." → wait for the real left (A) press.
+            yield return StartCoroutine(PlayAndWait(buttonTry2Clip));
+            yield return new WaitUntil(() => !toggle.IsAction);
+
+            // "The button you select is highlighted in green."
+            yield return StartCoroutine(PlayAndWait(buttonTry3Clip));
+
+            toggle.SetInteractionEnabled(false);
         }
 
         // ── Rock-blocker reps ──────────────────────────────────────────────────
