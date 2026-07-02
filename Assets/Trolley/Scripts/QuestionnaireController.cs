@@ -42,7 +42,8 @@ namespace VRT.Pilots.Trolley
 
         [Header("Booth A — Master / Solo player")]
         [SerializeField] GameObject reflectionPanelA;
-        [SerializeField] TextMeshProUGUI reflectionPromptTextA;
+        [SerializeField] TextMeshProUGUI reflectionPromptTextA;      // "What happened" — the consequence
+        [SerializeField] TextMeshProUGUI reflectionInstructionTextA; // accent box — the question to answer aloud
         [SerializeField] TextMeshProUGUI reflectionTimerTextA;
         [SerializeField] GameObject questionPanelA;
         [SerializeField] QuestionRow[] questionRowsA;
@@ -58,7 +59,8 @@ namespace VRT.Pilots.Trolley
 
         [Header("Booth B — Non-master player (paired only)")]
         [SerializeField] GameObject reflectionPanelB;
-        [SerializeField] TextMeshProUGUI reflectionPromptTextB;
+        [SerializeField] TextMeshProUGUI reflectionPromptTextB;      // "What happened" — the consequence
+        [SerializeField] TextMeshProUGUI reflectionInstructionTextB; // accent box — the question to answer aloud
         [SerializeField] TextMeshProUGUI reflectionTimerTextB;
         [SerializeField] GameObject questionPanelB;
         [SerializeField] QuestionRow[] questionRowsB;
@@ -92,7 +94,7 @@ namespace VRT.Pilots.Trolley
         // Working refs resolved at Start() based on master/non-master role.
         Button reflectionDoneButton;
         GameObject reflectionPanel;
-        TextMeshProUGUI reflectionPromptText, reflectionTimerText;
+        TextMeshProUGUI reflectionPromptText, reflectionInstructionText, reflectionTimerText;
         GameObject questionPanel;
         QuestionRow[] questionRows;
         Button nextButton;
@@ -156,6 +158,7 @@ namespace VRT.Pilots.Trolley
         {
             reflectionPanel      = useA ? reflectionPanelA      : reflectionPanelB;
             reflectionPromptText = useA ? reflectionPromptTextA  : reflectionPromptTextB;
+            reflectionInstructionText = useA ? reflectionInstructionTextA : reflectionInstructionTextB;
             reflectionTimerText  = useA ? reflectionTimerTextA   : reflectionTimerTextB;
             questionPanel        = useA ? questionPanelA         : questionPanelB;
             questionRows         = useA ? questionRowsA          : questionRowsB;
@@ -222,8 +225,8 @@ namespace VRT.Pilots.Trolley
         {
             if (transitionPanel != null) transitionPanel.SetActive(true);
             if (transitionText != null)
-                transitionText.text = "You will now fill in a questionnaire (on paper).\n" +
-                                      "When you are done and return here, please press the Continue button.";
+                transitionText.text = "Please take off the headset and fill in the questionnaire on paper.\n" +
+                                      "When you're done, put the headset back on and press Continue.";
             if (startButton != null)
             {
                 SetButtonLabel(startButton, "Continue");
@@ -246,9 +249,15 @@ namespace VRT.Pilots.Trolley
         IEnumerator ShowReflection()
         {
             reflectionPanel.SetActive(true);
-            string prompt = BuildConsequenceText(_completedScenario, _lastDecision);
-            if (_isPaired) prompt += "\nDid another person affect your decision? If so, how?";
-            reflectionPromptText.text = prompt;
+            // "What happened" — the consequence of their choice.
+            reflectionPromptText.text = BuildConsequenceText(_completedScenario, _lastDecision);
+            // The highlighted box — what to say aloud; append the partner question in paired sessions.
+            if (reflectionInstructionText != null)
+            {
+                string instruction = "Why did you make that choice?";
+                if (_isPaired) instruction += "\nDid the other person affect your decision?";
+                reflectionInstructionText.text = instruction;
+            }
             if (reflectionTimerText != null) reflectionTimerText.text = "";
 
             if (reflectionDoneButton != null)
@@ -284,24 +293,24 @@ namespace VRT.Pilots.Trolley
             reflectionPanel.SetActive(false);
         }
 
+        // The "What happened" line only — the consequence of their choice. The instruction to speak
+        // aloud is now static in the reflection panel (see TrolleyQuestionnaireSetup), so it's no
+        // longer appended here.
         string BuildConsequenceText(string scenarioID, string decision)
         {
-            const string prompt = "Please think out loud: what was going through your mind? What did you decide, and why?";
-
             if (practiceMode)
-                return "This is a practice run of the questionnaire you will fill in after each round.\n\n" +
-                       "Try thinking out loud — say whatever comes to mind — then press Done.";
+                return "This is a practice of the reflection you'll do after every round. When you're ready, answer out loud — then press I've answered.";
 
             if (scenarioID == "selfharm")
             {
                 return decision == "action"
-                    ? $"You diverted the train into the cliff, saving the five workers. The impact put your own safety at risk.\n\n{prompt}"
-                    : $"You did not divert the train, and it continued toward the five workers.\n\n{prompt}";
+                    ? "You steered the train into the rocks. The five workers are safe, but you put yourself in danger."
+                    : "You let the train continue, and it hit the five workers.";
             }
 
             return decision == "action"
-                ? $"You pressed the button, diverting the train and resulting in one person being harmed.\n\n{prompt}"
-                : $"You did not press the button, and the train continued toward the five workers.\n\n{prompt}";
+                ? "You diverted the train to the side track. The five workers are safe, but one worker was hit."
+                : "You let the train continue, and it hit the five workers.";
         }
 
         struct PageSpec { public int start; public int count; }
