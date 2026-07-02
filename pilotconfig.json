@@ -12,7 +12,7 @@
         "scenarioOrderLabel": "B→D→S",
         "questionnaireInVR": false,
         "decisionWindow": 8,
-        "participantNumbers": ["12", "13"],
+        "participantNumbers": ["T1", "T2"],
         "sessionDate": "2026-07-02",
         "sessionTime": "14:30"
     },
