@@ -19,6 +19,17 @@ namespace VRT.Pilots.Trolley.Editor
 
         static readonly Color BtnGreen   = new Color(0.1f, 0.55f, 0.1f);
 
+        // Reflection-panel palette — dark theme (black card, white text), keeping the clear hierarchy
+        // from Resources/SelfReflectionPanel.png so participants still understand what to do.
+        static readonly Color CardBg     = new Color(0.05f, 0.05f, 0.06f);
+        static readonly Color TextPrimary= new Color(0.96f, 0.96f, 0.97f);
+        static readonly Color TextMuted  = new Color(0.60f, 0.62f, 0.66f);
+        static readonly Color DividerCol = new Color(0.25f, 0.26f, 0.30f);
+        static readonly Color AccentBg   = new Color(0.10f, 0.16f, 0.28f);
+        static readonly Color AccentText = new Color(0.68f, 0.82f, 0.99f);
+        static readonly Color ButtonRed  = new Color(0.78f, 0.22f, 0.20f);
+        static readonly Color DoneText   = new Color(0.97f, 0.98f, 0.97f);
+
         const int MaxRows = 5; // most questions shown on one page (Decision Evaluation / Partner = 5)
 
         struct RowRefs
@@ -32,7 +43,7 @@ namespace VRT.Pilots.Trolley.Editor
         struct BoothRefs
         {
             public GameObject refPanel;
-            public TextMeshProUGUI refPrompt, refTimer;
+            public TextMeshProUGUI refPrompt, refTimer, refInstruction;
             public Button doneButton;
             public GameObject qPanel;
             public RowRefs[] rows;
@@ -108,6 +119,7 @@ namespace VRT.Pilots.Trolley.Editor
             so.FindProperty($"reflectionPanel{suffix}").objectReferenceValue      = r.refPanel;
             so.FindProperty($"reflectionPromptText{suffix}").objectReferenceValue = r.refPrompt;
             so.FindProperty($"reflectionTimerText{suffix}").objectReferenceValue  = r.refTimer;
+            so.FindProperty($"reflectionInstructionText{suffix}").objectReferenceValue = r.refInstruction;
             so.FindProperty($"reflectionDoneButton{suffix}").objectReferenceValue = r.doneButton;
             so.FindProperty($"questionPanel{suffix}").objectReferenceValue        = r.qPanel;
             so.FindProperty($"nextButton{suffix}").objectReferenceValue           = r.nextButton;
@@ -157,17 +169,58 @@ namespace VRT.Pilots.Trolley.Editor
             canvasGO.transform.rotation    = Quaternion.Euler(0f, 180f, 0f);
             canvasGO.transform.localScale  = Vector3.one * 0.003f;
 
-            // ── Reflection panel ──────────────────────────────────────────────
-            var refPanel  = CreatePanel("ReflectionPanel", canvasGO, Color.black);
-            var refPrompt = CreateTMP("PromptText", refPanel,
-                new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.90f), 36,
-                "Please think out loud: what was going through your mind? What did you decide, and why?");
-            var refTimer  = CreateTMP("TimerText", refPanel,
-                new Vector2(0.35f, 0.55f), new Vector2(0.65f, 0.78f), 72, "");
-            refTimer.alignment = TextAlignmentOptions.Center;
+            // ── Reflection panel (redesigned — see Resources/SelfReflectionPanel.png) ──────────
+            // A light card with a clear hierarchy so participants understand what to do:
+            //   centred title · OUTCOME (the consequence, set at runtime) · a highlighted box
+            //   telling them to speak aloud · a button that names the action.
+            var refPanel = CreateCard("ReflectionPanel", canvasGO,
+                Vector2.zero, Vector2.one, CardBg);
 
-            var doneBtn = CreateButton("DoneButton", refPanel, "DONE",
-                new Vector2(0.25f, 0.05f), new Vector2(0.75f, 0.27f), BtnGreen, 32);
+            // Header: centred title.
+            var refTitle = CreateTMP("Title", refPanel,
+                new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.97f), 30, "Self-reflection");
+            refTitle.alignment = TextAlignmentOptions.Center;
+            refTitle.color = TextPrimary;
+            refTitle.fontStyle = FontStyles.Bold;
+
+            // Divider under the header.
+            CreateCard("Divider", refPanel, new Vector2(0.05f, 0.868f), new Vector2(0.95f, 0.872f), DividerCol);
+
+            // OUTCOME — the consequence of their choice (controller sets ConsequenceText at runtime).
+            var whatLbl = CreateTMP("OutcomeLabel", refPanel,
+                new Vector2(0.05f, 0.79f), new Vector2(0.95f, 0.845f), 16, "OUTCOME");
+            whatLbl.alignment = TextAlignmentOptions.MidlineLeft;
+            whatLbl.color = TextMuted;
+            whatLbl.characterSpacing = 6f;
+
+            var refPrompt = CreateTMP("ConsequenceText", refPanel,
+                new Vector2(0.05f, 0.62f), new Vector2(0.95f, 0.79f), 28,
+                "You diverted the train to the side track. The five workers are safe, but one worker was hit.");
+            refPrompt.alignment = TextAlignmentOptions.TopLeft;
+            refPrompt.color = TextPrimary;
+
+            // Highlighted instruction box — the imperative + the question to answer aloud (controller
+            // sets InstructionText at runtime, appending the paired-session line when relevant).
+            var accent = CreateCard("InstructionBox", refPanel,
+                new Vector2(0.05f, 0.35f), new Vector2(0.95f, 0.605f), AccentBg);
+            var accentHead = CreateTMP("InstructionHead", accent,
+                new Vector2(0.05f, 0.54f), new Vector2(0.95f, 0.90f), 26, "Answer the questions out loud");
+            accentHead.alignment = TextAlignmentOptions.MidlineLeft;
+            accentHead.color = AccentText;
+            accentHead.fontStyle = FontStyles.Bold;
+            var refInstruction = CreateTMP("InstructionText", accent,
+                new Vector2(0.05f, 0.10f), new Vector2(0.95f, 0.54f), 24,
+                "Why did you make that choice? What were you thinking in the moment?");
+            refInstruction.alignment = TextAlignmentOptions.TopLeft;
+            refInstruction.color = AccentText;
+
+            // Done button — narrower and centred so it reads as a button; the label names the action.
+            var doneBtn = CreateButton("DoneButton", refPanel, "I've answered",
+                new Vector2(0.28f, 0.06f), new Vector2(0.72f, 0.185f), ButtonRed, 26, DoneText);
+
+            // Timer kept (empty, invisible) only for the no-Done-button fallback path in the controller.
+            var refTimer = CreateTMP("TimerText", refPanel,
+                Vector2.zero, new Vector2(0.001f, 0.001f), 1, "");
 
             refPanel.SetActive(false);
 
@@ -255,6 +308,7 @@ namespace VRT.Pilots.Trolley.Editor
                 refPanel       = refPanel,
                 refPrompt      = refPrompt,
                 refTimer       = refTimer,
+                refInstruction = refInstruction,
                 doneButton     = doneBtn,
                 qPanel         = qPanel,
                 rows           = rows,
@@ -336,14 +390,14 @@ namespace VRT.Pilots.Trolley.Editor
         }
 
         static Button CreateButton(string name, GameObject parent, string label,
-            Vector2 min, Vector2 max, Color bg, float fontSize)
+            Vector2 min, Vector2 max, Color bg, float fontSize, Color? textColor = null)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent.transform, false);
             var rect = go.AddComponent<RectTransform>();
             rect.anchorMin = min; rect.anchorMax = max;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
-            go.AddComponent<Image>().color = bg;
+            ApplyRoundedSprite(go.AddComponent<Image>(), bg);
             var btn = go.AddComponent<Button>();
 
             var labelGO = new GameObject("Label");
@@ -354,9 +408,29 @@ namespace VRT.Pilots.Trolley.Editor
             var tmp = labelGO.AddComponent<TextMeshProUGUI>();
             tmp.text = label; tmp.fontSize = fontSize;
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
+            tmp.color = textColor ?? Color.white;
 
             return btn;
+        }
+
+        // A rounded-corner panel (Unity's built-in sliced UISprite). Used for the reflection card,
+        // the Recording pill, the divider, the instruction box, and buttons.
+        static GameObject CreateCard(string name, GameObject parent, Vector2 min, Vector2 max, Color bg)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent.transform, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = min; rect.anchorMax = max;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            ApplyRoundedSprite(go.AddComponent<Image>(), bg);
+            return go;
+        }
+
+        static void ApplyRoundedSprite(Image img, Color color)
+        {
+            var spr = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            if (spr != null) { img.sprite = spr; img.type = Image.Type.Sliced; }
+            img.color = color;
         }
 
         static GameObject CreateBlackCube(string name, GameObject parent,

@@ -29,10 +29,10 @@ namespace VRT.Pilots.Trolley
     ///   • After the drill, the next scene in the session flow loads.
     ///
     /// Reuses the Bystander rail spline (0 = straight, 1 = branch), train mesh, the A/B button +
-    /// monitor rims (via TrolleyToggleDecision), all wired by TrolleyTutorialSetup. This script
+    /// monitor rims (via TrolleyToggleDecision), all wired by TrolleyTutorialBystanderSetup. This script
     /// only ever touches the tutorial scene — it does not modify any shared controller.
     /// </summary>
-    public class TutorialTrainDrill : MonoBehaviour
+    public class TutorialBystanderDrill : MonoBehaviour
     {
         [Header("Track")]
         [Tooltip("Bystander rail: spline 0 = straight (left/inaction), spline 1 = branch (right/action).")]
@@ -168,7 +168,7 @@ namespace VRT.Pilots.Trolley
 
             if (rail == null || train == null || toggle == null)
             {
-                Debug.LogError("[TutorialTrainDrill] rail / train / toggle not wired — tutorial cannot run.");
+                Debug.LogError("[TutorialBystanderDrill] rail / train / toggle not wired — tutorial cannot run.");
                 return;
             }
             if (narrationSource != null) narrationSource.volume = narrationVolume;
@@ -199,7 +199,7 @@ namespace VRT.Pilots.Trolley
 
             yield return StartCoroutine(ReadyToStartTutorial());
 #if VRT_WITH_STATS
-            Cwipc.Statistics.Output("TrolleyTutorialTrainDrill", "event=tutorial_start");
+            Cwipc.Statistics.Output("TrolleyTutorialBystanderDrill", "event=tutorial_start");
 #endif
 
             // ── Round 1 — button familiarisation ──────────────────────────────
@@ -345,7 +345,7 @@ namespace VRT.Pilots.Trolley
             toggle.SetInteractionEnabled(true);
             yield return StartCoroutine(ReadyToStartRound());
 #if VRT_WITH_STATS
-            Cwipc.Statistics.Output("TrolleyTutorialTrainDrill", $"event=round_start, round={roundNumber}");
+            Cwipc.Statistics.Output("TrolleyTutorialBystanderDrill", $"event=round_start, round={roundNumber}");
 #endif
 
             // The participant may press any time to ARM a divert, but the train only actually switches
@@ -502,7 +502,7 @@ namespace VRT.Pilots.Trolley
             string next = TrolleyGameState.Instance?.NextScene();
             if (string.IsNullOrEmpty(next))
             {
-                Debug.LogWarning("[TutorialTrainDrill] Tutorial finished but TrolleyGameState has no next scene.");
+                Debug.LogWarning("[TutorialBystanderDrill] Tutorial finished but TrolleyGameState has no next scene.");
                 return;
             }
             PilotController.Instance.LoadNewScene(next);

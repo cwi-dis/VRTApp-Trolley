@@ -13,7 +13,7 @@ namespace VRT.Pilots.Trolley.Editor
     ///
     ///   Trolley > Build Tutorial From Bystander
     ///
-    /// Result: a TutorialTrainDrill runs a sequence of trains one at a time —
+    /// Result: a TutorialBystanderDrill runs a sequence of trains one at a time —
     ///   • RED  train → do nothing (it runs straight/left).
     ///   • BLUE train → press the button (it diverts right).
     /// A top-right counter tracks correct handlings; a ding/buzz plays each round; after all
@@ -23,7 +23,7 @@ namespace VRT.Pilots.Trolley.Editor
     /// Reuses the Bystander rail spline, train mesh, and A/B button. Non-destructive to the
     /// Bystander scene. Overwrites TrolleyTutorial.unity each run — manual tweaks after the last run.
     /// </summary>
-    public static class TrolleyTutorialSetup
+    public static class TrolleyTutorialBystanderSetup
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyBystander.unity";
         const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorialBystander.unity";
@@ -132,8 +132,8 @@ namespace VRT.Pilots.Trolley.Editor
             sfx.playOnAwake = false;
 
             // ── The tutorial controller ────────────────────────────────────────
-            var drillGO = new GameObject("TutorialTrainDrill");
-            var drill = drillGO.AddComponent<TutorialTrainDrill>();
+            var drillGO = new GameObject("TutorialBystanderDrill");
+            var drill = drillGO.AddComponent<TutorialBystanderDrill>();
             var dSO = new SerializedObject(drill);
             dSO.FindProperty("rail").objectReferenceValue           = railRef;
             dSO.FindProperty("train").objectReferenceValue          = trainRef;
@@ -156,7 +156,7 @@ namespace VRT.Pilots.Trolley.Editor
             EditorSceneManager.SaveScene(scene);
             Debug.Log("Build Tutorial: TrolleyTutorial.unity created (two-round practice).\n" +
                       "Done: workers removed, TrolleyController/TrainController removed; cloned RimApproach/RimSwitch " +
-                      "onto the two upper monitors; TutorialNarration source created; TutorialTrainDrill wired " +
+                      "onto the two upper monitors; TutorialNarration source created; TutorialBystanderDrill wired " +
                       "(rail/train/toggle/4 rims/2 buttons/11 narration + 2 SFX clips/score/sfx); added to Build Settings.\n" +
                       "MANUAL: (1) reposition DrillScoreCanvas top-right; nudge RimApproach/RimSwitch to sit on their " +
                       "monitors; (2) check trainSpeed and set divertThreshold to the switch point on the rail; " +
@@ -168,7 +168,7 @@ namespace VRT.Pilots.Trolley.Editor
 
         /// <summary>
         /// Non-destructive: opens the bystander tutorial scene and assigns all 11 narration + 2 SFX clips
-        /// to its TutorialTrainDrill. Use after recording (or re-recording) clips — it touches only the
+        /// to its TutorialBystanderDrill. Use after recording (or re-recording) clips — it touches only the
         /// clip fields, so manual tweaks (rim placement, score canvas, speeds) are preserved.
         /// </summary>
         [MenuItem("Trolley/Tutorial – Assign Narration & SFX Clips")]
@@ -178,10 +178,10 @@ namespace VRT.Pilots.Trolley.Editor
             var scene = EditorSceneManager.OpenScene(TutorialScene, OpenSceneMode.Single);
             if (!scene.IsValid()) { Debug.LogError($"Assign Tutorial Clips: could not open {TutorialScene}."); return; }
 
-            var drill = Object.FindFirstObjectByType<TutorialTrainDrill>(FindObjectsInactive.Include);
+            var drill = Object.FindFirstObjectByType<TutorialBystanderDrill>(FindObjectsInactive.Include);
             if (drill == null)
             {
-                Debug.LogError($"Assign Tutorial Clips: no TutorialTrainDrill found in {TutorialScene} — " +
+                Debug.LogError($"Assign Tutorial Clips: no TutorialBystanderDrill found in {TutorialScene} — " +
                                "run 'Trolley > Build Tutorial From Bystander' first.");
                 return;
             }
@@ -190,7 +190,7 @@ namespace VRT.Pilots.Trolley.Editor
             dSO.ApplyModifiedProperties();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
-            Debug.Log("Assign Tutorial Clips: wired 11 narration + 2 SFX clips to TutorialTrainDrill " +
+            Debug.Log("Assign Tutorial Clips: wired 11 narration + 2 SFX clips to TutorialBystanderDrill " +
                       "(non-destructive). Any 'clip not found' warnings above are still-missing files.");
         }
 
@@ -270,7 +270,7 @@ namespace VRT.Pilots.Trolley.Editor
         {
             var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
             if (clip == null)
-                Debug.LogWarning($"Build Tutorial: {label} not found at {path} — record + assign it on TutorialTrainDrill.");
+                Debug.LogWarning($"Build Tutorial: {label} not found at {path} — record + assign it on TutorialBystanderDrill.");
             return clip;
         }
 
