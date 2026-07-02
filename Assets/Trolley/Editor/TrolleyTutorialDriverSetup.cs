@@ -25,7 +25,7 @@ namespace VRT.Pilots.Trolley.Editor
     /// Non-destructive to the Driver scene. Overwrites TrolleyTutorialDriver.unity each run — make manual
     /// tweaks (rock placement, speeds, score canvas) only after the last run.
     /// </summary>
-    public static class TrolleyDriverTutorialSetup
+    public static class TrolleyTutorialDriverSetup
     {
         const string SourceScene   = "Assets/Trolley/Scenes/TrolleyDriver.unity";
         const string TutorialScene = "Assets/Trolley/Scenes/TrolleyTutorialDriver.unity";

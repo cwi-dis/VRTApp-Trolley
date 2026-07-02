@@ -7,7 +7,7 @@ namespace VRT.Pilots.Trolley
 {
     /// <summary>
     /// Standalone first-person practice for the DRIVER Tutorial scene — the counterpart of
-    /// TutorialTrainDrill. Completely separate from TrolleyController/DriverTrainController so it can't
+    /// TutorialBystanderDrill. Completely separate from TrolleyController/DriverTrainController so it can't
     /// affect the real scenario flow.
     ///
     /// The player sits in the cab; the whole environment (TrackEnvironment) slides toward them, exactly
@@ -27,7 +27,7 @@ namespace VRT.Pilots.Trolley
     ///   • After the drill, the practice questionnaire loads.
     ///
     /// Reuses the Driver rail/cab/movement + the A/B TrolleyToggleDecision, all wired by
-    /// TrolleyDriverTutorialSetup. Touches no shared controller.
+    /// TrolleyTutorialDriverSetup. Touches no shared controller.
     /// </summary>
     public class TutorialDriverDrill : MonoBehaviour
     {

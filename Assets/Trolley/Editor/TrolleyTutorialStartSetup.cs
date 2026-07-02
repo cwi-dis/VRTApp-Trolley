@@ -7,7 +7,7 @@ namespace VRT.Pilots.Trolley.Editor
 {
     /// <summary>
     /// Adds a participant-facing "Start" button to the CURRENTLY OPEN tutorial scene and wires it into
-    /// that scene's drill (TutorialTrainDrill or TutorialDriverDrill).
+    /// that scene's drill (TutorialBystanderDrill or TutorialDriverDrill).
     ///
     ///   Trolley > Add Tutorial Start Button (open scene)
     ///
@@ -102,12 +102,12 @@ namespace VRT.Pilots.Trolley.Editor
             return false;
         }
 
-        // Assign the gate to whichever drill is in the scene (bystander = TutorialTrainDrill,
+        // Assign the gate to whichever drill is in the scene (bystander = TutorialBystanderDrill,
         // driver = TutorialDriverDrill). Both expose a serialized 'gate' field.
         static bool WireDrillGate(TutorialGate gate)
         {
             foreach (var drill in new MonoBehaviour[] {
-                         Object.FindFirstObjectByType<TutorialTrainDrill>(),
+                         Object.FindFirstObjectByType<TutorialBystanderDrill>(),
                          Object.FindFirstObjectByType<TutorialDriverDrill>() })
             {
                 if (drill == null) continue;

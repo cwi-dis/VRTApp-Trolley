@@ -137,7 +137,7 @@ pushed to `origin/master`.
 **Tutorial fixes (#59) — `2de3748`, `1af19ed`, `f149489`:**
 - **Divert bug** — in the bystander tutorial the blue train went straight, then "appeared" on the side
   track a few seconds later. Cause: the drill advanced the train at a fixed spline-*t* rate, not constant
-  world speed; after the fork the branch's short segments crawl at that t-rate. Fixed `TutorialTrainDrill`
+  world speed; after the fork the branch's short segments crawl at that t-rate. Fixed `TutorialBystanderDrill`
   to move at constant world speed, like the real `TrainController`.
 - **Bystander drill** cut 5 → 3 rounds (BLUE/RED/BLUE), slower + shorter run, shorter gap, with a "next
   train approaching" narration before each round (new clip).
@@ -254,7 +254,7 @@ canvas `… / 3`. This shipped, then got **replaced the same day** — see below
 - **Signal light → rocks.** Suzy's call: a colour-coded light is an arbitrary rule to memorise; a physical
   obstacle is self-explanatory and fits the first-person cab (you steer away from what's blocking you).
   Two rocky-mountain barriers (reusing the self-harm look), one per track — the **blocked** track is the
-  one to avoid (rocks on main → divert; rocks on side → stay). Built by `TrolleyDriverTutorialSetup` at
+  one to avoid (rocks on main → divert; rocks on side → stay). Built by `TrolleyTutorialDriverSetup` at
   the captured worker positions, so they ride in on the correct track.
 - **Buttons no longer re-taught** — already practised in the bystander tutorial. Narration cut to **4
   clips**: intro → window → sortingtrain (rules) → closing.
@@ -286,7 +286,7 @@ Locations/Player1+2` world transforms into the other two scenes (finds them insi
 the "neutral until pressable" button behaviour to the real scenes, built room tooling, loaded the real
 questionnaire, renamed the tutorial scene, and scaffolded the second (driver) tutorial.
 
-**Bystander tutorial (`TutorialTrainDrill.cs`) — finished + reworked:**
+**Bystander tutorial (`TutorialBystanderDrill.cs`) — finished + reworked:**
 - Intro is now **per-monitor, clip-driven**: preamble (`intro` + `monitors`, monitors blinks all four
   rims) then one clip per monitor; each rim (and, for main/side, its A/B button) blinks for exactly its
   clip's length — sync is automatic, no `monitorHighlightTimes`. Button pulse colour is **green**.
@@ -325,7 +325,7 @@ ORDER left to Suzy.
   (TrackEnvironment slides toward the seated player; divert yaws about DivertMarker, same rate as
   `DriverTrainController`). Round 2 = **signal-light drill**: a light ahead turns BLUE (divert) / RED (stay),
   5 reps; tram switches at the fork; sound at the fork.
-- `TrolleyDriverTutorialSetup.cs` — `Trolley > Build Driver Tutorial From Driver` duplicates Driver, copies
+- `TrolleyTutorialDriverSetup.cs` — `Trolley > Build Driver Tutorial From Driver` duplicates Driver, copies
   movement params off `DriverTrainController`, strips it + TrolleyController + both worker groups, adds the
   drill + SignalLight + score + SFX + narration source. **Does NOT touch Build Settings.** Plus a
   non-destructive `Driver Tutorial – Assign Narration & SFX Clips` menu.
@@ -363,14 +363,14 @@ From Driver` (TrolleyTutorialDriver scene now exists), both committed.
 
 A single-round first pass earlier in the session (no-timer, 10-train, /10) was reworked into the two-round version below before committing. The practice-questionnaire half (and the no-timer / spatial-commit mechanic) carried over from that pass unchanged.
 
-**TutorialTrainDrill.cs — rewritten as a two-round flow (still fully standalone, touches no shared controller):**
+**TutorialBystanderDrill.cs — rewritten as a two-round flow (still fully standalone, touches no shared controller):**
 - **Round 1 — button familiarisation (guided).** Plays an intro clip describing the four CCTV monitors; each monitor's green rim **blinks in turn** as it's named (`monitorHighlightTimes`, tunable to the recording), then a 3s pause (`introPauseAfter`). Then "press to divert" → button B blinks, waits for the **real** B press (side monitor lights via the toggle); "now change it back" → button A blinks, waits for the real A press. Reuses the existing `TrolleyToggleDecision` (A=main/RimA, B=divert/RimB) and the four monitor rims — no new highlight system.
 - **Round 2 — sorting drill.** Fixed order **RED, BLUE, BLUE, RED, BLUE** (5 trains, was 10), ~10s apart (`interRoundDelay`). **No timer** — decision commits spatially when the train passes `divertThreshold`. Counter `Correct decisions: N / 5` (hidden during Round 1, shown for Round 2).
 - Ends by loading the **practice questionnaire** scene (`practiceQuestionnaireScene`), then the first real scenario.
 - Narration is now **four separate clips** (`introClip`/`pressClip`/`backClip`/`sortClip`) on a dedicated `narrationSource` — separate clips let the flow genuinely wait for each button press. Removed the old single `narrationPlayer` path.
 - Button prompt blink uses a bright contrasting colour (button A starts green-selected, so green-on-green wouldn't show). After each guided press, `toggle.ApplyRemoteState(...)` re-asserts the toggle's own colours/rims.
 
-**TrolleyTutorialSetup.cs — wiring for the two rounds:**
+**TrolleyTutorialBystanderSetup.cs — wiring for the two rounds:**
 - Reads `buttonA`/`buttonB`/`rimA`/`rimB` straight off the `ToggleDecision`'s serialized fields (the buttons are inside a prefab, so `GameObject.Find` by name won't reach them).
 - **Clones the existing rim** onto `Monitor_WestView` + `Monitor_SwitchPoint` (→ `RimApproach`/`RimSwitch`) so all four monitors can blink — reuses the same rim object, not new code.
 - Creates a `TutorialNarration` AudioSource, loads the 4 clips if present (warns + leaves null otherwise), wires everything, silences the carried-over Bystander NarrationPlayer. Score canvas default → `/ 5`.
@@ -388,12 +388,12 @@ A single-round first pass earlier in the session (no-timer, 10-train, /10) was r
 **Late fix (shared util, not a controller):** `GazeDetector.cs` threw `MissingReferenceException` on scene unload — `m_CurrentTarget?.NotifyGazeExit()` in `OnDisable`/`Update` used `?.`, which ignores Unity's destroyed-object state, so a `GazeTarget` torn down with the scene still got called. Switched to Unity-aware `if (m_CurrentTarget != null)` checks. Pre-existing bug, surfaced while testing the tutorial transitions.
 
 **End-of-day state (2026-06-17):**
-- ✅ Suzy rewired the two scripts in-Editor (`TutorialTrainDrill` two-round + `GazeDetector` fix confirmed working).
+- ✅ Suzy rewired the two scripts in-Editor (`TutorialBystanderDrill` two-round + `GazeDetector` fix confirmed working).
 - ⏳ The four narration MP3s are NOT recorded yet — Suzy records them tomorrow.
 
 **Tomorrow — start here:**
-1. **Record the 4 clips** and drop them in `Assets/Trolley/Audio/` with exact names: `narration_tutorial_intro.mp3`, `_press.mp3`, `_back.mp3`, `_sort.mp3` (scripts in `NARRATION_SCRIPTS.md`). Then **drag each onto its field** on `TutorialTrainDrill` (`introClip`/`pressClip`/`backClip`/`sortClip`) — do NOT re-run `Build Tutorial From Bystander`, it would wipe the manual rewire + rim nudging. (Re-running only auto-assigns clips; not worth losing the tweaks.)
-2. **Tune `monitorHighlightTimes`** on `TutorialTrainDrill` so each rim blinks when the intro clip names that monitor (default `1,5,9,13`s).
+1. **Record the 4 clips** and drop them in `Assets/Trolley/Audio/` with exact names: `narration_tutorial_intro.mp3`, `_press.mp3`, `_back.mp3`, `_sort.mp3` (scripts in `NARRATION_SCRIPTS.md`). Then **drag each onto its field** on `TutorialBystanderDrill` (`introClip`/`pressClip`/`backClip`/`sortClip`) — do NOT re-run `Build Tutorial From Bystander`, it would wipe the manual rewire + rim nudging. (Re-running only auto-assigns clips; not worth losing the tweaks.)
+2. **Tune `monitorHighlightTimes`** on `TutorialBystanderDrill` so each rim blinks when the intro clip names that monitor (default `1,5,9,13`s).
 3. **Assign ding/buzz** to `DrillSFX` (`correctClip`/`wrongClip`) — no such asset exists yet.
 4. **Set `divertThreshold`** to the actual switch point on the rail; tune `trainSpeed`.
 5. **Run `Trolley > Build Practice Questionnaire From Questionnaire`** if not done — creates the after-scene `TrolleyPracticeQuestionnaire`.
@@ -418,10 +418,10 @@ A single-round first pass earlier in the session (no-timer, 10-train, /10) was r
 - Old script (spline `TrainController`, build-from-scratch) was stale — Driver now uses `DriverTrainController` (environment-movement). New script **duplicates TrolleyDriver.unity → TrolleySelfharm.unity** (SaveScene saveAsCopy, preserves Driver's hand-tuned cab/tram/movement), sets `scenarioID=selfharm`, replaces the single side-track worker with `RockyMountain_SelfHarm` (boulder cluster) + `SelfHarmImpactEffect` dust burst, rewires `DriverTrainController` (actionHitWorkers=null, inactionHitWorkers=the five, actionImpactEffect wired), assigns `narration_selfharm.mp3`, adds to Build Settings.
 - `DriverTrainController.cs`: added optional `actionImpactEffect` + `impactOnAction` — fires the burst hitDelay after the chosen outcome (null/no-op in Driver).
 
-**Task 2 — `Trolley > Build Tutorial From Bystander` (new `TrolleyTutorialSetup.cs`) — redesigned mid-session as a colour DRILL:**
+**Task 2 — `Trolley > Build Tutorial From Bystander` (new `TrolleyTutorialBystanderSetup.cs`) — redesigned mid-session as a colour DRILL:**
 - Suzy clarified the tutorial is a practice mini-game, not the single-decision flow: a sequence of trains one at a time, each RED or BLUE — **RED = do nothing (runs left/straight), BLUE = press the button (diverts right)** — with a top-right `Correct: X / 10` counter and a ding/buzz per round (5 red + 5 blue, shuffled). She asked for a *completely separate* controller so the real `TrolleyController` is untouched.
-- **`TutorialTrainDrill.cs` (new, standalone):** self-contained spline follow (reuses the Bystander rail: spline 0 straight/left, 1 branch/right), recolours the train each round, reads `TrolleyToggleDecision.IsAction` for input, scores, plays SFX, then loads the first real scenario (`NextScenarioScene()`). Paired = independent (each player runs their own drill). Does NOT touch TrolleyController.
-- **Setup script** duplicates Bystander → Tutorial, removes both worker groups, **removes the TrolleyController + TrainController components from this scene only**, hides the idle TimerCanvas, builds a `DrillScoreCanvas` (world-space, reposition to taste) + `DrillSFX`, and wires `TutorialTrainDrill`. Adds to Build Settings.
+- **`TutorialBystanderDrill.cs` (new, standalone):** self-contained spline follow (reuses the Bystander rail: spline 0 straight/left, 1 branch/right), recolours the train each round, reads `TrolleyToggleDecision.IsAction` for input, scores, plays SFX, then loads the first real scenario (`NextScenarioScene()`). Paired = independent (each player runs their own drill). Does NOT touch TrolleyController.
+- **Setup script** duplicates Bystander → Tutorial, removes both worker groups, **removes the TrolleyController + TrainController components from this scene only**, hides the idle TimerCanvas, builds a `DrillScoreCanvas` (world-space, reposition to taste) + `DrillSFX`, and wires `TutorialBystanderDrill`. Adds to Build Settings.
 - `TrolleyController.isTutorial` flag + `TrolleyGameState.tutorialScene` field still added (harmless; the drill supersedes the isTutorial path but the flag remains a general capability).
 - Tutorial narration script added to `NARRATION_SCRIPTS.md`.
 - **MANUAL (left for Suzy):** assign ding/buzz clips (correctClip/wrongClip) + `narration_tutorial.mp3`; reposition DrillScoreCanvas; tune trainSpeed/decisionWindow; to run in the flow, point `AvatarSetupController` at `TrolleyGameState.tutorialScene` (one line — AvatarSetup is off-limits to Claude).
@@ -433,14 +433,14 @@ A single-round first pass earlier in the session (no-timer, 10-train, /10) was r
 
 **End-of-day state — committed (4 atomic commits on `master`, NOT pushed):**
 - `981316c` Selfharm · `0b863c8` Tutorial · `e13331e` Questionnaire · `f02a480` Docs.
-- Compile fix mid-session: `TutorialTrainDrill` `Random.Range` was ambiguous (Unity.Mathematics vs UnityEngine) → fully qualified to `UnityEngine.Random`.
+- Compile fix mid-session: `TutorialBystanderDrill` `Random.Range` was ambiguous (Unity.Mathematics vs UnityEngine) → fully qualified to `UnityEngine.Random`.
 - ✅ **Selfharm:** built via the new menu + verified working in the Editor by Suzy.
-- ✅ **Tutorial drill:** scene re-built with `TutorialTrainDrill`, compiles. NOT yet polished or playtested.
+- ✅ **Tutorial drill:** scene re-built with `TutorialBystanderDrill`, compiles. NOT yet polished or playtested.
 - ✅ **Questionnaire P2 fix:** committed. NOT yet 2-client tested.
 - 8 `voicerecording-*.wav` test recordings left untracked (not committed). A `.gitignore` rule `voicerecording-*.wav` would hide them.
 
 **Tomorrow — start here:**
-1. **Tutorial polish:** on `TutorialTrainDrill`, assign `correctClip`/`wrongClip` (ding/buzz — no such asset exists yet) and `narration_tutorial.mp3`; reposition `DrillScoreCanvas` to the top-right of the player's view; playtest and tune `trainSpeed` (6) / `decisionWindow` (3s).
+1. **Tutorial polish:** on `TutorialBystanderDrill`, assign `correctClip`/`wrongClip` (ding/buzz — no such asset exists yet) and `narration_tutorial.mp3`; reposition `DrillScoreCanvas` to the top-right of the player's view; playtest and tune `trainSpeed` (6) / `decisionWindow` (3s).
 2. **Tutorial in flow (optional):** point `AvatarSetupController.ExecuteLoad` at `TrolleyGameState.tutorialScene` (one line; AvatarSetup is yours to edit, off-limits to Claude).
 3. **Selfharm:** position/scale `RockyMountain_SelfHarm` so the divert visibly crashes into it; tune `DriverTrainController.hitDelay`. Camera shake on impact is still a TODO (touches the XR rig — VR2Gather/Jack territory).
 4. **Questionnaire:** 2-client test; read the `[Questionnaire]` log line on P2 — want `booth=B` + small distance. If distance is large, the cause is VR2Gather assigning the spawn slot, not the transform (next thing to dig into).
@@ -605,7 +605,7 @@ A single-round first pass earlier in the session (no-timer, 10-train, /10) was r
 - Root cause: `SetHighlight()` overwrote swatch `Image.color` with flat blue/grey, losing original swatch colors permanently
 - Fix: `CaptureColors()` records base colors at `Start()`; `HighlightSwatchGroup()` dims unselected swatches to `base × 0.4f` instead of replacing with a flat color
 
-**TrolleyTutorialSetup.cs:**
+**TrolleyTutorialBystanderSetup.cs:**
 - Removed Male/Female avatar row (avatar selection is in AvatarSetup scene, not Tutorial)
 - All rows shifted up 0.07 to fill gap; OrderLabels/OrderScenes updated to TrolleySelfharm convention
 - Added TrolleyGameState + DataLogger singleton creation — no longer needs manual placement
@@ -825,7 +825,7 @@ A single-round first pass earlier in the session (no-timer, 10-train, /10) was r
 **Scene renames finalised:**
 - `TrolleyTutorial` → `TrolleyResearcherSetup` (researcher operates this, not participant)
 - `TutorialController` → `ResearcherSetupController`
-- `TrolleyTutorialSetup.cs` → `TrolleyResearcherSetupSceneSetup.cs`
+- `TrolleyTutorialBystanderSetup.cs` → `TrolleyResearcherSetupSceneSetup.cs`
 - Build Settings updated; `TrolleyPlayerPositions.cs` updated to exclude ResearcherSetup and AvatarSetup from auto-position script
 
 **Protocol fixes applied:**

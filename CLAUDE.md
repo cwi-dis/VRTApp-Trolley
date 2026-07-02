@@ -22,12 +22,12 @@ Setup scripts live in `Assets/Trolley/Editor/`:
 | `Trolley > Wire Questionnaire Scene` | `TrolleyQuestionnaireSetup.cs` |
 | `Trolley > Driver – Wire Movement` / `Driver – Wire Toggle Buttons` (targeted; full wire removed) | `TrolleyDriverSetup.cs` |
 | `Trolley > Build Selfharm From Driver` (duplicates Driver → cliff/mountain on action track) | `TrolleySelfharmSetup.cs` |
-| `Trolley > Build Tutorial From Bystander` (duplicates Bystander → no workers, practice) | `TrolleyTutorialSetup.cs` |
-| `Trolley > Build Driver Tutorial From Driver` / `Driver Tutorial – Assign Narration & SFX Clips` (first-person signal drill; does NOT touch Build Settings) | `TrolleyDriverTutorialSetup.cs` |
+| `Trolley > Build Tutorial From Bystander` (duplicates Bystander → no workers, practice) | `TrolleyTutorialBystanderSetup.cs` |
+| `Trolley > Build Driver Tutorial From Driver` / `Driver Tutorial – Assign Narration & SFX Clips` (first-person signal drill; does NOT touch Build Settings) | `TrolleyTutorialDriverSetup.cs` |
 | `Trolley > Bystander – …` (targeted menus) | `TrolleyBystanderSetup.cs` |
 | `Trolley > Wire Researcher Setup Scene` | `TrolleyResearcherSetupSceneSetup.cs` |
 | `Trolley > Wire Avatar Setup Scene` | `TrolleyAvatarSetupSceneSetup.cs` |
-| `Trolley > Tutorial – Assign Narration & SFX Clips` (non-destructive; wires the 10 narration + 2 SFX clips) | `TrolleyTutorialSetup.cs` |
+| `Trolley > Tutorial – Assign Narration & SFX Clips` (non-destructive; wires the 10 narration + 2 SFX clips) | `TrolleyTutorialBystanderSetup.cs` |
 | `Trolley > Build Control Room Shell` (enclosing ceiling+walls around the console; operates on open scene, doesn't save) | `TrolleyControlRoomShell.cs` |
 | `Trolley > Add Tutorial Skip Button (open scene)` (researcher-only grey skip button; run once per tutorial scene; preserves placement on re-run) | `TrolleySkipButtonSetup.cs` |
 | `Trolley > Add Tutorial Start Button (open scene)` (participant-facing green Start button; wires the drill's `gate` field; opens with an A/B button warm-up then waits for Start; run once per tutorial scene) | `TrolleyTutorialStartSetup.cs` |

@@ -34,7 +34,7 @@ All scenarios use a button as the shared action point — referenced consistentl
 The tutorial is a guided **button round** (intro → monitors → per-monitor → press/back/confirm) then a
 **sorting drill**. Record **ten separate clips** so the flow waits for each real press and each monitor's
 rim blinks for exactly its own clip — sync is automatic, no timestamp tuning. Each clip maps to a field
-on `TutorialTrainDrill`.
+on `TutorialBystanderDrill`.
 
 **Blink behaviour:** during the four per-monitor clips the named monitor's green **rim** blinks. The
 **buttons are never blinked** — from the button-practice step on, they use their real-scene feedback

@@ -17,7 +17,7 @@ namespace VRT.Pilots.Trolley.Editor
     ///   • loads the first real scenario when finished.
     ///
     /// Non-destructive to TrolleyQuestionnaire.unity. Overwrites TrolleyPracticeQuestionnaire.unity
-    /// each run — make manual tweaks only after the final run. The TutorialTrainDrill loads this
+    /// each run — make manual tweaks only after the final run. The TutorialBystanderDrill loads this
     /// scene by name after the colour drill.
     /// </summary>
     public static class TrolleyPracticeQuestionnaireSetup
@@ -65,7 +65,7 @@ namespace VRT.Pilots.Trolley.Editor
                       "(2 items), added to Build Settings. No data is logged in this scene; it loads the first " +
                       "real scenario when finished.\n" +
                       "MANUAL: nothing required. The tutorial drill already points at this scene by name " +
-                      "(TutorialTrainDrill.practiceQuestionnaireScene).");
+                      "(TutorialBystanderDrill.practiceQuestionnaireScene).");
         }
 
         static QuestionSet GetOrCreatePracticeQuestions()
