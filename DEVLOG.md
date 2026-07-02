@@ -8,6 +8,22 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 23 (2026-07-02) — Re-enabled SceneFader, made it scene-local, added impact fade to Driver/Self-harm (#83)
+
+**Context:** `SceneFader` had been silently made invisible at some point (found via `git log -S`: commit `188cc80`, "add invisible mode... to suppress the broken World Space canvas") — a triangle-flashing artifact in the HMD, tracked as #35. It had two uses: fading in/out at scene boundaries (now redundant — see #80's `CameraFader` fix above), and a mid-scene "comfort fade" in the driver tutorial that hides the world snapping back to its start pose between the 3 rock-blocker practice rounds. Re-tested both non-VR and on vrtiny; the original "broken look" did not reappear, so it was safe to build on.
+
+**Re-enable — `a2621ac`:** Flipped `invisible` to `false` in `SceneFader.cs` and in the `TrolleyAvatarSetup` scene instance (the `DontDestroyOnLoad` singleton origin at the time).
+
+**Made SceneFader scene-local — `fe7fcea`:** Since scene-boundary fading is now `CameraFader`'s job, `SceneFader` no longer needs to survive scene loads. Removed `DontDestroyOnLoad`, the `SceneManager.sceneLoaded` subscription, and the `OnFadeInComplete` narration-start gate in `TrolleyController` (narration now just waits a fixed 2s). Each scene that wants a fade now carries its own `SceneFader` GameObject, added via a new menu item `Trolley > Add Scene Fader (open scene)` (`TrolleySceneFaderSetup.cs`, idempotent, does not save). Calling code checks `SceneFader.Instance` for null and simply skips the fade if no fader is present in the scene — removed the now-pointless instance from `TrolleyAvatarSetup`.
+
+**Tutorial fade-order bug — `fe7fcea`:** `TutorialDriverDrill.TransitionToNextRound()` called `HideBlockers()` *before* the fade-to-black coroutine started, so the rock blockers visibly popped instead of vanishing under black. Reordered to hide them only after the screen is confirmed black.
+
+**Impact fade in Driver/Self-harm — `fe7fcea`:** `DriverTrainController` (shared by both scenes) used to hide the hit workers / trigger the impact effect via an abrupt `SetActive(false)`/`(true)`, `hitDelay` seconds after the decision locked in. Replaced with `ImpactRoutine()`: starts `SceneFader.FadeToBlack()` at `HitDelay - FadeDuration` seconds (added a `SceneFader.FadeDuration` getter) so the screen is fully opaque exactly at the impact moment — the hit itself is never seen — then does the hide/effect swap under black. Stays black afterward by default (new `fadeBackInAfterImpact` toggle, off by default) rather than fading back in, since there's nothing worth showing post-impact and it avoids a black→visible→black flicker a few seconds before `CameraFader`'s own transition fade. Tuned via live testing: `hitDelay` left at its existing `4`s in both scenes, `SceneFader.fadeDuration` set to `2` (tried `4` first — matching `hitDelay` exactly so the fade starts right as the switches lock — but that read as too slow; `2` looked good in both non-VR and VR on both Driver and Self-harm).
+
+Confirmed working non-VR and in VR (vrtiny) for driver tutorial, Driver, and Self-harm. Merged to `master`.
+
+---
+
 ### Day 22 (2026-07-02) — Fixed VRT/Fader shader warning (#80)
 
 **Context:** Issue #80 reported two errors during a run: a missing-microphone message (expected, no mic configured for that test) and a shader error logged on every scene fade in/out:
