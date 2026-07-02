@@ -113,23 +113,12 @@ namespace VRT.Pilots.Trolley
             toggleDecision?.SetInteractionEnabled(false);
 
             _state = State.Narration;
-
-            if (SceneFader.Instance != null)
-                SceneFader.Instance.OnFadeInComplete += BeginNarration;
-            else
-                StartCoroutine(FallbackBegin());
+            StartCoroutine(BeginNarrationAfterDelay());
         }
 
-        IEnumerator FallbackBegin()
+        IEnumerator BeginNarrationAfterDelay()
         {
             yield return new WaitForSeconds(2f);
-            BeginNarration();
-        }
-
-        void BeginNarration()
-        {
-            if (SceneFader.Instance != null)
-                SceneFader.Instance.OnFadeInComplete -= BeginNarration;
             StartCoroutine(ReadyThenBeginNarration());
         }
 

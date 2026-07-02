@@ -52,6 +52,9 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject actionImpactEffect;
         [Tooltip("Which outcome triggers the impact effect. Driver/Self-harm crash is on the ACTION (divert) outcome.")]
         [SerializeField] bool impactOnAction = true;
+        [Tooltip("If a SceneFader is present: fade back in after the impact swap. Leave off to stay black " +
+                 "through the rest of the outcome window and into the scene transition.")]
+        [SerializeField] bool fadeBackInAfterImpact = false;
 
         bool _approaching;
         bool _diverting;
@@ -73,39 +76,49 @@ namespace VRT.Pilots.Trolley
         {
             _diverting = true;
             _turnedSoFar = 0f;
-            HideAfterDelay(actionHitWorkers);
-            if (impactOnAction) PlayImpactAfterDelay();
+            StartCoroutine(ImpactRoutine(actionHitWorkers, impactOnAction));
         }
 
         public override void ExecuteInaction()
         {
             // Keep rolling straight through the outcome.
-            HideAfterDelay(inactionHitWorkers);
-            if (!impactOnAction) PlayImpactAfterDelay();
+            StartCoroutine(ImpactRoutine(inactionHitWorkers, !impactOnAction));
         }
 
-        void PlayImpactAfterDelay()
+        // Fade-to-black starts as soon as the decision locks in (HitDelay - FadeDuration seconds before
+        // impact), so the screen is fully black by the moment of impact — the hit is never actually seen.
+        // Workers are hidden and the impact effect (if any) triggers under that black. By default the
+        // screen then stays black through the rest of the outcome window and into the scene transition,
+        // which VR2Gather's own CameraFader fades out of — set fadeBackInAfterImpact to fade back in
+        // instead. No-ops the fade itself if no SceneFader is present in the scene.
+        IEnumerator ImpactRoutine(GameObject workers, bool playImpactEffect)
         {
-            if (actionImpactEffect != null) StartCoroutine(ImpactRoutine());
-        }
+            var fader = SceneFader.Instance;
 
-        IEnumerator ImpactRoutine()
-        {
-            yield return new WaitForSeconds(HitDelay);
-            actionImpactEffect.SetActive(true);
-            var ps = actionImpactEffect.GetComponent<ParticleSystem>();
-            if (ps != null) ps.Play();
-        }
+            float preDelay = fader != null ? Mathf.Max(0f, HitDelay - fader.FadeDuration) : HitDelay;
+            yield return new WaitForSeconds(preDelay);
 
-        void HideAfterDelay(GameObject workers)
-        {
-            if (workers != null) StartCoroutine(HideRoutine(workers));
-        }
+            if (fader != null)
+            {
+                bool done = false;
+                fader.FadeToBlack(() => done = true);
+                yield return new WaitUntil(() => done);
+            }
 
-        IEnumerator HideRoutine(GameObject workers)
-        {
-            yield return new WaitForSeconds(HitDelay);
-            workers.SetActive(false);
+            if (workers != null) workers.SetActive(false);
+            if (playImpactEffect && actionImpactEffect != null)
+            {
+                actionImpactEffect.SetActive(true);
+                var ps = actionImpactEffect.GetComponent<ParticleSystem>();
+                if (ps != null) ps.Play();
+            }
+
+            if (fader != null && fadeBackInAfterImpact)
+            {
+                bool done = false;
+                fader.FadeFromBlack(() => done = true);
+                yield return new WaitUntil(() => done);
+            }
         }
 
         void Update()

@@ -1,15 +1,19 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace VRT.Pilots.Trolley
 {
     /// <summary>
-    /// Singleton that fades the screen to/from black between scene transitions.
+    /// Scene-local fader: fades the screen to/from black mid-scene (e.g. to hide a hidden
+    /// world reset, or to mask the moment of hitting rocks/workers near the end of a scene).
+    /// Lives in whichever scene needs it (added via Trolley > Add Scene Fader) and is destroyed
+    /// with that scene like any other GameObject — it does NOT persist across scene loads and
+    /// does not fade at scene start (that's handled by VR2Gather's own CameraFader). Code that
+    /// wants to fade should check SceneFader.Instance for null and skip the effect if no fader
+    /// is present.
     /// Uses a World Space canvas so it works in both editor and XR headset.
-    /// Create via: new GameObject("SceneFader").AddComponent<SceneFader>()
     /// </summary>
     public class SceneFader : MonoBehaviour
     {
@@ -19,10 +23,9 @@ namespace VRT.Pilots.Trolley
         [SerializeField] bool invisible = false;
         [SerializeField] float fadeDuration = 0.8f;
         [SerializeField] float canvasDistance = 0.3f;
-        [Tooltip("Seconds to hold black before fading in on scene load.")]
-        [SerializeField] float introHoldDuration = 2f;
 
-        public event Action OnFadeInComplete;
+        /// <summary>Seconds a FadeToBlack/FadeFromBlack takes — lets callers time a fade to land exactly on a moment.</summary>
+        public float FadeDuration => fadeDuration;
 
         Transform _fadeCanvas;
         Image _overlay;
@@ -32,12 +35,13 @@ namespace VRT.Pilots.Trolley
         {
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
-            DontDestroyOnLoad(gameObject);
             if (!invisible) CreateOverlay();
-            SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        void OnDestroy() => SceneManager.sceneLoaded -= OnSceneLoaded;
+        void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
 
         void Update()
         {
@@ -81,24 +85,6 @@ namespace VRT.Pilots.Trolley
         public void FadeFromBlack(Action onComplete)
         {
             StartCoroutine(DoFade(1f, 0f, onComplete));
-        }
-
-        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            StartCoroutine(IntroFadeIn());
-        }
-
-        IEnumerator IntroFadeIn()
-        {
-            if (_overlay != null)
-            {
-                Color c = _overlay.color;
-                c.a = 1f;
-                _overlay.color = c;
-            }
-            yield return new WaitForSeconds(introHoldDuration);
-            yield return DoFade(1f, 0f, null);
-            OnFadeInComplete?.Invoke();
         }
 
         IEnumerator DoFade(float from, float to, Action onComplete)

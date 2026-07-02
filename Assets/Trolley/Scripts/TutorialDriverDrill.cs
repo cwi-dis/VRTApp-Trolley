@@ -135,11 +135,6 @@ namespace VRT.Pilots.Trolley
             _envStartPos = environment.localPosition;
             _envStartRot = environment.localRotation;
 
-            // Ensure a fader exists so the between-rep reset can be hidden. The real flow already has
-            // one (DontDestroyOnLoad singleton from an earlier scene); this covers standalone testing.
-            if (SceneFader.Instance == null)
-                new GameObject("SceneFader").AddComponent<SceneFader>();
-
             if (narrationSource != null) narrationSource.volume = narrationVolume;
             toggle.SetInteractionEnabled(false);
             StartCoroutine(RunTutorial());
@@ -281,8 +276,8 @@ namespace VRT.Pilots.Trolley
         // under full black (invisible), then fade in — still rolling. No visible stop, no teleport.
         IEnumerator TransitionToNextRound()
         {
-            HideBlockers();
             yield return StartCoroutine(DriveWhileFading(toBlack: true));
+            HideBlockers();
             ResetEnvironment();
             yield return StartCoroutine(DriveWhileFading(toBlack: false));
         }
