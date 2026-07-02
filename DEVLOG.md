@@ -8,6 +8,22 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 24 (2026-07-02) — Diagnosed and fixed audio dropouts via ignoreSynchronizer (#85)
+
+**Context:** Jack noticed severe audio dropouts (audio "hardly usable" in both directions) during `cwi-test07-pair-laptops` (malakov/jezebel). `stats:` log analysis of that run pinpointed the cause: `AsyncVoicePreparer` was starved of data 76–78% of the time on both ends, even though `AsyncVoiceDecoder` had data ready 99% of the time and the encoder/transmit side was clean. `VRTSynchronizer` was running in strict zero-latency mode (`minLatency=0, maxLatency=0, acceptDesyncOnDataUnavailable=false`), discarding any voice frame that didn't arrive at exactly the right moment — pointless for a voice-only session with no other stream to synchronize against.
+
+**Repro — `2283ad4`:** Reproduced locally in-Editor between `sap` (this machine) and `beelzebub`, before any fix: `AsyncVoicePreparer` nodata rate averaged ~40% (peaking at ~60% in some 10s windows) — same strict-synchronizer config present, less severe than the original session but clearly the same bug.
+
+**Fix:** Set `VoiceConfig.ignoreSynchronizer: true` in `config.json`, which makes voice playout run unsynchronized off the local system clock instead of through `VRTSynchronizer`. Re-ran the same in-Editor sap/beelzebub session with the fix: `AsyncVoicePreparer` logged `unsynchronized=1` and nodata rate dropped to ~9–18%.
+
+Also checked `VoiceConfig.preparerQueueSize` while in there (Jack was worried `0` meant "unbounded"): it doesn't — `VoicePipelineOther.cs` only overrides the queue's hardcoded default of 50 frames (~1s of audio) when the config value is `> 0`, and the queue always drops frames once full (`dropWhenFull=true`) rather than growing. Not a contributor to this bug.
+
+Ported the same setting to `../TrolleyExperiment/experiments/_config/config.json` so future real sessions pick it up too — VRTrun-launched sessions load their own uploaded `config.json` instead of this repo's root `config.json`, so the fix had to be applied there separately, or real sessions would still hit the bug.
+
+**Status:** Fix looks solid but only verified with a short in-Editor desk test so far; #85 stays open with a "need to test" label pending a fuller verification run.
+
+---
+
 ### Day 23 (2026-07-02) — Re-enabled SceneFader, made it scene-local, added impact fade to Driver/Self-harm (#83)
 
 **Context:** `SceneFader` had been silently made invisible at some point (found via `git log -S`: commit `188cc80`, "add invisible mode... to suppress the broken World Space canvas") — a triangle-flashing artifact in the HMD, tracked as #35. It had two uses: fading in/out at scene boundaries (now redundant — see #80's `CameraFader` fix above), and a mid-scene "comfort fade" in the driver tutorial that hides the world snapping back to its start pose between the 3 rock-blocker practice rounds. Re-tested both non-VR and on vrtiny; the original "broken look" did not reappear, so it was safe to build on.
