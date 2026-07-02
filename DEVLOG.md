@@ -8,6 +8,22 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 25 (2026-07-02) — Tutorial narration rework + bystander train fixes + questionnaire reflection panel redesign (#59, #78)
+
+**Context:** Session on the two tutorial scenes and the questionnaire's self-reflection panel. Two commits: `b953d2e` (tutorials, #59) and `8ea7492` (questionnaire, #78). Tutorial scripts were also renamed to the `TrolleyTutorial{Bystander,Driver}` convention (scenario-last, matching the scene names) so setup/drill names line up.
+
+**Tutorial narration mechanism (#59) — `b953d2e`:** Reworked to the reversed order the scene flow already used — **driver first, bystander second**. The driver tutorial now **teaches the A/B buttons** with three new clips (`button_try1/2/3`) and a press-practice step (wait-for-right → wait-for-left → confirm), mirroring the bystander's button round; its closing is now "end of the first tutorial." The bystander tutorial runs second and its closing ends the whole block ("the real scenarios will begin"). Re-recorded all affected narration; `NARRATION_SCRIPTS.md` rewritten to the new order (issue-#59 warning removed). Extracted the sorting rounds into `RunSortingRounds()` and added an Editor-only `devSkipToSorting` toggle for testing.
+
+**Bystander train matched to the real scene — `b953d2e`:** The tutorial tram diverged from `TrainController` three ways, all fixed: (1) **speed** — was derived from `roundDuration` (too fast); now constant `trainSpeed` (40) × decision-window factor, identical to the real scene; (2) **start** — was a fixed `roundStartT` fraction (weird placement); now the tram's placed position projected onto the straight spline, exactly like `TrainController.DoStartApproach`; (3) **divert jump** — the blue train ran straight past the fork then teleported onto the side track because the divert committed at a fixed `divertThreshold=0.5`; added `ComputeForkT()` which finds where the two splines actually diverge, so the switch commits at the real fork and curves on smoothly. Also fixed `modelForwardYaw` 180→0 (tram was facing backward). Tuned round values baked into code defaults so a rebuild no longer resets them.
+
+**Other tutorial changes — `b953d2e`:** Removed the "correct / N" score-counter UI from both drills. Driver now shows an example rock obstacle from the start of the "watch for obstacles" line (not just during the reps). Replaced the physical console Start button with a world-space titled "Start Tutorial" panel (dark card + Start button); `TutorialGate` now drives a UI button.
+
+**Questionnaire reflection panel redesign (#78) — `8ea7492`:** Rebuilt the self-reflection panel from a single black text block into a dark card with a clear hierarchy: centred "Self-reflection" title, an **OUTCOME** section (the consequence, set at runtime), a highlighted instruction box ("Answer the questions out loud" + the question, raised and enlarged), and a narrower red "I've answered" button. Split the consequence from the think-aloud question into two wired fields (`reflectionInstructionText`) and reworded both plus all outcome lines. The outside-VR **paper prompt** now has a line gap and reads "Press 'Continue' after filling in the questionnaire"; Continue button shrunk to match. Regenerated both questionnaire scenes.
+
+**Status:** All committed to `master` (not yet pushed). Train speed/start/divert confirmed working in Editor. Tutorial runtime ≈ 4.5 min at the default 8 s decision window (~1.5 min driver + ~3 min bystander). Pending in-headset verification of the new Start panel (needs an EventSystem / XR UI input module in each tutorial scene) and wiring the driver `button_try` clips (`Trolley > Driver Tutorial – Assign Narration & SFX Clips`).
+
+---
+
 ### Day 24 (2026-07-02) — Diagnosed and fixed audio dropouts via ignoreSynchronizer (#85)
 
 **Context:** Jack noticed severe audio dropouts (audio "hardly usable" in both directions) during `cwi-test07-pair-laptops` (malakov/jezebel). `stats:` log analysis of that run pinpointed the cause: `AsyncVoicePreparer` was starved of data 76–78% of the time on both ends, even though `AsyncVoiceDecoder` had data ready 99% of the time and the encoder/transmit side was clean. `VRTSynchronizer` was running in strict zero-latency mode (`minLatency=0, maxLatency=0, acceptDesyncOnDataUnavailable=false`), discarding any voice frame that didn't arrive at exactly the right moment — pointless for a voice-only session with no other stream to synchronize against.
