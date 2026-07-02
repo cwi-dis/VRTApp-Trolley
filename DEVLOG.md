@@ -8,6 +8,20 @@ Full protocol: `protocol.md`
 
 ## Progress
 
+### Day 25 (2026-07-02) — Instrumented #81 ("participants don't see each other") with hip position markers
+
+**Context:** #81 is the current blocker — in all scenes except AvatarSelection, paired participants don't see each other's avatar. Log analysis of `cwi-test07-pair-laptops/run-20260702-1620` and an earlier `cwi-test06-pair` run had pointed at a "self rig anchored at world origin" theory, based on the Questionnaire scene's built-in wrong-booth diagnostic (`cameraPos=(0,0,0)`). That turned out to be a red herring twice over: participants aren't supposed to see each other in the Questionnaire scene at all, and separately the diagnostic's `cameraPos=(0,0,0)`/`distance=-1.0` is just its null-`Camera.main` fallback, not a real position reading.
+
+**Rigged-avatar theory:** Jack's working theory is that the male/female rigged avatars "drift" — root placement (P_Self_Player_Trolley / P_Player_Trolley, confirmed correct via the grey hand-controller models tracking properly) is fine, but the skeleton itself ends up somewhere else. Static analysis found that VR2Gather's `PlayerTrackingTargets` component (added in #328, required for `PlayerRepresentationWirer` to wire `SyncSkeletonToVRRig.vrTarget`) is present on `P_Player.prefab` but missing entirely from `P_Self_Player.prefab` — confirmed both in the local VR2Gather checkout and in Trolley's actual pinned package cache. That should make any self-avatar frozen (or throw a `NullReferenceException` every frame), but a live solo VR test on beelzebub showed Jack's own full-body avatar tracking correctly throughout, with no matching warnings or exceptions in `Editor.log`. Couldn't reconcile the two from logs alone — needs runtime data from an actual two-person VR session.
+
+**Instrumentation:** Added four `PFB_GazeTarget` instances (tiny 0.01 colliders, existing gaze-target component already does periodic position logging to `stats.log` every 200 ms when position changes) as local overrides parented on the real resolved `hipsBone` transform (the `MultiPositionConstraint`'s constrained object from the lotus-position fix, not the Body Constraint driver GO) in both `P_Self_Player_Trolley.prefab` and `P_Player_Trolley.prefab`:
+- `xxxjackHipsMaleSelf` / `xxxjackHipsFemaleSelf` (self player, one per body type)
+- `xxxjackHipsMaleOther` / `xxxjackHipsFemaleOther` (other/remote player, one per body type)
+
+All four at local position/rotation identity relative to the hips bone. A frozen/unwired hips bone will log exactly one `pos_` line at scene start and go silent; a tracking one keeps updating — directly diagnostic for the missing-`PlayerTrackingTargets` theory, from a real paired VR run rather than static analysis.
+
+**Status:** Built and merging to `master`; two-person VR test planned at CWI tomorrow (2026-07-03).
+
 ### Day 24 (2026-07-02) — Diagnosed and fixed audio dropouts via ignoreSynchronizer (#85)
 
 **Context:** Jack noticed severe audio dropouts (audio "hardly usable" in both directions) during `cwi-test07-pair-laptops` (malakov/jezebel). `stats:` log analysis of that run pinpointed the cause: `AsyncVoicePreparer` was starved of data 76–78% of the time on both ends, even though `AsyncVoiceDecoder` had data ready 99% of the time and the encoder/transmit side was clean. `VRTSynchronizer` was running in strict zero-latency mode (`minLatency=0, maxLatency=0, acceptDesyncOnDataUnavailable=false`), discarding any voice frame that didn't arrive at exactly the right moment — pointless for a voice-only session with no other stream to synchronize against.
