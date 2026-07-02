@@ -16,7 +16,7 @@ namespace VRT.Pilots.Trolley
         public static SceneFader Instance { get; private set; }
 
         [Tooltip("When true, no canvas is created and no visual effect is shown; only the timing and callbacks are active.")]
-        [SerializeField] bool invisible = true;
+        [SerializeField] bool invisible = false;
         [SerializeField] float fadeDuration = 0.8f;
         [SerializeField] float canvasDistance = 0.3f;
         [Tooltip("Seconds to hold black before fading in on scene load.")]
