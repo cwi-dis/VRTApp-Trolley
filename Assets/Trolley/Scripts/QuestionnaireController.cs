@@ -225,8 +225,8 @@ namespace VRT.Pilots.Trolley
         {
             if (transitionPanel != null) transitionPanel.SetActive(true);
             if (transitionText != null)
-                transitionText.text = "Please take off the headset and fill in the questionnaire on paper.\n" +
-                                      "When you're done, put the headset back on and press Continue.";
+                transitionText.text = "Please take off the headset and fill in the questionnaire on paper.\n\n" +
+                                      "Press 'Continue' after filling in the questionnaire.";
             if (startButton != null)
             {
                 SetButtonLabel(startButton, "Continue");
