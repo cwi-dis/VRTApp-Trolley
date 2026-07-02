@@ -22,6 +22,16 @@ public class TrolleyResearcherConfig
     [Tooltip("Decision window in seconds for the scenarios. 0 = use the TrolleyTimingConfig asset default. " +
              "Set per session in pilotconfig.json — train speed and worker-hide timing scale to it.")]
     public float decisionWindow = 0f;
+    [Tooltip("Participant number(s) as written on the paper form. One entry for Solo, two for Paired " +
+             "(index 0 = player 1 / master / Station A, index 1 = player 2 / non-master / Station B). " +
+             "Not used while running the experiment; kept only for record-keeping.")]
+    public string[] participantNumbers = null;
+    [Tooltip("Session date as written on the paper form, e.g. '2026-07-02'. Free text, not parsed. " +
+             "Not used while running the experiment; kept only for record-keeping.")]
+    public string sessionDate = "";
+    [Tooltip("Session time as written on the paper form, e.g. '14:30'. Free text, not parsed. " +
+             "Not used while running the experiment; kept only for record-keeping.")]
+    public string sessionTime = "";
 
     public bool HasConfig =>
         (condition == "Solo" || condition == "Paired") &&

@@ -9,7 +9,10 @@ namespace VRT.Pilots.Trolley
     /// <summary>
     /// Singleton that writes decision data to CSV and to the stats: output.
     /// Created in the ResearcherSetup scene; survives scene loads via DontDestroyOnLoad.
-    /// Session starts automatically on Awake.
+    /// Session starts automatically on Start (not Awake — StartSession() reads
+    /// VRTPilotConfig.Instance, and Awake ordering between the two is not guaranteed
+    /// since neither has an explicit Script Execution Order; Unity does guarantee all
+    /// Awake calls finish before any Start call, so Start is race-free).
     /// </summary>
     public class DataLogger : MonoBehaviour
     {
@@ -25,6 +28,10 @@ namespace VRT.Pilots.Trolley
             if (Instance != null) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
+        }
+
+        void Start()
+        {
             StartSession();
         }
 
@@ -42,8 +49,13 @@ namespace VRT.Pilots.Trolley
 
             Debug.Log($"DataLogger: writing to {_decisionPath}");
 #if VRT_WITH_STATS
+            var rc = VRTPilotConfig.InstanceExists() ? VRTPilotConfig.Instance.researcherConfig : null;
+            int avatarIndex = TrolleyGameState.LocalAvatarConfigIndex;
+            string participantNumber = (rc?.participantNumbers != null && avatarIndex < rc.participantNumbers.Length)
+                ? rc.participantNumbers[avatarIndex] : "0";
             Cwipc.Statistics.Output("TrolleyDataLogger",
-                $"event=session_start, sessionID={_sessionID}, csvPath={_decisionPath}");
+                $"event=session_start, sessionID={_sessionID}, csvPath={_decisionPath}, " +
+                $"participantNumber={participantNumber}, sessionDate={rc?.sessionDate}, sessionTime={rc?.sessionTime}");
 #endif
         }
 
