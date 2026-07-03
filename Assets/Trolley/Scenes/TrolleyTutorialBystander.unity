@@ -2850,7 +2850,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.229
+      value: -3.22863
+      objectReference: {fileID: 0}
+    - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.29700005
       objectReference: {fileID: 0}
     - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2914,7 +2918,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.229
+      value: -2.22863
+      objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.29700005
       objectReference: {fileID: 0}
     - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2927,6 +2935,18 @@ PrefabInstance:
     - target: {fileID: 7935367321392098293, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: 5f5aaf25-ea3b-4723-ba84-2cd524648beb
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644310923046033676, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.72863
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644310923046033676, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.29700005
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644310923046033676, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.6625
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7039,7 +7059,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2129619621
 Transform:
   m_ObjectHideFlags: 0

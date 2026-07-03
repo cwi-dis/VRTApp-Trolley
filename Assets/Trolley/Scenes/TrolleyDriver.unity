@@ -2175,6 +2175,10 @@ PrefabInstance:
       propertyPath: NetworkId
       value: b1170bbe-a60a-433d-b9b2-90ff53ee97fe
       objectReference: {fileID: 0}
+    - target: {fileID: 942049329130859555, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.19963
+      objectReference: {fileID: 0}
     - target: {fileID: 1425178425847460037, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: e102a8f7-9d75-4b1d-8558-3d75de166c94
@@ -2227,9 +2231,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5485998810809680586, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.19963
+      objectReference: {fileID: 0}
     - target: {fileID: 7935367321392098293, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
       propertyPath: NetworkId
       value: 8b40242b-4954-483c-8ac5-2ff4180abf02
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644310923046033676, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.69963
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644310923046033676, guid: c5cf9f264199a4391b99b1b5c396976c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.368
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2946,6 +2962,7 @@ MonoBehaviour:
   hitDelay: 4
   actionImpactEffect: {fileID: 0}
   impactOnAction: 1
+  fadeBackInAfterImpact: 0
 --- !u!1001 &2078594739
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3206,7 +3223,7 @@ PrefabInstance:
       objectReference: {fileID: 1547119119}
     - target: {fileID: 5125812228732580533, guid: 70947f27b9ca243229f654361ec311db, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5263243349346785365, guid: 70947f27b9ca243229f654361ec311db, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
