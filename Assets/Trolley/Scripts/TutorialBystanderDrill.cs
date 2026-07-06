@@ -495,10 +495,16 @@ namespace VRT.Pilots.Trolley
             _current = branch;
         }
 
-        // Walk the straight spline; the fork is the last point that still coincides with the branch spline
+        // Walk the straight spline; the fork is the LAST point that coincides with the branch spline
         // (in world space). Before the fork the two tracks overlap, so committing the divert there curves
         // smoothly onto the branch instead of snapping sideways. Falls back to divertThreshold if the two
         // splines never coincide (e.g. a fully separate branch track).
+        //
+        // Do NOT stop at the first gap (#89): the straight track is an AutoSmooth Bézier while the branch's
+        // shared run is Linear knots (a chord), so mid-approach they drift ~0.5 m apart before re-converging
+        // at the exact shared fork knot. Breaking at that drift detected a phantom fork ~200 m early — the
+        // beep played and input locked ~5 s before the train visibly reached the switch. Taking the last
+        // coincident sample lands on the real fork; past it the branch veers off (~14°) and never returns.
         float ComputeForkT()
         {
             if (rail.Splines.Count < 2) return divertThreshold;
@@ -515,7 +521,6 @@ namespace VRT.Pilots.Trolley
                 SplineUtility.GetNearestPoint(s1, query, out float3 nearLocal, out _);
                 Vector3 nearWorld = rail.transform.TransformPoint(nearLocal);
                 if ((world0 - nearWorld).sqrMagnitude < epsSqr) fork = t;
-                else if (fork >= 0f) break;   // was coincident, now diverged → fork found
             }
             return fork >= 0f ? fork : divertThreshold;
         }
