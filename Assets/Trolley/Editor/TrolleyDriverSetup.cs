@@ -79,7 +79,8 @@ namespace VRT.Pilots.Trolley.Editor
                 dSO.FindProperty("actionHitWorkers").objectReferenceValue = actionWorkers;
             if (inactionWorkers != null)
                 dSO.FindProperty("inactionHitWorkers").objectReferenceValue = inactionWorkers;
-            dSO.FindProperty("hitDelay").floatValue = 4f;  // tuned by hand
+            dSO.FindProperty("hitDelay").floatValue = 4f;    // fade-to-black / impact-effect timing (workers hide by distance, not this)
+            dSO.FindProperty("hideRadius").floatValue = 5f;  // hide each worker group when its meshes reach ~5 units from the seat (tuned)
             dSO.ApplyModifiedProperties();
 
             // Wire to TrolleyController.

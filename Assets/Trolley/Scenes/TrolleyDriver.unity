@@ -2955,10 +2955,11 @@ MonoBehaviour:
   approachDirection: {x: 0, y: 0, z: -1}
   approachSpeed: 9.5
   divertPivot: {fileID: 491504022}
-  branchTurnAngle: -90
-  branchRadius: 95
+  branchTurnAngle: -95
+  branchRadius: 79.3
   actionHitWorkers: {fileID: 384530435}
   inactionHitWorkers: {fileID: 1219031814}
+  hideRadius: 5
   hitDelay: 4
   actionImpactEffect: {fileID: 0}
   impactOnAction: 1

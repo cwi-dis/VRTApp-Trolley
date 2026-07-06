@@ -43,10 +43,19 @@ namespace VRT.Pilots.Trolley
         [SerializeField] GameObject actionHitWorkers;
         [Tooltip("Workers on the straight track — hidden after an INACTION outcome.")]
         [SerializeField] GameObject inactionHitWorkers;
-        [Tooltip("Seconds after the decision before the hit workers are hidden. Tune to the impact moment.")]
-        [SerializeField] float hitDelay = 2f;
+        [Tooltip("A hit worker group is hidden the instant it comes within this many world units of the " +
+                 "player's seat (divertPivot) — i.e. the moment the cab actually reaches it. This is " +
+                 "distance-based on purpose: it fires at the true impact for BOTH the straight and the " +
+                 "divert outcome and at any decision window, so no per-outcome time tuning is needed. " +
+                 "Distance from the workers' visual centre to the seat at which they vanish: LOWER it if " +
+                 "workers vanish too early (before reaching the cab), RAISE it if a worker clips in first.")]
+        [SerializeField] float hideRadius = 5f;
 
-        [Header("Impact effect (optional — e.g. Self-harm rocky-mountain crash)")]
+        [Header("Impact effect / fade timing")]
+        [Tooltip("Seconds after the decision at which the scene fade goes black and the impact effect (if any) " +
+                 "fires. NOTE: this no longer controls when the hit workers are hidden — that is distance-based " +
+                 "via hideRadius. It only times the fade-to-black and the optional impact burst below.")]
+        [SerializeField] float hitDelay = 2f;
         [Tooltip("Activated hitDelay seconds after the chosen outcome. Self-harm: the dust/impact burst " +
                  "when the tram hits the obstacle. Leave null in the Driver scene.")]
         [SerializeField] GameObject actionImpactEffect;
@@ -76,22 +85,54 @@ namespace VRT.Pilots.Trolley
         {
             _diverting = true;
             _turnedSoFar = 0f;
-            StartCoroutine(ImpactRoutine(actionHitWorkers, impactOnAction));
+            StartCoroutine(HideWorkersRoutine(actionHitWorkers));
+            StartCoroutine(ImpactRoutine(impactOnAction));
         }
 
         public override void ExecuteInaction()
         {
             // Keep rolling straight through the outcome.
-            StartCoroutine(ImpactRoutine(inactionHitWorkers, !impactOnAction));
+            StartCoroutine(HideWorkersRoutine(inactionHitWorkers));
+            StartCoroutine(ImpactRoutine(!impactOnAction));
+        }
+
+        // Hide the workers the tram runs into the instant the cab actually reaches them, so they never clip
+        // through it. Distance-based (not a timer): the worker groups are children of the moving environment
+        // and close on the stationary seat (divertPivot) as it slides/diverts, so we just watch their world
+        // distance to the seat and hide them when it drops below hideRadius. This fires at the true impact for
+        // BOTH the straight and the divert outcome, and at any decision window, with no per-outcome tuning.
+        // Deliberately INDEPENDENT of the scene fade, which fades the whole scene on its own schedule below.
+        IEnumerator HideWorkersRoutine(GameObject workers)
+        {
+            if (workers == null) yield break;
+            // Measure from the workers' visual centre (combined renderer bounds), NOT the group's pivot —
+            // the pivot can sit well ahead of the actual meshes, which would hide them seconds too early.
+            var renderers = workers.GetComponentsInChildren<Renderer>(true);
+            while (true)
+            {
+                Vector3 seat = divertPivot != null ? divertPivot.position : Vector3.zero;
+                if (Vector3.Distance(WorkersCentre(workers, renderers), seat) <= hideRadius) break;
+                yield return null;
+            }
+            workers.SetActive(false);
+        }
+
+        // World-space centre of the worker meshes (falls back to the group transform if it has no renderers).
+        static Vector3 WorkersCentre(GameObject workers, Renderer[] renderers)
+        {
+            if (renderers == null || renderers.Length == 0) return workers.transform.position;
+            Bounds b = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
+            return b.center;
         }
 
         // Fade-to-black starts as soon as the decision locks in (HitDelay - FadeDuration seconds before
-        // impact), so the screen is fully black by the moment of impact — the hit is never actually seen.
-        // Workers are hidden and the impact effect (if any) triggers under that black. By default the
-        // screen then stays black through the rest of the outcome window and into the scene transition,
-        // which VR2Gather's own CameraFader fades out of — set fadeBackInAfterImpact to fade back in
-        // instead. No-ops the fade itself if no SceneFader is present in the scene.
-        IEnumerator ImpactRoutine(GameObject workers, bool playImpactEffect)
+        // impact), so the screen is fully black by the moment of the straight-outcome impact. The impact
+        // effect (if any) triggers under that black. By default the screen then stays black through the
+        // rest of the outcome window and into the scene transition, which VR2Gather's own CameraFader fades
+        // out of — set fadeBackInAfterImpact to fade back in instead. No-ops the fade itself if no
+        // SceneFader is present in the scene. Worker-hiding is handled separately by HideWorkersRoutine.
+        IEnumerator ImpactRoutine(bool playImpactEffect)
         {
             var fader = SceneFader.Instance;
 
@@ -105,7 +146,6 @@ namespace VRT.Pilots.Trolley
                 yield return new WaitUntil(() => done);
             }
 
-            if (workers != null) workers.SetActive(false);
             if (playImpactEffect && actionImpactEffect != null)
             {
                 actionImpactEffect.SetActive(true);
