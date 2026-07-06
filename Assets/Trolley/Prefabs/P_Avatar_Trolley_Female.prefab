@@ -293,7 +293,7 @@ MonoBehaviour:
     includeYRotation: 0
   neck:
     vrTarget: {fileID: 0}
-    rigTarget: {fileID: 3181836131493769831}
+    rigTarget: {fileID: 244501322349965002}
     rigSource: {fileID: 5945879511088085344}
     positionOnly: 1
     includeYRotation: 1
@@ -355,7 +355,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c10bdb03db33fb148b858a4a3b646cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.MultiPositionConstraint
-  m_Weight: 1
+  m_Weight: 0
   m_Data:
     m_ConstrainedObject: {fileID: 6469288547076127992}
     m_SourceObjects:
