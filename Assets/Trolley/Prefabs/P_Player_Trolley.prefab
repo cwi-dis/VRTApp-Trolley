@@ -1,5 +1,67 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1051016450188518598
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5272895463439270072}
+  m_Layer: 0
+  m_Name: RiggingAttachPointRightHandOther
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5272895463439270072
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051016450188518598}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: -0.5, z: -0.5, w: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 700730347282929331}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: -90}
+--- !u!1 &8020621280878612503
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1013723574441792731}
+  m_Layer: 0
+  m_Name: RiggingAttachPointLeftHandOther
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1013723574441792731
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8020621280878612503}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 595545816764294896}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
 --- !u!1001 &954303704304677688
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8,6 +70,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -1358535412789719997, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+      propertyPath: LeftHandTransform
+      value: 
+      objectReference: {fileID: 1013723574441792731}
+    - target: {fileID: -1358535412789719997, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+      propertyPath: RightHandTransform
+      value: 
+      objectReference: {fileID: 5272895463439270072}
     - target: {fileID: 2952826054765745878, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -84,11 +154,27 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5131421326051842284, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
       insertIndex: 5
       addedObject: {fileID: 6263112154444530467}
+    - targetCorrespondingSourceObject: {fileID: 395634977143772616, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1013723574441792731}
+    - targetCorrespondingSourceObject: {fileID: 326265371718444427, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5272895463439270072}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5131421326051842195, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2613616516623479027}
   m_SourcePrefab: {fileID: 100100000, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+--- !u!4 &595545816764294896 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 395634977143772616, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+  m_PrefabInstance: {fileID: 954303704304677688}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &700730347282929331 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 326265371718444427, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
+  m_PrefabInstance: {fileID: 954303704304677688}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1357882038131043509 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2298652947393044365, guid: 21abad33e8196954b8f19e6b888a67a4, type: 3}
