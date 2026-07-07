@@ -1484,7 +1484,8 @@ PrefabInstance:
       value: DriverCab
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1476244472746925228, guid: 70947f27b9ca243229f654361ec311db, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 70947f27b9ca243229f654361ec311db, type: 3}
