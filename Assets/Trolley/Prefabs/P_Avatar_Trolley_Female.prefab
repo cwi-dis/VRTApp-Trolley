@@ -67,6 +67,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2210064080695824060}
+  - component: {fileID: 1452925751223914890}
   m_Layer: 0
   m_Name: Right Arm IK Offset
   m_TagString: Untagged
@@ -90,6 +91,18 @@ Transform:
   - {fileID: 3761701854767516604}
   m_Father: {fileID: 4829781453802384438}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1452925751223914890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1069451045904462207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48948dfe9d76b07488dacd46a7955fa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.RigTransform
 --- !u!1 &1260239528691976261
 GameObject:
   m_ObjectHideFlags: 0
@@ -790,6 +803,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3761701854767516604}
+  - component: {fileID: 6352421918663070532}
   m_Layer: 0
   m_Name: Right Arm IK Target
   m_TagString: Untagged
@@ -812,6 +826,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2210064080695824060}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6352421918663070532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6484048941218299809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48948dfe9d76b07488dacd46a7955fa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.RigTransform
 --- !u!1 &6571463162543683568
 GameObject:
   m_ObjectHideFlags: 0
@@ -821,6 +847,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2102407904623748988}
+  - component: {fileID: 7303856972137591372}
   m_Layer: 0
   m_Name: Left Arm IK Offset
   m_TagString: Untagged
@@ -844,6 +871,18 @@ Transform:
   - {fileID: 2952336484967540096}
   m_Father: {fileID: 6709708758231697698}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7303856972137591372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6571463162543683568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48948dfe9d76b07488dacd46a7955fa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.RigTransform
 --- !u!1 &7446870749750785745
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,6 +892,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2952336484967540096}
+  - component: {fileID: 4905326860635168715}
   m_Layer: 0
   m_Name: Left Arm IK Target
   m_TagString: Untagged
@@ -875,6 +915,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2102407904623748988}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4905326860635168715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7446870749750785745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48948dfe9d76b07488dacd46a7955fa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.RigTransform
 --- !u!1 &8398455948902241157
 GameObject:
   m_ObjectHideFlags: 0
