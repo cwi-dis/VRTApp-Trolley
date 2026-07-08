@@ -6476,10 +6476,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2746896282820159274, guid: 3e76c3441589c413d944cf1bdb555650, type: 3}
-      propertyPath: m_Name
-      value: Button_Select_TrackA
-      objectReference: {fileID: 0}
     - target: {fileID: 3665458523078353245, guid: 3e76c3441589c413d944cf1bdb555650, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.182
@@ -6595,10 +6591,6 @@ PrefabInstance:
     - target: {fileID: 99105134305060305, guid: fa8a10eb88d9e4e6488314f5ee20be49, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558433618940847014, guid: fa8a10eb88d9e4e6488314f5ee20be49, type: 3}
-      propertyPath: m_Name
-      value: Button_Select_TrackB
       objectReference: {fileID: 0}
     - target: {fileID: 4800815249133962447, guid: fa8a10eb88d9e4e6488314f5ee20be49, type: 3}
       propertyPath: NetworkId
