@@ -11,6 +11,13 @@ namespace VRT.Pilots.Trolley
     /// Logs stats records when the local player starts and stops looking at this object.
     /// Also logs the world position at start and whenever it changes (for distance computations).
     /// Wire OnGazeEnter / OnGazeExit for additional behaviour (e.g. NetworkTrigger).
+    ///
+    /// Also unconditionally logs a closing gazing=0 (and final position) on OnDisable, so a gaze
+    /// span never survives this object being disabled or destroyed (e.g. its scene unloading).
+    /// Without this, GazeDetector never gets a chance to notice the target disappeared, so a gaze
+    /// still open at that moment looks (in the stats log) like it lasts until the next time an
+    /// object with the same name happens to be gazed at -- however much later that is. See
+    /// VRTApp-Trolley#94 / TrolleyExperiment's session-solo-02 notes.
     /// </summary>
     public class GazeTarget : MonoBehaviour
     {
@@ -30,6 +37,14 @@ namespace VRT.Pilots.Trolley
         {
             m_LastLoggedPosition = transform.position;
             m_TimeSinceLastLog = 0f;
+#if VRT_WITH_STATS
+            Statistics.Output("GazeTarget", $"gazing=0, target={gameObject.name}");
+            LogPosition();
+#endif
+        }
+
+        void OnDisable()
+        {
 #if VRT_WITH_STATS
             Statistics.Output("GazeTarget", $"gazing=0, target={gameObject.name}");
             LogPosition();
